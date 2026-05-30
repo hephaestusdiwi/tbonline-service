@@ -11,7 +11,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        $users = User::select('id', 'name', 'email', 'created_at')
+        $users = User::select('id', 'name', 'email', 'avatar', 'created_at')
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($user) {
@@ -20,6 +20,7 @@ class UserController extends Controller
                     'name'       => $user->name,
                     'email'      => $user->email,
                     'role'       => $user->getRoleNames()->first() ?? '-',
+                    'avatar_url' => $user->avatar ? asset('storage/' . $user->avatar) : null,
                     'created_at' => $user->created_at,
                 ];
             });
@@ -56,6 +57,7 @@ class UserController extends Controller
             'name'       => $user->name,
             'email'      => $user->email,
             'role'       => $user->getRoleNames()->first() ?? '-',
+            'avatar_url' => $user->avatar ? asset('storage/' . $user->avatar) : null,
             'created_at' => $user->created_at,
         ]);
     }
@@ -84,10 +86,11 @@ class UserController extends Controller
         $user->syncRoles([$request->role]);
 
         return response()->json([
-            'id'    => $user->id,
-            'name'  => $user->name,
-            'email' => $user->email,
-            'role'  => $user->getRoleNames()->first() ?? '-',
+            'id'         => $user->id,
+            'name'       => $user->name,
+            'email'      => $user->email,
+            'role'       => $user->getRoleNames()->first() ?? '-',
+            'avatar_url' => $user->avatar ? asset('storage/' . $user->avatar) : null,
         ]);
     }
 

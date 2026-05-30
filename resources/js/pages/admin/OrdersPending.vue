@@ -584,12 +584,15 @@
                             <div class="inv-meta__col">
                                 <div class="inv-meta__heading">DITERBITKAN ATAS NAMA</div>
                                 <table class="inv-meta__table">
+                                    <tbody>
                                     <tr><td class="inv-meta__key">Penjual</td><td class="inv-meta__sep">:</td><td class="inv-meta__val inv-meta__val--bold">{{ storeName }}</td></tr>
+                                    </tbody>
                                 </table>
                             </div>
                             <div class="inv-meta__col">
                                 <div class="inv-meta__heading">UNTUK</div>
                                 <table class="inv-meta__table">
+                                    <tbody>
                                     <tr><td class="inv-meta__key">Pembeli</td><td class="inv-meta__sep">:</td><td class="inv-meta__val inv-meta__val--bold">{{ invoiceData.customer_name }}</td></tr>
                                     <tr><td class="inv-meta__key">Tanggal Pembelian</td><td class="inv-meta__sep">:</td><td class="inv-meta__val inv-meta__val--bold">{{ formatDateLong(invoiceData.created_at) }}</td></tr>
                                     <tr>
@@ -597,6 +600,7 @@
                                         <td class="inv-meta__val"><span class="inv-meta__val--bold">{{ invoiceData.customer_name }} ({{ invoiceData.customer_phone }})</span><br>{{ invoiceData.address }}, {{ invoiceData.subdistrict }}, {{ invoiceData.district }}, {{ invoiceData.city }}, {{ invoiceData.province }} {{ invoiceData.postal_code }}</td>
                                     </tr>
                                     <tr v-if="invoiceData.customer_email"><td class="inv-meta__key">Email</td><td class="inv-meta__sep">:</td><td class="inv-meta__val">{{ invoiceData.customer_email }}</td></tr>
+                                </tbody>
                                 </table>
                             </div>
                         </div>

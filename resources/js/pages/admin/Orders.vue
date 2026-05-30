@@ -503,16 +503,19 @@
                             <div class="inv-meta__col">
                                 <div class="inv-meta__heading">DITERBITKAN ATAS NAMA</div>
                                 <table class="inv-meta__table">
-                                    <tr>
-                                        <td class="inv-meta__key">Penjual</td>
-                                        <td class="inv-meta__sep">:</td>
-                                        <td class="inv-meta__val inv-meta__val--bold">{{ storeName }}</td>
-                                    </tr>
+                                    <tbody>
+                                        <tr>
+                                            <td class="inv-meta__key">Penjual</td>
+                                            <td class="inv-meta__sep">:</td>
+                                            <td class="inv-meta__val inv-meta__val--bold">{{ storeName }}</td>
+                                        </tr>
+                                    </tbody>
                                 </table>
                             </div>
                             <div class="inv-meta__col">
                                 <div class="inv-meta__heading">UNTUK</div>
                                 <table class="inv-meta__table">
+                                    <tbody>
                                     <tr>
                                         <td class="inv-meta__key">Pembeli</td>
                                         <td class="inv-meta__sep">:</td>
@@ -544,6 +547,7 @@
                                         <td class="inv-meta__sep">:</td>
                                         <td class="inv-meta__val">{{ invoiceData.customer_email }}</td>
                                     </tr>
+                                    </tbody>
                                 </table>
                             </div>
                         </div>

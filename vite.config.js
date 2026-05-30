@@ -24,7 +24,7 @@ export default defineConfig({
                 target: 'http://localhost:8000',
                 changeOrigin: true,
             },
-            '/img': {                          // ← tambahkan ini
+            '/img': {                         
                 target: 'http://localhost:8000',
                 changeOrigin: true,
             }

@@ -28,7 +28,7 @@ class AuthController extends Controller
                 'id'          => $user->id,
                 'name'        => $user->name,
                 'email'       => $user->email,
-                'role'        => $user->role,
+                'role'        => $user->getRoleNames()->first(),
                 'permissions' => $user->getAllPermissions()->pluck('name'),
                 'avatar_url'  => $user->avatar ? asset('storage/' . $user->avatar) : null,
             ]
@@ -52,9 +52,10 @@ class AuthController extends Controller
             'id'          => $user->id,
             'name'        => $user->name,
             'email'       => $user->email,
-            'role'        => $user->role,
+            'role'        => $user->getRoleNames()->first(),
             'permissions' => $user->getAllPermissions()->pluck('name'),
             'avatar_url'  => $user->avatar ? asset('storage/' . $user->avatar) : null,
+            'is_online'   => $user->onlineStatus?->is_online ?? false,
         ]);
     }
 }

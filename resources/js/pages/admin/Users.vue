@@ -121,11 +121,17 @@
                             :key="user.id"
                             class="hover:bg-gray-50/60 transition-colors duration-150"
                         >
-                            <!-- Pengguna -->
-                            <td class="px-6 py-3.5">
-                                <div class="flex items-center gap-3">
+                            <td class="px-6 py-3.5 w-40">
+                                <div class="w-8 h-13 rounded-xl overflow-hidden shrink-0 flex-shrink-0" style="min-width:3rem; min-height:2rem;">
+                                    <img 
+                                        v-if="user.avatar_url"
+                                        :src="user.avatar_url"
+                                        :alt="user.name"
+                                        class="w-full h-full object-cover object-center"
+                                    />
                                     <div
-                                        class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold shrink-0"
+                                        v-else
+                                        class="w-full h-full flex items-center justify-center text-xs font-bold"
                                         :class="avatarClass(user.role)"
                                     >
                                         {{ initials(user.name) }}
@@ -134,10 +140,8 @@
                                 </div>
                             </td>
 
-                            <!-- Email -->
                             <td class="px-6 py-3.5 text-sm text-gray-500">{{ user.email }}</td>
 
-                            <!-- Role -->
                             <td class="px-6 py-3.5">
                                 <span
                                     class="inline-flex items-center text-[10px] font-bold border px-2.5 py-0.5 rounded-full uppercase tracking-wider"

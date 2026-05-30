@@ -32,6 +32,7 @@ use App\Http\Controllers\Api\ImageUploadController;
 use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\FaqController;
 use App\Http\Controllers\Api\VisitorStatsController;
+use App\Http\Controllers\Api\ComplaintController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/homepage', [HomepageSectionController::class, 'public']);
@@ -294,4 +295,6 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function () {
  
     Route::apiResource('/faqs', FaqController::class)->except(['create', 'edit']);
     Route::get('/visitor-stats', [VisitorStatsController::class, 'index']);
+    Route::get  ('/complaints',                     [ComplaintController::class, 'index']);
+    Route::patch('/complaints/{complaint}/status',  [ComplaintController::class,  'updateStatus']);
 });

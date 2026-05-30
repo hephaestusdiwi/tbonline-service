@@ -569,6 +569,7 @@ export default {
             try {
                 const { data } = await axios.get('/chat/sessions')
                 this.sessions = data.data || data
+                this.pendingCount = this.sessions.filter(s => s.status === 'queued').length // ← tambah ini
                 this.sessions
                     .filter(s => ['queued', 'active'].includes(s.status))
                     .forEach(s => this.subscribeSessionChannel(s.uuid))
@@ -580,10 +581,7 @@ export default {
         },
 
         async fetchPendingCount() {
-            try {
-                const { data } = await axios.get('/orders/pending-count')
-                this.pendingCount = data.count || 0
-            } catch {}
+             // tidak perlu fetch, hitung dari sessions yang sudah ada
         },
 
         openFile(url, mimeType) {
@@ -907,8 +905,13 @@ export default {
             await Notification.requestPermission()
 
         try {
-            await axios.post('/agent/status/online')
-            this.agentOnline = true
+            const { data } = await axios.get('/me')
+            this.agentOnline = data.is_online ?? false
+            
+            if (!this.agentOnline) {
+                await axios.post('/agent/status/online')
+                this.agentOnline = true
+            }
         } catch {}
     },
 

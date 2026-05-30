@@ -2,7 +2,7 @@
 
 namespace App\Services\Chatbot;
 
-use App\Models\{ChatSession, ChatbotSession, Message};
+use App\Models\{ChatSession, ChatbotSession, Message, Order, Complaint};
 use App\Services\Chat\ChatService;
 
 class ChatbotService
@@ -22,14 +22,14 @@ class ChatbotService
             'next'    => 'resolve_or_escalate',
         ],
         'order_status' => [
-            'message' => 'Mohon masukkan nomor pesanan Kamu (Contoh: INV-123654):',
+            'message' => 'Mohon masukkan nomor pesanan Kamu (Contoh: INV20250530001):',
             'collect' => 'order_number',
             'next'    => 'show_order_status',
         ],
         'collect_complaint' => [
             'message' => 'Ceritakan masalah kamu :',
             'collect' => 'complaint_text',
-            'next'    => 'handoff',
+            'next'    => 'save_complaint',
         ],
         'resolve_or_escalate' => [
             'message' => 'Apakah masalah kamu sudah terselesaikan?',
@@ -38,8 +38,30 @@ class ChatbotService
                 '2' => ['label' => 'Belum, sambungkan dengan CS',     'next' => 'handoff'],
             ],
         ],
+
+        'show_order_status' => ['action' => 'show_order_status'],
+
+        'order_not_found' => [
+            'options' => [
+                '1' => ['label' => 'Coba nomor lain', 'next' => 'order_status'],
+                '2' => ['label' => 'Chat dengan CS',  'next' => 'handoff'],
+            ],
+        ],
+
+        'save_complaint' => ['action' => 'save_complaint'],
+
         'handoff'  => ['action' => 'handoff_to_agent'],
         'resolved' => ['action' => 'mark_resolved'],
+    ];
+
+    private array $statusLabels = [
+        'pending'    => '🕐 Menunggu Konfirmasi',
+        'confirmed'  => '✅ Dikonfirmasi',
+        'processing' => '📦 Sedang Diproses',
+        'shipped'    => '🚚 Dalam Pengiriman',
+        'delivered'  => '🎉 Telah Diterima',
+        'cancelled'  => '❌ Dibatalkan',
+        'revised'    => '✏️ Dalam Revisi',
     ];
 
     public function startSession(ChatSession $session): void
@@ -52,7 +74,6 @@ class ChatbotService
             ]
         );
 
-        // Hanya kirim greeting kalau session baru dibuat
         if ($botSession->wasRecentlyCreated) {
             $this->sendBotMessage($session, $this->flow['greeting']['message']);
             $this->sendOptions($session, $this->flow['greeting']['options'] ?? []);
@@ -111,12 +132,71 @@ class ChatbotService
     private function handleAction(string $action, ChatSession $session, ChatbotSession $botSession): void
     {
         match ($action) {
-            'handoff_to_agent' => app(ChatService::class)->handoffToQueue($session),
-            'mark_resolved'    => $session->update(['status' => 'resolved', 'resolved_at' => now()]),
-            default            => null,
+            'handoff_to_agent'  => app(ChatService::class)->handoffToQueue($session),
+            'mark_resolved'     => $session->update(['status' => 'resolved', 'resolved_at' => now()]),
+            'show_order_status' => $this->handleShowOrderStatus($session, $botSession),
+            'save_complaint'    => $this->handleSaveComplaint($session, $botSession),
+            default             => null,
         };
 
-        $botSession->update(['is_completed' => true, 'handed_off_at' => now()]);
+        if (!in_array($action, ['show_order_status', 'save_complaint'])) {
+            $botSession->update(['is_completed' => true, 'handed_off_at' => now()]);
+        }
+    }
+
+    private function handleShowOrderStatus(ChatSession $session, ChatbotSession $botSession): void
+    {
+        $invoiceNumber = trim($botSession->context['order_number'] ?? '');
+
+        if (empty($invoiceNumber)) {
+            $this->sendBotMessage($session, 'Nomor pesanan tidak ditemukan. Silahkan coba lagi.');
+            $botSession->update(['current_node' => 'order_status']);
+            return;
+        }
+
+        $order = Order::where('invoice_number', strtoupper($invoiceNumber))->first();
+
+        if (!$order) {
+            $this->sendBotMessage(
+                $session,
+                "Pesanan dengan nomor *{$invoiceNumber}* tidak ditemukan.\n" .
+                "Pastikan nomor pesanan sudah benar (Contoh: INV20250530001)."
+            );
+
+            $this->sendBotMessage($session, 'Apa yang ingin kamu lakukan selanjutnya?');
+            $this->sendOptions($session, [
+                '1' => ['label' => 'Coba nomor lain',       'next' => 'order_status'],
+                '2' => ['label' => 'Chat dengan CS',        'next' => 'handoff'],
+            ]);
+
+            $botSession->update(['current_node' => 'order_not_found']);
+            return;
+        }
+
+        $statusLabel = $this->statusLabels[$order->status] ?? ucfirst($order->status);
+        $totalFormatted = 'Rp ' . number_format($order->total_price, 0, ',', '.');
+
+        $message = "📋 *Detail Pesanan*\n" .
+                   "━━━━━━━━━━━━━━━━━━\n" .
+                   "Invoice     : {$order->invoice_number}\n" .
+                   "Nama        : {$order->customer_name}\n" .
+                   "Total       : {$totalFormatted}\n" .
+                   "📦 Status      : {$statusLabel}\n";
+
+        if ($order->status === 'shipped' && $order->shipping_courier) {
+            $message .= "🚚 Kurir       : {$order->shipping_courier} ({$order->shipping_service})\n";
+        }
+
+        if ($order->status === 'cancelled' && $order->cancel_reason) {
+            $message .= "📝 Alasan      : {$order->cancel_reason}\n";
+        }
+
+        $this->sendBotMessage($session, $message);
+
+        $nextConfig = $this->flow['resolve_or_escalate'];
+        $botSession->update(['current_node' => 'resolve_or_escalate']);
+        $this->sendBotMessage($session, $nextConfig['message']);
+        $this->sendOptions($session, $nextConfig['options']);
     }
 
     private function sendBotMessage(ChatSession $session, string $content): void
@@ -131,9 +211,7 @@ class ChatbotService
             'sent_at'     => now(),
         ]);
 
-        // PENTING: load relasi session supaya broadcastOn() dapat UUID
         $message->setRelation('session', $session);
-
         broadcast(new \App\Events\Chat\MessageSent($message));
     }
 
@@ -146,5 +224,33 @@ class ChatbotService
             ->implode("\n");
 
         $this->sendBotMessage($session, $optionText);
+    }
+
+    private function handleSaveComplaint(ChatSession $session, ChatbotSession $botSession): void
+    {
+        $complaintText = trim($botSession->context['complaint_text'] ?? '');
+
+        if (empty($complaintText)) {
+            $this->sendBotMessage($session, 'Maaf, komplain kamu tidak berhasil disimpan. Silahkan coba lagi.');
+            $botSession->update(['current_node' => 'collect_complaint']);
+            return;
+        }
+
+        Complaint::create([
+            'session_id'     => $session->id,
+            'complaint_text' => $complaintText,
+            'customer_name'  => $session->customer_name,
+            'customer_phone' => $session->customer_phone,
+            'status'         => 'open',
+        ]);
+
+        $this->sendBotMessage(
+            $session,
+            "Komplain kamu sudah kami terima.\n" .
+            "Tim CS kami akan segera menghubungi kamu. Mohon tunggu sebentar."
+        );
+
+        app(ChatService::class)->handoffToQueue($session);
+        $botSession->update(['is_completed' => true, 'handed_off_at' => now()]);
     }
 }

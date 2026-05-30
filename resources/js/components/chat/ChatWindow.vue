@@ -960,11 +960,11 @@ onUnmounted(() => {
 .input-wrap {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
   background: #f4f6fb;
   border: 1.5px solid #e5e7eb;
   border-radius: 16px;
-  padding: 9px 9px 9px 14px;
+  padding: 6px 6px 6px 14px;
+  gap: 4px;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
@@ -1113,5 +1113,27 @@ onUnmounted(() => {
 @keyframes zoom-in {
   from { transform: scale(0.85); opacity: 0; }
   to   { transform: scale(1); opacity: 1; }
+}
+
+.upload-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  color: #b0b7c3;
+  transition: color 0.2s, background 0.2s;
+}
+
+.upload-btn:hover {
+  color: #6b7280;
+  background: #f0f0f0;
+}
+
+.hidden {
+  display: none;
 }
 </style>

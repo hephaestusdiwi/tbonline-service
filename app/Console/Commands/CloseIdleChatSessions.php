@@ -55,6 +55,9 @@ class CloseIdleChatSessions extends Command
                     'closed_at'    => now(),
                     'close_reason' => 'idle_timeout',
                 ]);
+
+                broadcast(new \App\Events\Chat\ChatSessionClosed($session, null));
+
                 \Log::info('session closed', ['uuid' => $session->uuid]);
 
             } catch (\Exception $e) {

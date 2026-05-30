@@ -71,6 +71,7 @@ const routes = [
     { path: '/admin/faqs/:id/edit', component: AdminFaqForm,  meta: { requiresAuth: true } },
     { path: '/admin/visitor-stats', name: 'AdminVisitorStats', component: () => import('../pages/admin/VisitorStats.vue'), meta: { requiresAuth: true, role: 'admin' } },
     { path: '/i/:invoice_number', component: () => import('../pages/PublicInvoicePage.vue') },
+    { path: '/admin/complaints', component: () => import('../pages/admin/Complaints.vue'), meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({

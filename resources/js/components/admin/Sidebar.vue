@@ -374,6 +374,7 @@ export default {
                             icon: 'comments', label: 'Live Chat',
                             children: [
                                 { path: '/admin/chat', label: 'Chat Dashboard' },
+                                { path: '/admin/complaints', label: 'Komplain'},
                             ]
                         },
                     ]
