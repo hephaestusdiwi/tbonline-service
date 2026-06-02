@@ -19,6 +19,7 @@
 
 <script>
 import axios from '../../axios.js'
+import { getUser, clearAuth } from '../../auth.js'
 
 export default {
     name: 'Navbar',
@@ -30,7 +31,7 @@ export default {
     },
     data() {
         return {
-            user: JSON.parse(localStorage.getItem('user') || '{}')
+            user: getUser() ?? {}
         }
     },
     methods: {
@@ -40,8 +41,7 @@ export default {
             } catch (e) {
                 // tetap logout meski error
             } finally {
-                localStorage.removeItem('token')
-                localStorage.removeItem('user')
+                clearAuth()
                 this.$router.push('/login')
             }
         }

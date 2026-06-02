@@ -2,7 +2,11 @@
     <AdminLayout title="Dashboard">
 
         <!-- ───────────────────────── GREETING HERO ───────────────────────── -->
-        <div class="relative mb-8 rounded-2xl overflow-hidden" style="background: linear-gradient(135deg, #ED1F24 0%, #B01419 60%, #8B0F13 100%);">
+        <div
+            class="relative mb-8 rounded-2xl overflow-hidden anim-hero"
+            :class="{ 'anim-hero--visible': mounted }"
+            style="background: linear-gradient(135deg, #ED1F24 0%, #B01419 60%, #8B0F13 100%);"
+        >
             <!-- Decorative circles -->
             <div class="absolute -top-8 -right-8 w-48 h-48 rounded-full opacity-10" style="background: white;"></div>
             <div class="absolute -bottom-10 -right-24 w-64 h-64 rounded-full opacity-5" style="background: white;"></div>
@@ -31,7 +35,7 @@
                 <div>
                     <p class="text-red-200 text-[10px] font-bold uppercase tracking-widest mb-0.5">Total Revenue</p>
                     <p class="text-white text-2xl font-bold tabular-nums">
-                        Rp {{ Number(stats.summary.total_revenue || 0).toLocaleString('id-ID') }}
+                        Rp {{ displayRevenue }}
                     </p>
                     <p class="text-red-200 text-xs mt-0.5">Dari order sukses</p>
                 </div>
@@ -49,15 +53,17 @@
             </template>
             <template v-else>
                 <div
-                    v-for="card in summaryCards"
+                    v-for="(card, idx) in summaryCards"
                     :key="card.label"
-                    class="group bg-white rounded-xl border border-gray-200/80 shadow-sm hover:shadow-md hover:border-gray-300/80 transition-all duration-200 overflow-hidden relative"
+                    class="group bg-white rounded-xl border border-gray-200/80 shadow-sm hover:shadow-md hover:border-gray-300/80 transition-all duration-300 overflow-hidden relative anim-card"
+                    :class="{ 'anim-card--visible': mounted }"
+                    :style="{ transitionDelay: (0.05 + idx * 0.07) + 's' }"
                 >
                     <div class="absolute top-0 left-0 right-0 h-0.5 rounded-t-xl transition-opacity duration-300" :style="{ background: card.accentColor }"></div>
                     <div class="p-5">
                         <div class="flex items-start justify-between mb-3">
                             <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 leading-tight pr-2">{{ card.label }}</span>
-                            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border"
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-transform duration-300 group-hover:scale-110"
                                 :style="{ background: card.iconBg, borderColor: card.accentColor + '25' }">
                                 <font-awesome-icon :icon="['fas', card.icon]" :style="{ color: card.accentColor }" class="text-sm" />
                             </div>
@@ -73,7 +79,11 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
 
             <!-- Revenue Line Chart -->
-            <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+            <div
+                class="lg:col-span-2 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden anim-section"
+                :class="{ 'anim-section--visible': mounted }"
+                style="transition-delay: 0.28s"
+            >
                 <div class="px-6 py-4 border-b border-gray-100 flex items-start justify-between">
                     <div>
                         <h3 class="text-sm font-bold text-gray-800">Tren Revenue Bulanan</h3>
@@ -92,7 +102,11 @@
             </div>
 
             <!-- Success Rate Radial -->
-            <div class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+            <div
+                class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden anim-section"
+                :class="{ 'anim-section--visible': mounted }"
+                style="transition-delay: 0.35s"
+            >
                 <div class="px-5 py-4 border-b border-gray-100">
                     <h3 class="text-sm font-bold text-gray-800">Success Rate</h3>
                     <p class="text-xs text-gray-400 mt-0.5">Rasio order berhasil</p>
@@ -103,17 +117,16 @@
                     <p class="text-xs text-gray-400 -mt-2 text-center">
                         vs total <span class="font-bold text-gray-600">{{ Number(stats.summary.total_orders || 0).toLocaleString('id-ID') }}</span> order
                     </p>
-                    <!-- Mini stats row -->
                     <div class="w-full mt-4 grid grid-cols-3 gap-2">
-                        <div class="text-center p-2 bg-emerald-50 rounded-lg border border-emerald-100">
+                        <div class="text-center p-2 bg-emerald-50 rounded-lg border border-emerald-100 transition-transform duration-200 hover:scale-105">
                             <p class="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Sukses</p>
                             <p class="text-sm font-bold text-emerald-700 tabular-nums">{{ (stats.summary.total_success || 0).toLocaleString('id-ID') }}</p>
                         </div>
-                        <div class="text-center p-2 bg-amber-50 rounded-lg border border-amber-100">
+                        <div class="text-center p-2 bg-amber-50 rounded-lg border border-amber-100 transition-transform duration-200 hover:scale-105">
                             <p class="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Pending</p>
                             <p class="text-sm font-bold text-amber-700 tabular-nums">{{ (stats.summary.total_pending || 0).toLocaleString('id-ID') }}</p>
                         </div>
-                        <div class="text-center p-2 bg-red-50 rounded-lg border border-red-100">
+                        <div class="text-center p-2 bg-red-50 rounded-lg border border-red-100 transition-transform duration-200 hover:scale-105">
                             <p class="text-[10px] font-bold text-red-400 uppercase tracking-wider">Batal</p>
                             <p class="text-sm font-bold text-red-600 tabular-nums">{{ (stats.summary.total_cancelled || 0).toLocaleString('id-ID') }}</p>
                         </div>
@@ -126,7 +139,11 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
 
             <!-- Monthly Trend Bar -->
-            <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+            <div
+                class="lg:col-span-2 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden anim-section"
+                :class="{ 'anim-section--visible': mounted }"
+                style="transition-delay: 0.42s"
+            >
                 <div class="px-6 py-4 border-b border-gray-100">
                     <h3 class="text-sm font-bold text-gray-800">Tren Order Bulanan</h3>
                     <p class="text-xs text-gray-400 mt-0.5">6 bulan terakhir · stacked by status</p>
@@ -138,7 +155,11 @@
             </div>
 
             <!-- Top Couriers -->
-            <div class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+            <div
+                class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden anim-section"
+                :class="{ 'anim-section--visible': mounted }"
+                style="transition-delay: 0.49s"
+            >
                 <div class="px-5 py-4 border-b border-gray-100 flex items-start justify-between">
                     <div>
                         <h3 class="text-sm font-bold text-gray-800">Top Ekspedisi</h3>
@@ -153,7 +174,13 @@
                         <div v-for="i in 5" :key="i" class="h-8 bg-gray-100 rounded-lg animate-pulse"></div>
                     </div>
                     <div v-else class="space-y-4">
-                        <div v-for="(courier, i) in stats.top_couriers" :key="courier.courier">
+                        <div
+                            v-for="(courier, i) in stats.top_couriers"
+                            :key="courier.courier"
+                            class="courier-row"
+                            :class="{ 'courier-row--visible': barsVisible }"
+                            :style="{ transitionDelay: (i * 0.08) + 's' }"
+                        >
                             <div class="flex items-center gap-2 mb-1.5">
                                 <span class="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0"
                                     :style="i === 0 ? 'background:#ED1F24;color:white' : i === 1 ? 'background:#f3f4f6;color:#374151' : 'background:#f9fafb;color:#9ca3af'"
@@ -163,8 +190,12 @@
                             </div>
                             <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                 <div
-                                    class="h-full rounded-full transition-all duration-700"
-                                    :style="{ width: courierBarWidth(courier.total) + '%', background: courierColors[i] }"
+                                    class="h-full rounded-full bar-fill"
+                                    :style="{
+                                        width: barsVisible ? courierBarWidth(courier.total) + '%' : '0%',
+                                        background: courierColors[i],
+                                        transitionDelay: (0.1 + i * 0.1) + 's'
+                                    }"
                                 ></div>
                             </div>
                         </div>
@@ -180,7 +211,11 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
 
             <!-- Top Products -->
-            <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+            <div
+                class="lg:col-span-2 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden anim-section"
+                :class="{ 'anim-section--visible': mounted }"
+                style="transition-delay: 0.56s"
+            >
                 <div class="px-6 py-4 border-b border-gray-100 flex items-start justify-between">
                     <div>
                         <h3 class="text-sm font-bold text-gray-800">Produk Terlaris</h3>
@@ -209,7 +244,9 @@
                             <tr
                                 v-for="(product, i) in stats.top_products"
                                 :key="product.product"
-                                class="hover:bg-gray-50/60 transition-colors duration-150"
+                                class="hover:bg-gray-50/60 transition-colors duration-150 product-row"
+                                :class="{ 'product-row--visible': barsVisible }"
+                                :style="{ transitionDelay: (i * 0.06) + 's' }"
                             >
                                 <td class="px-6 py-3.5">
                                     <div class="flex items-center gap-3">
@@ -225,7 +262,13 @@
                                 <td class="px-6 py-3.5 hidden lg:table-cell">
                                     <div class="flex items-center gap-2 justify-end">
                                         <div class="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                            <div class="h-full rounded-full bg-[#ED1F24]" :style="{ width: productBarWidth(product.total_sold) + '%' }"></div>
+                                            <div
+                                                class="h-full rounded-full bg-[#ED1F24] bar-fill"
+                                                :style="{
+                                                    width: barsVisible ? productBarWidth(product.total_sold) + '%' : '0%',
+                                                    transitionDelay: (0.15 + i * 0.08) + 's'
+                                                }"
+                                            ></div>
                                         </div>
                                         <span class="text-xs text-gray-400 w-8 text-right tabular-nums">{{ productBarWidth(product.total_sold) }}%</span>
                                     </div>
@@ -240,7 +283,11 @@
             </div>
 
             <!-- Order Status Donut -->
-            <div class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+            <div
+                class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden anim-section"
+                :class="{ 'anim-section--visible': mounted }"
+                style="transition-delay: 0.63s"
+            >
                 <div class="px-5 py-4 border-b border-gray-100">
                     <h3 class="text-sm font-bold text-gray-800">Rasio Status Order</h3>
                     <p class="text-xs text-gray-400 mt-0.5">Success · Pending · Cancelled</p>
@@ -258,7 +305,11 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
 
             <!-- Low Stock -->
-            <div class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+            <div
+                class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden anim-section"
+                :class="{ 'anim-section--visible': mounted }"
+                style="transition-delay: 0.70s"
+            >
                 <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
                     <div class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0"></div>
                     <h3 class="text-sm font-bold text-gray-800 flex-1">Stok Hampir Habis</h3>
@@ -275,7 +326,7 @@
                             <div
                                 v-for="item in pagedLowStock"
                                 :key="item.id"
-                                class="flex items-center justify-between bg-amber-50 border border-amber-100 rounded-lg px-3 py-2.5"
+                                class="flex items-center justify-between bg-amber-50 border border-amber-100 rounded-lg px-3 py-2.5 transition-all duration-200 hover:shadow-sm hover:border-amber-200"
                             >
                                 <span class="text-sm text-gray-700 font-medium truncate max-w-[65%]">{{ item.name }}</span>
                                 <span class="text-xs font-bold text-amber-600 shrink-0">Sisa {{ item.stock }}</span>
@@ -283,10 +334,10 @@
                         </div>
                         <div v-if="alerts.low_stock.length > 3" class="flex items-center justify-between mt-3">
                             <button @click="lowStockPage--" :disabled="lowStockPage === 0"
-                                class="text-xs px-2.5 py-1 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">← Prev</button>
+                                class="text-xs px-2.5 py-1 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all">← Prev</button>
                             <span class="text-xs text-gray-400 font-medium">{{ lowStockPage + 1 }} / {{ lowStockTotalPages }}</span>
                             <button @click="lowStockPage++" :disabled="lowStockPage >= lowStockTotalPages - 1"
-                                class="text-xs px-2.5 py-1 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">Next →</button>
+                                class="text-xs px-2.5 py-1 rounded-lg border border-gray-200 text-gray-500 hover:text-gray-700 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all">Next →</button>
                         </div>
                     </div>
                     <div v-else class="flex flex-col items-center justify-center py-6 gap-2">
@@ -297,7 +348,11 @@
             </div>
 
             <!-- Pending Orders -->
-            <div class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+            <div
+                class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden anim-section"
+                :class="{ 'anim-section--visible': mounted }"
+                style="transition-delay: 0.77s"
+            >
                 <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
                     <div class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></div>
                     <h3 class="text-sm font-bold text-gray-800 flex-1">Order Pending</h3>
@@ -313,7 +368,7 @@
                         <div
                             v-for="order in alerts.pending_orders"
                             :key="order.id"
-                            class="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5"
+                            class="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5 transition-all duration-200 hover:shadow-sm hover:border-blue-200"
                         >
                             <div>
                                 <p class="text-sm font-bold text-gray-700">#{{ order.invoice_number }}</p>
@@ -323,14 +378,18 @@
                         </div>
                     </div>
                     <div v-else class="flex flex-col items-center justify-center py-6 gap-2">
-                        <span class="text-2xl">🎉</span>
+                        <span class="text-2xl"></span>
                         <span class="text-gray-400 text-sm font-medium">Tidak ada order pending</span>
                     </div>
                 </div>
             </div>
 
             <!-- Promo Expiring -->
-            <div class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+            <div
+                class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden anim-section"
+                :class="{ 'anim-section--visible': mounted }"
+                style="transition-delay: 0.84s"
+            >
                 <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
                     <div class="w-2 h-2 rounded-full bg-[#ED1F24] shrink-0"></div>
                     <h3 class="text-sm font-bold text-gray-800 flex-1">Promo Hampir Expired</h3>
@@ -346,7 +405,7 @@
                         <div
                             v-for="promo in alerts.expiring_promos"
                             :key="promo.id"
-                            class="flex items-center justify-between rounded-lg px-3 py-2.5 border border-red-100"
+                            class="flex items-center justify-between rounded-lg px-3 py-2.5 border border-red-100 transition-all duration-200 hover:shadow-sm hover:border-red-200"
                             style="background: rgba(237,31,36,0.04);"
                         >
                             <span class="text-sm text-gray-700 font-medium truncate max-w-[65%]">{{ promo.name }}</span>
@@ -362,7 +421,11 @@
         </div>
 
         <!-- ───────────────────────── RECENT ORDERS ───────────────────────── -->
-        <div class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden mb-4">
+        <div
+            class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden mb-4 anim-section"
+            :class="{ 'anim-section--visible': mounted }"
+            style="transition-delay: 0.91s"
+        >
             <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <div>
                     <h3 class="text-sm font-bold text-gray-800">Order Terbaru</h3>
@@ -391,9 +454,11 @@
                     </thead>
                     <tbody class="divide-y divide-gray-50">
                         <tr
-                            v-for="order in recentOrders"
+                            v-for="(order, i) in recentOrders"
                             :key="order.id"
-                            class="hover:bg-gray-50/60 transition-colors duration-150"
+                            class="hover:bg-gray-50/60 transition-colors duration-150 order-row"
+                            :class="{ 'order-row--visible': barsVisible }"
+                            :style="{ transitionDelay: (i * 0.04) + 's' }"
                         >
                             <td class="px-6 py-3.5">
                                 <span class="font-mono font-bold text-gray-700 text-xs bg-gray-100 px-2 py-0.5 rounded-md">#{{ order.invoice_number }}</span>
@@ -434,17 +499,19 @@
         </div>
 
         <!-- ───────────────────────── ERROR ───────────────────────── -->
-        <div v-if="error" class="rounded-xl p-4 text-sm flex items-center gap-3 bg-red-50 border border-red-200">
-            <div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
-                <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
+        <transition name="alert-slide">
+            <div v-if="error" class="rounded-xl p-4 text-sm flex items-center gap-3 bg-red-50 border border-red-200">
+                <div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
+                    <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <span class="text-red-600 font-medium flex-1">{{ error }}</span>
+                <button @click="fetchAll" class="text-xs font-bold text-[#ED1F24] shrink-0 px-3 py-1 rounded-lg border border-red-200 hover:bg-red-50 transition-colors active:scale-95">
+                    Coba lagi
+                </button>
             </div>
-            <span class="text-red-600 font-medium flex-1">{{ error }}</span>
-            <button @click="fetchAll" class="text-xs font-bold text-[#ED1F24] shrink-0 px-3 py-1 rounded-lg border border-red-200 hover:bg-red-50 transition-colors">
-                Coba lagi
-            </button>
-        </div>
+        </transition>
 
     </AdminLayout>
 </template>
@@ -478,6 +545,12 @@ export default {
             currentTime: '',
             currentDate: '',
             timeInterval: null,
+            mounted: false,
+            barsVisible: false,
+
+            // Animated revenue counter
+            displayRevenueValue: 0,
+            revenueAnimFrame: null,
 
             stats: {
                 summary: {},
@@ -502,13 +575,15 @@ export default {
         greeting() {
             const hour = new Date().getHours()
             const name = JSON.parse(localStorage.getItem('user') || '{}')?.name || 'Admin'
-
             let salam = 'Selamat pagi'
             if (hour >= 11 && hour < 15) salam = 'Selamat siang'
             else if (hour >= 15 && hour < 19) salam = 'Selamat sore'
             else if (hour >= 19 || hour < 4)  salam = 'Selamat malam'
-
             return `${salam}, ${name} 👋`
+        },
+
+        displayRevenue() {
+            return Number(this.displayRevenueValue).toLocaleString('id-ID')
         },
 
         summaryCards() {
@@ -550,7 +625,6 @@ export default {
             return Math.ceil((this.alerts.low_stock?.length || 0) / 3)
         },
 
-        // Sparkline for hero (minimal)
         sparklineOptions() {
             return {
                 chart: {
@@ -712,10 +786,7 @@ export default {
                 this.alerts       = statsRes.data.alerts ?? { low_stock: [], pending_orders: [], expiring_promos: [] }
                 this.recentOrders = ordersRes.data.data ?? []
 
-                // Pad monthly_trend supaya selalu 6 bulan
                 const trend = statsRes.data.monthly_trend || []
-                console.log('raw trend:', trend) // cek revenue sudah ada belum
-
                 const now = new Date()
                 const last6 = Array.from({ length: 6 }, (_, i) => {
                     const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1)
@@ -723,16 +794,17 @@ export default {
                     const m = String(d.getMonth() + 1).padStart(2, '0')
                     return `${y}-${m}`
                 })
-                console.log('last6:', last6)
 
-                this.stats.monthly_trend = last6.map(month => {
-                    const found = trend.find(t => String(t.month) === String(month))
-                    console.log(`month ${month}:`, found) // cek tiap bulan ketemu atau tidak
-                    return found ?? { month, revenue: 0, success: 0, pending: 0, cancelled: 0, total: 0 }
-                })
                 this.stats.monthly_trend = last6.map(month => {
                     const found = trend.find(t => t.month === month)
                     return found || { month, revenue: 0, success: 0, pending: 0, cancelled: 0 }
+                })
+
+                // Animate revenue counter after data loads
+                this.$nextTick(() => {
+                    this.animateRevenue(statsRes.data.summary?.total_revenue || 0)
+                    // Trigger bar/row entrance animations
+                    setTimeout(() => { this.barsVisible = true }, 200)
                 })
 
             } catch (err) {
@@ -740,6 +812,26 @@ export default {
             } finally {
                 this.loading = false
             }
+        },
+
+        animateRevenue(target) {
+            if (this.revenueAnimFrame) cancelAnimationFrame(this.revenueAnimFrame)
+            const start = 0
+            const duration = 1200
+            const startTime = performance.now()
+            const easeOut = t => 1 - Math.pow(1 - t, 3)
+
+            const step = (now) => {
+                const elapsed = now - startTime
+                const progress = Math.min(elapsed / duration, 1)
+                this.displayRevenueValue = Math.round(start + (target - start) * easeOut(progress))
+                if (progress < 1) {
+                    this.revenueAnimFrame = requestAnimationFrame(step)
+                } else {
+                    this.displayRevenueValue = target
+                }
+            }
+            this.revenueAnimFrame = requestAnimationFrame(step)
         },
 
         updateClock() {
@@ -781,10 +873,91 @@ export default {
         this.updateClock()
         this.timeInterval = setInterval(this.updateClock, 1000)
         this.fetchAll()
+
+        // Trigger entrance animations
+        requestAnimationFrame(() => {
+            setTimeout(() => { this.mounted = true }, 60)
+        })
     },
 
     beforeUnmount() {
         if (this.timeInterval) clearInterval(this.timeInterval)
+        if (this.revenueAnimFrame) cancelAnimationFrame(this.revenueAnimFrame)
     },
 }
 </script>
+
+<style scoped>
+/* ─── Hero entrance ─── */
+.anim-hero {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.995);
+    transition: opacity 0.6s cubic-bezier(0.22,1,0.36,1),
+                transform 0.6s cubic-bezier(0.22,1,0.36,1);
+}
+.anim-hero--visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+/* ─── KPI card entrance ─── */
+.anim-card {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.45s cubic-bezier(0.22,1,0.36,1),
+                transform 0.45s cubic-bezier(0.22,1,0.36,1),
+                box-shadow 0.2s,
+                border-color 0.2s;
+}
+.anim-card--visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ─── Section panels entrance ─── */
+.anim-section {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.5s cubic-bezier(0.22,1,0.36,1),
+                transform 0.5s cubic-bezier(0.22,1,0.36,1);
+}
+.anim-section--visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ─── Animated progress bars ─── */
+.bar-fill {
+    transition: width 0.9s cubic-bezier(0.22,1,0.36,1);
+}
+
+/* ─── Courier row fade-in ─── */
+.courier-row {
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.22,1,0.36,1);
+}
+.courier-row--visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* ─── Product & order row fade-in ─── */
+.product-row,
+.order-row {
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.22,1,0.36,1), background-color 0.15s;
+}
+.product-row--visible,
+.order-row--visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ─── Alert slide transition ─── */
+.alert-slide-enter-active { transition: all 0.35s cubic-bezier(0.22,1,0.36,1); }
+.alert-slide-leave-active { transition: all 0.2s ease-in; }
+.alert-slide-enter-from   { opacity: 0; transform: translateY(-8px); }
+.alert-slide-leave-to     { opacity: 0; transform: translateY(-4px); }
+</style>

@@ -72,6 +72,8 @@ class OrderController extends Controller
             'items.*.qty'           => 'required|integer|min:1',
             'items.*.sell_price'    => 'required|integer',
             'items.*.subtotal'      => 'required|integer',
+            'items.*.product_id'    => 'nullable|integer',  
+            'items.*.variant_id'    => 'nullable|integer',  
         ];
 
         // ── Validasi kondisional berdasarkan fulfillment_type ────────────────
@@ -211,9 +213,12 @@ class OrderController extends Controller
             ]);
 
             foreach ($validated['items'] as $item) {
+                \Log::info('item_debug', $item);
+
                 OrderItem::create([
                     'order_id'      => $order->id,
                     'product_id'    => $item['product_id'] ?? null,
+                    'variant_id'    => $item['variant_id'] ?? null,
                     'product_name'  => $item['product_name'],
                     'variant_label' => $item['variant_label'] ?? null,
                     'variant_names' => $item['variant_names'] ?? null,
@@ -286,7 +291,7 @@ class OrderController extends Controller
             'cancel_reason' => 'nullable|string|required_if:status,cancelled',
         ]);
 
-        $order = Order::lockForUpdate()->findOrFail($id);
+        $order = Order::with('items')->lockForUpdate()->findOrFail($id);
 
         if ($order->status !== 'pending') {
             return response()->json([
@@ -311,8 +316,20 @@ class OrderController extends Controller
                 invoiceNumber: $order->invoice_number,
             );
         } elseif ($request->status === 'cancelled') {
-            // Order dibatalkan → tarik kembali point yang pernah di-earn dari order ini
             LoyaltyPoint::expireByOrder($order->id);
+
+            // Kembalikan stok
+            foreach ($order->items as $item) {
+                if ($item->variant_id) {
+                    DB::table('product_variants')
+                        ->where('id', $item->variant_id)
+                        ->increment('stock_qty', $item->qty);
+                } elseif ($item->product_id) {
+                    DB::table('products')
+                        ->where('id', $item->product_id)
+                        ->increment('stock_qty', $item->qty);
+                }
+            }
         }
         // ─────────────────────────────────────────────────────────────────────
 

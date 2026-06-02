@@ -281,14 +281,15 @@ import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import { useFaqStore } from '../../store/useFaqStore'
 import AdminLayout from '../../components/admin/AdminLayout.vue'
+import { getUser, getPermissions } from '../../auth.js'
 
 const route    = useRoute()
 const router   = useRouter()
 const faqStore = useFaqStore()
 const isEditing   = computed(() => !!route.params.id)
 
-const user        = computed(() => JSON.parse(localStorage.getItem('user') || '{}'))
-const permissions = computed(() => user.value.permissions ?? [])
+const user        = computed(() => getUser() ?? {})
+const permissions = computed(() => getPermissions())
 const canPublish  = computed(() => permissions.value.includes('content.publish'))
 
 // ── Form ──────────────────────────────────────────────────────

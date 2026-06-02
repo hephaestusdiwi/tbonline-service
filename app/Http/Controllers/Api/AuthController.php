@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,7 +12,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required',
         ]);
 
@@ -19,7 +20,18 @@ class AuthController extends Controller
             return response()->json(['message' => 'Email atau password salah'], 401);
         }
 
-        $user  = Auth::user();
+        $user = Auth::user();
+        
+        if ($user->isSuspended()) {
+            Auth::logout();
+            return response()->json([
+                'message' => 'Akun Anda telah disuspend. Hubungi administrator.',
+            ], 403);
+        }
+
+        $user->update(['last_login_at' => now()]);
+        AuditLog::record($user, 'login', "{$user->name} berhasil login");
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -31,23 +43,19 @@ class AuthController extends Controller
                 'role'        => $user->getRoleNames()->first(),
                 'permissions' => $user->getAllPermissions()->pluck('name'),
                 'avatar_url'  => $user->avatar ? asset('storage/' . $user->avatar) : null,
-            ]
+            ],
         ]);
     }
 
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
-
-        return response()->json([
-            'message' => 'Logout berhasil',
-        ]);
+        return response()->json(['message' => 'Logout berhasil']);
     }
 
     public function me(Request $request)
     {
         $user = $request->user();
-
         return response()->json([
             'id'          => $user->id,
             'name'        => $user->name,

@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useContentStore } from '@/store/useContentStore'
 import { useRouter } from 'vue-router'
+import { getUser } from '@/auth.js'
 
 export function useContentForm(type = 'article', existingContent = null) {
   const store  = useContentStore()
@@ -30,7 +31,7 @@ export function useContentForm(type = 'article', existingContent = null) {
   const isArticle  = computed(() => type === 'article')
   const isEditing  = computed(() => !!existingContent)
 
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const user = getUser() ?? {}
   const userRole = user.role || ''
   
   const isStaff    = computed(() => userRole === 'staff')

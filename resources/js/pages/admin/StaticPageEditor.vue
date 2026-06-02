@@ -351,6 +351,7 @@ import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import AdminLayout from '../../components/admin/AdminLayout.vue'
 import { useContentStore } from '../../store/useContentStore'
+import { getUser } from '../../auth.js'
 
 const route = useRoute()
 const store = useContentStore()
@@ -371,7 +372,7 @@ const pageType   = computed(() => route.params.type)
 const pageMeta   = computed(() => PAGE_META[pageType.value] ?? { title: 'Halaman Statis', description: '', icon: '📄', iconBg: '#f3f4f6' })
 const allPages   = ALL_PAGES
 
-const user       = computed(() => JSON.parse(localStorage.getItem('user') || '{}'))
+const user = computed(() => getUser() ?? {})
 const userRole   = computed(() => user.value.role || '')
 const canPublish = computed(() => ['admin', 'manager'].includes(userRole.value))
 

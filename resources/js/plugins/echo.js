@@ -1,6 +1,7 @@
 // src/plugins/echo.js
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js'
+import { getToken } from '../auth.js'
 
 window.Pusher = Pusher
 
@@ -13,7 +14,7 @@ const echo = new Echo({
   authEndpoint:  '/broadcasting/auth',
   auth: {
     headers: {
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
+      Authorization: `Bearer ${getToken()}`,
       Accept: 'application/json',
     },
   },

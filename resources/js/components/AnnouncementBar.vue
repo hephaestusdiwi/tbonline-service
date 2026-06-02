@@ -164,13 +164,11 @@ export default {
   flex: 1;
   text-align: center;
   overflow: hidden;
-  min-height: 20px;
 }
 
 .ab-transition-wrap {
   position: relative;
   width: 100%;
-  min-height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -183,7 +181,7 @@ export default {
   justify-content: center;
   gap: 8px;
   width: 100%;
-  /* HAPUS position: absolute dari sini */
+  flex-wrap: wrap;
 }
 
 .ab-text {
@@ -192,7 +190,11 @@ export default {
   letter-spacing: 0.01em;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;      /* ← ubah dari nowrap ke normal */
+  overflow: visible;        /* ← ubah dari hidden ke visible */
+  text-overflow: unset;     /* ← hapus ellipsis */
+  text-align: center;       /* ← pastikan center */
+  word-break: break-word;   /* ← tambahkan ini */
 }
 
 .ab-link {
@@ -267,9 +269,12 @@ export default {
 
 /* ─── Mobile ─────────────────────────────────────────────── */
 @media (max-width: 480px) {
-  .ab-bar   { height: 30px; }
+  .ab-bar {
+    height: auto;          /* hapus fixed height */
+    padding: 10px 12px;     /* beri ruang atas bawah */
+  }
   .ab-dots  { display: none; }
-  .ab-text  { font-size: 14px; }
+  .ab-text  { font-size: 13px; } /* ← turunkan sedikit dari 14px */
   .ab-arrow { display: none; }
 }
 </style>

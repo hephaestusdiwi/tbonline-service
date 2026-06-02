@@ -350,6 +350,7 @@
 <script>
 import AdminLayout from '../components/admin/AdminLayout.vue'
 import { useProfile } from '../composables/useProfile.js'
+import { getUser, saveAuth, getToken } from '../auth.js'
 
 export default {
     name: 'ProfileView',
@@ -466,9 +467,9 @@ export default {
             try {
                 const result = await this.uploadAvatar(file)
                 this.success = 'Foto profil berhasil diperbarui.'
-                const user = JSON.parse(localStorage.getItem('user') || '{}')
-                user.avatar_url = result.avatar_url
-                localStorage.setItem('user', JSON.stringify(user))
+                const isRemembered = !!localStorage.getItem('token')
+                const user = { ...getUser(), avatar_url: result.avatar_url }
+                saveAuth({ token: getToken(), user, rememberMe: isRemembered })
                 window.dispatchEvent(new Event('user-updated'))
             } catch (err) {
                 this.error = err.response?.data?.message ?? 'Gagal mengunggah foto.'

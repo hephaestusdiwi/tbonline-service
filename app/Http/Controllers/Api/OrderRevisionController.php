@@ -144,12 +144,32 @@ class OrderRevisionController extends Controller
                 ->filter()
                 ->toArray();
 
+            $removedItems = $order->items->whereNotIn('id', $keepIds);
+            foreach ($removedItems as $removed) {
+                $oldItem = $existingItems->get($removed->id);
+                if (!$oldItem) continue;
+
+                $oldVariantId = $oldItem->variant_id ?? null;
+
+                if ($oldVariantId) {
+                    DB::table('product_variants')
+                        ->where('id', $oldVariantId)
+                        ->increment('stock_qty', $oldItem->qty);
+                } elseif ($oldItem->product_id) {
+                    DB::table('products')
+                        ->where('id', $oldItem->product_id)
+                        ->increment('stock_qty', $oldItem->qty);
+                }
+            }
+
+
             $order->items()->whereNotIn('id', $keepIds)->delete();
 
             // ── Update / Insert items ─────────────────────────────────────────
             foreach ($resolvedItems as $itemData) {
                 $payload = [
                     'product_id'    => $itemData['product_id'] ?? null,
+                    'variant_id'    => $itemData['variant_id'] ?? null,
                     'product_name'  => $itemData['product_name'],
                     'variant_label' => $itemData['variant_label'] ?? null,
                     'variant_names' => $itemData['variant_names'] ?? null,
@@ -163,7 +183,34 @@ class OrderRevisionController extends Controller
                         ->where('order_id', $order->id)  // security: pastikan item milik order ini
                         ->update($payload);
                 } else {
-                    OrderItem::create(array_merge($payload, ['order_id' => $order->id]));
+                    OrderItem::create(array_merge($payload, [
+                        'order_id'   => $order->id,
+                        'variant_id' => $itemData['variant_id'] ?? null, // tambah ini
+                    ]));
+                }
+            }
+
+            foreach ($resolvedItems as $itemData) {
+                $variantId = $itemData['variant_id'] ?? null;
+                $productId = $itemData['product_id'] ?? null;
+                $newQty    = (int) $itemData['qty'];
+
+                $oldQty = 0;
+                if (!empty($itemData['id']) && $existingItems->has($itemData['id'])) {
+                    $oldQty = (int) $existingItems->get($itemData['id'])->qty;
+                }
+
+                $qtyDiff = $newQty - $oldQty;
+                if ($qtyDiff === 0) continue;
+
+                if ($variantId) {
+                    DB::table('product_variants')
+                        ->where('id', $variantId)
+                        ->decrement('stock_qty', $qtyDiff);
+                } elseif ($productId) {
+                    DB::table('products')
+                        ->where('id', $productId)
+                        ->decrement('stock_qty', $qtyDiff);
                 }
             }
 

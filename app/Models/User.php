@@ -21,6 +21,7 @@ class User extends Authenticatable
         'avatar',
         'phone',
         'is_active',
+        'last_login_at',
     ];
 
     protected $hidden = [
@@ -33,6 +34,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
+            'last_login_at' => 'datetime',
         ];
     }
 
@@ -51,8 +54,25 @@ class User extends Authenticatable
         return $this->hasRole('staff');
     }
 
+    public function isSuspended(): bool { return !$this->is_active; }
+
+    public function suspend(): void
+    {
+        $this->update(['is_active' => false]);
+    }
+
+    public function activate(): void
+    {
+        $this->update(['is_active' => true]);
+    }
+
     public function onlineStatus()
     {
         return $this->hasOne(\App\Models\UserOnlineStatus::class);
+    }
+
+    public function auditLogs()
+    {
+        return $this->hasMany(AuditLog::class)->latest()->limit(20);
     }
 }

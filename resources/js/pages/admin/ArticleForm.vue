@@ -535,13 +535,14 @@ import Placeholder from '@tiptap/extension-placeholder'
 import AdminLayout from '../../components/admin/AdminLayout.vue'
 import { useContentStore } from '../../store/useContentStore'
 import axios from '../../axios.js'
+import { getUser } from '../../auth.js'
 
 const route        = useRoute()
 const router       = useRouter()
 const contentStore = useContentStore()
 
 const isEditing  = computed(() => !!route.params.id)
-const user       = computed(() => JSON.parse(localStorage.getItem('user') || '{}'))
+const user = computed(() => getUser() ?? {})
 const userRole   = computed(() => user.value.role || '')
 const isStaff    = computed(() => userRole.value === 'staff')
 const canPublish = computed(() => ['admin', 'manager'].includes(userRole.value))

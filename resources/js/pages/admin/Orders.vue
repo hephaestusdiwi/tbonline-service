@@ -5,7 +5,6 @@
 
             <!-- ───────────────────────── HERO HEADER ───────────────────────── -->
             <div class="or-hero">
-                <!-- Decorative circles (sama persis dengan Dashboard) -->
                 <div class="or-hero__circle or-hero__circle--1"></div>
                 <div class="or-hero__circle or-hero__circle--2"></div>
                 <div class="or-hero__circle or-hero__circle--3"></div>
@@ -24,7 +23,6 @@
                     </div>
                 </div>
 
-                <!-- Stats strip (mirip revenue strip di Dashboard) -->
                 <div class="or-hero__strip">
                     <div class="or-hero__stat">
                         <p class="or-hero__stat-label">Total Order</p>
@@ -189,14 +187,17 @@
                                 <p class="or-modal__subtitle">{{ selectedOrder?.invoice_number }}</p>
                             </div>
                         </div>
-                        <button @click="showDetail = false" class="or-modal__close">
+                        <button @click="showDetail = false" class="or-modal__close" title="Tutup">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
                     </div>
 
                     <div class="or-modal__body" v-if="selectedOrder">
                         <div :class="['or-status-banner', statusBannerClass(selectedOrder.status)]">
-                            <span class="or-status-banner__label">{{ statusLabel(selectedOrder.status) }}</span>
+                            <div class="or-status-banner__left">
+                                <span class="or-status-banner__dot"></span>
+                                <span class="or-status-banner__label">{{ statusLabel(selectedOrder.status) }}</span>
+                            </div>
                             <span class="or-status-banner__date">{{ formatDate(selectedOrder.created_at) }}</span>
                         </div>
 
@@ -309,13 +310,23 @@
                                 <div class="or-detail-item" v-if="selectedOrder?.confirmed_by_name">
                                     <span class="or-detail-label">Konfirmasi</span>
                                     <span class="or-detail-value">{{ selectedOrder.confirmed_by_name }}</span>
-                                    <span class="or-detail-value" style="font-size:11px;color:#9ca3af">{{ formatDate(selectedOrder.confirmed_at) }}</span>
+                                    <span class="or-detail-meta">{{ formatDate(selectedOrder.confirmed_at) }}</span>
                                 </div>
                                 <div class="or-detail-item" v-if="selectedOrder?.revised_by_name">
                                     <span class="or-detail-label">Revisi Terakhir</span>
                                     <span class="or-detail-value">{{ selectedOrder.revised_by_name }}</span>
-                                    <span class="or-detail-value" style="font-size:11px;color:#9ca3af">{{ formatDate(selectedOrder.revised_at) }}</span>
+                                    <span class="or-detail-meta">{{ formatDate(selectedOrder.revised_at) }}</span>
                                 </div>
+                            </div>
+                            <div v-if="selectedOrder?.last_revision_note || selectedOrder?.last_revision_changes?.length"
+                                class="or-revision-box">
+                                <span class="or-revision-box__label">Ringkasan Revisi Terakhir</span>
+                                <p v-if="selectedOrder.last_revision_note" class="or-revision-box__note">
+                                    {{ selectedOrder.last_revision_note }}
+                                </p>
+                                <ul v-if="selectedOrder.last_revision_changes?.length" class="or-revision-box__list">
+                                    <li v-for="(change, i) in selectedOrder.last_revision_changes" :key="i">{{ change }}</li>
+                                </ul>
                             </div>
                         </div>
 
@@ -363,7 +374,7 @@
 
         <!-- ===== MODAL UPDATE STATUS ===== -->
         <Transition name="or-modal">
-            <div v-if="showStatusModal" class="or-modal-backdrop" @click.self="showStatusModal = false">
+            <div v-if="showStatusModal" class="or-modal-backdrop" :style="statusLoading ? 'pointer-events:none' : ''">
                 <div class="or-modal or-modal--sm">
                     <div class="or-modal__header">
                         <div class="or-modal__header-left">
@@ -371,11 +382,11 @@
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                             </div>
                             <div>
-                                <h3 class="or-modal__title">Update Status</h3>
+                                <h3 class="or-modal__title">Update Status Pesanan</h3>
                                 <p class="or-modal__subtitle">{{ selectedOrder?.invoice_number }} — {{ selectedOrder?.customer_name }}</p>
                             </div>
                         </div>
-                        <button @click="showStatusModal = false" class="or-modal__close">
+                        <button @click="confirmClose(statusFormDirty, () => showStatusModal = false)" class="or-modal__close" title="Tutup">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
                     </div>
@@ -388,30 +399,42 @@
                     <div class="or-modal__body">
                         <div class="or-section">
                             <div class="or-field">
-                                <label class="or-label">Status Baru <span class="or-label__req">*</span></label>
+                                <label class="or-label">Pilih Status Baru <span class="or-label__req">*</span></label>
                                 <div class="or-status-options">
                                     <label class="or-status-opt" :class="{ 'or-status-opt--success': statusForm.status === 'success' }">
                                         <input type="radio" v-model="statusForm.status" value="success" class="or-status-radio"/>
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                                        Sukses
+                                        <div class="or-status-opt__icon or-status-opt__icon--success">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                        </div>
+                                        <div class="or-status-opt__text">
+                                            <span class="or-status-opt__label">Sukses</span>
+                                            <span class="or-status-opt__desc">Pesanan selesai & diterima</span>
+                                        </div>
                                     </label>
                                     <label class="or-status-opt" :class="{ 'or-status-opt--cancelled': statusForm.status === 'cancelled' }">
                                         <input type="radio" v-model="statusForm.status" value="cancelled" class="or-status-radio"/>
-                                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                                        Dibatalkan
+                                        <div class="or-status-opt__icon or-status-opt__icon--cancelled">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                        </div>
+                                        <div class="or-status-opt__text">
+                                            <span class="or-status-opt__label">Dibatalkan</span>
+                                            <span class="or-status-opt__desc">Batalkan pesanan ini</span>
+                                        </div>
                                     </label>
                                 </div>
                             </div>
-                            <div v-if="statusForm.status === 'cancelled'" class="or-field" style="margin-top:14px">
-                                <label class="or-label">Alasan Pembatalan <span class="or-label__req">*</span></label>
-                                <textarea v-model="statusForm.cancel_reason" class="or-textarea" rows="3" placeholder="Tulis alasan pembatalan order ini..."/>
-                            </div>
+                            <Transition name="or-slide">
+                                <div v-if="statusForm.status === 'cancelled'" class="or-field">
+                                    <label class="or-label">Alasan Pembatalan <span class="or-label__req">*</span></label>
+                                    <textarea v-model="statusForm.cancel_reason" class="or-textarea" rows="3" placeholder="Tulis alasan pembatalan order ini..."/>
+                                </div>
+                            </Transition>
                         </div>
                     </div>
 
                     <div class="or-modal__footer">
-                        <button @click="showStatusModal = false" class="or-btn or-btn--ghost">Batal</button>
-                        <button @click="submitStatus" :disabled="statusLoading" :class="['or-btn', statusForm.status === 'cancelled' ? 'or-btn--danger' : 'or-btn--primary']">
+                        <button @click="confirmClose(statusFormDirty, () => showStatusModal = false)" class="or-btn or-btn--ghost" :disabled="statusLoading">Batal</button>
+                        <button @click="submitStatus" :disabled="statusLoading || !statusForm.status" :class="['or-btn', statusForm.status === 'cancelled' ? 'or-btn--danger' : 'or-btn--primary']">
                             <svg v-if="statusLoading" class="or-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
                             {{ statusLoading ? 'Menyimpan...' : 'Simpan Status' }}
                         </button>
@@ -422,19 +445,19 @@
 
         <!-- ===== MODAL HAPUS (Admin Only) ===== -->
         <Transition name="or-modal">
-            <div v-if="showDeleteModal" class="or-modal-backdrop" @click.self="showDeleteModal = false">
-                <div class="or-modal or-modal--sm">
-                    <div class="or-modal__header">
+            <div v-if="showDeleteModal" class="or-modal-backdrop" :style="deleteLoading ? 'pointer-events:none' : ''">
+                <div class="or-modal or-modal--sm or-modal--danger">
+                    <div class="or-modal__header or-modal__header--danger">
                         <div class="or-modal__header-left">
                             <div class="or-modal__icon or-modal__icon--red">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                             </div>
                             <div>
-                                <h3 class="or-modal__title">Hapus Order</h3>
+                                <h3 class="or-modal__title">Hapus Order Permanen</h3>
                                 <p class="or-modal__subtitle">Tindakan ini tidak dapat dibatalkan</p>
                             </div>
                         </div>
-                        <button @click="showDeleteModal = false" class="or-modal__close">
+                        <button @click="showDeleteModal = false" class="or-modal__close" :disabled="deleteLoading" title="Tutup">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
                     </div>
@@ -447,20 +470,22 @@
                     <div class="or-modal__body">
                         <div class="or-delete-confirm">
                             <div class="or-delete-confirm__icon">
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                             </div>
-                            <p class="or-delete-confirm__text">
-                                Yakin ingin menghapus order <strong>{{ orderToDelete?.invoice_number }}</strong> atas nama <strong>{{ orderToDelete?.customer_name }}</strong>?
-                            </p>
-                            <p class="or-delete-confirm__sub">Semua data termasuk item produk akan terhapus permanen dari sistem.</p>
+                            <div class="or-delete-confirm__content">
+                                <p class="or-delete-confirm__text">
+                                    Yakin ingin menghapus order <strong>{{ orderToDelete?.invoice_number }}</strong> atas nama <strong>{{ orderToDelete?.customer_name }}</strong>?
+                                </p>
+                                <p class="or-delete-confirm__sub">Semua data termasuk item produk akan terhapus permanen dari sistem dan tidak dapat dipulihkan.</p>
+                            </div>
                         </div>
                     </div>
 
                     <div class="or-modal__footer">
-                        <button @click="showDeleteModal = false" class="or-btn or-btn--ghost">Batal</button>
+                        <button @click="showDeleteModal = false" class="or-btn or-btn--ghost" :disabled="deleteLoading">Batal, jangan hapus</button>
                         <button @click="submitDelete" :disabled="deleteLoading" class="or-btn or-btn--danger">
                             <svg v-if="deleteLoading" class="or-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                            {{ deleteLoading ? 'Menghapus...' : 'Ya, Hapus Order' }}
+                            {{ deleteLoading ? 'Menghapus...' : 'Ya, Hapus Permanen' }}
                         </button>
                     </div>
                 </div>
@@ -637,7 +662,7 @@
 
         <!-- ===== MODAL REQUEST DELETE ===== -->
         <Transition name="or-modal">
-            <div v-if="showRequestDeleteModal" class="or-modal-backdrop" @click.self="showRequestDeleteModal = false">
+            <div v-if="showRequestDeleteModal" class="or-modal-backdrop" :style="requestDeleteLoading ? 'pointer-events:none' : ''">
                 <div class="or-modal or-modal--sm">
                     <div class="or-modal__header">
                         <div class="or-modal__header-left">
@@ -645,11 +670,11 @@
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
                             </div>
                             <div>
-                                <h3 class="or-modal__title">Ajukan penghapusan</h3>
+                                <h3 class="or-modal__title">Ajukan Penghapusan</h3>
                                 <p class="or-modal__subtitle">{{ orderToRequestDelete?.invoice_number }} — {{ orderToRequestDelete?.customer_name }}</p>
                             </div>
                         </div>
-                        <button @click="showRequestDeleteModal = false" class="or-modal__close">
+                        <button @click="confirmClose(requestDeleteFormDirty, () => showRequestDeleteModal = false)" class="or-modal__close" :disabled="requestDeleteLoading" title="Tutup">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
                     </div>
@@ -662,7 +687,7 @@
                     <div class="or-modal__body">
                         <div class="or-info-box">
                             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                            <p>Pengajuan ini akan dikirim ke admin untuk ditinjau. Order <strong>tidak akan langsung terhapus</strong> sampai admin menyetujuinya</p>
+                            <p>Pengajuan ini akan dikirim ke admin untuk ditinjau. Order <strong>tidak akan langsung terhapus</strong> sampai admin menyetujuinya.</p>
                         </div>
                         <div class="or-field">
                             <label class="or-label">Alasan Pengajuan <span class="or-label__req">*</span></label>
@@ -672,10 +697,10 @@
                     </div>
 
                     <div class="or-modal__footer">
-                        <button @click="showRequestDeleteModal = false" class="or-btn or-btn--ghost">Batal</button>
+                        <button @click="confirmClose(requestDeleteFormDirty, () => showRequestDeleteModal = false)" class="or-btn or-btn--ghost" :disabled="requestDeleteLoading">Batal</button>
                         <button @click="submitRequestDelete" :disabled="requestDeleteLoading" class="or-btn or-btn--orange">
                             <svg v-if="requestDeleteLoading" class="or-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                            {{ requestDeleteLoading ? 'Mengirim...' : 'Kirim pengajuan ke admin' }}
+                            {{ requestDeleteLoading ? 'Mengirim...' : 'Kirim Pengajuan ke Admin' }}
                         </button>
                     </div>
                 </div>
@@ -698,6 +723,7 @@ import AdminLayout from '../../components/admin/AdminLayout.vue'
 import OrderReviseModal from './OrderReviseModal.vue'
 import OrderActionMenu from './OrderActionMenu.vue'
 import axios from '../../axios.js'
+import { getPermissions } from '../../auth.js'
 
 export default {
     name: 'Orders',
@@ -721,6 +747,7 @@ export default {
 
             showStatusModal: false,
             statusForm: { status: 'success', cancel_reason: '' },
+            statusFormDirty: false,
             statusLoading: false,
             statusError: '',
 
@@ -732,6 +759,7 @@ export default {
             showRequestDeleteModal: false,
             orderToRequestDelete: null,
             requestDeleteForm: { reason: '' },
+            requestDeleteFormDirty: false,
             requestDeleteLoading: false,
             requestDeleteError: '',
 
@@ -757,33 +785,66 @@ export default {
         }
     },
 
+    watch: {
+        'statusForm.status'()        { this.statusFormDirty = true },
+        'statusForm.cancel_reason'() { this.statusFormDirty = true },
+        'requestDeleteForm.reason'() { this.requestDeleteFormDirty = true },
+    },
+
     computed: {
         canDelete() {
-            try { return JSON.parse(localStorage.getItem('permissions') || '[]').includes('orders_delete') } catch { return false }
+            try { return getPermissions().includes('orders_delete') } catch { return false }
         },
         canRequestDelete() {
             try {
-                const p = JSON.parse(localStorage.getItem('permissions') || '[]')
+                const p = getPermissions()
                 return p.includes('orders_view') && !p.includes('orders_delete')
             } catch { return false }
         },
         canRevise() {
-            try { return JSON.parse(localStorage.getItem('permissions') || '[]').includes('orders_revise') } catch { return false }
+            try { return getPermissions().includes('orders_revise') } catch { return false }
         },
         canRevisePrice() {
-            try { return JSON.parse(localStorage.getItem('permissions') || '[]').includes('orders_revise_price') } catch { return false }
+            try { return getPermissions().includes('orders_revise_price') } catch { return false }
         },
         canReviseCourier() {
-            try { return JSON.parse(localStorage.getItem('permissions') || '[]').includes('orders_revise_courier') } catch { return false }
+            try { return getPermissions().includes('orders_revise_courier') } catch { return false }
         },
     },
 
     mounted() {
         this.fetchOrders()
         this.fetchStats()
+        window.addEventListener('keydown', this.handleEscape)
+    },
+
+    beforeUnmount() {
+        window.removeEventListener('keydown', this.handleEscape)
     },
 
     methods: {
+        handleEscape(e) {
+            if (e.key !== 'Escape') return
+            if (this.showStatusModal) {
+                this.confirmClose(this.statusFormDirty, () => { this.showStatusModal = false })
+            } else if (this.showRequestDeleteModal) {
+                this.confirmClose(this.requestDeleteFormDirty, () => { this.showRequestDeleteModal = false })
+            } else if (this.showDeleteModal) {
+                if (!this.deleteLoading) this.showDeleteModal = false
+            } else if (this.showInvoice) {
+                this.showInvoice = false
+            } else if (this.showDetail) {
+                this.showDetail = false
+            }
+        },
+
+        confirmClose(dirtyFlag, closeFn) {
+            if (dirtyFlag) {
+                if (!confirm('Ada perubahan yang belum disimpan. Yakin ingin menutup?')) return
+            }
+            closeFn()
+        },
+
         formatPrice(val) {
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val)
         },
@@ -814,7 +875,6 @@ export default {
         getMenuGroups(order) {
             const s = this._svg
             const groups = []
-
             const info = [
                 { key: 'detail', label: 'Lihat detail', desc: 'Info lengkap pesanan', icon: s.eye, handler: () => this.openDetail(order) },
                 { key: 'invoice', label: 'Cetak invoice', desc: 'Buka & print invoice', icon: s.print, handler: () => this.openInvoice(order) },
@@ -825,7 +885,6 @@ export default {
                 info.push({ key: 'wa', label: 'Hubungi via WhatsApp', desc: order.customer_phone, icon: s.wa, handler: () => window.open(`https://wa.me/${phone}?text=${msg}`, '_blank') })
             }
             groups.push(info)
-
             if (order.status === 'pending') {
                 const ops = [{ key: 'status', label: 'Update status', desc: 'Tandai sukses atau batalkan', icon: s.check, handler: () => this.openUpdateStatus(order) }]
                 if (this.canRevise) {
@@ -833,7 +892,6 @@ export default {
                 }
                 groups.push(ops)
             }
-
             const danger = []
             if (this.canDelete) {
                 danger.push({ key: 'delete', label: 'Hapus order', desc: 'Permanen, tidak bisa dibatalkan', icon: s.trash, destructive: true, handler: () => this.openDelete(order) })
@@ -841,13 +899,13 @@ export default {
                 danger.push({ key: 'req-delete', label: 'Ajukan penghapusan', desc: 'Kirim ke admin untuk disetujui', icon: s.flag, destructive: true, handler: () => this.openRequestDelete(order) })
             }
             if (danger.length) groups.push(danger)
-
             return groups
         },
 
         openRequestDelete(order) {
             this.orderToRequestDelete = order
             this.requestDeleteForm = { reason: '' }
+            this.requestDeleteFormDirty = false
             this.requestDeleteError = ''
             this.showRequestDeleteModal = true
         },
@@ -904,13 +962,42 @@ export default {
         changePage(page) { if (page < 1 || page > this.meta.last_page) return; this.fetchOrders(page) },
 
         async openDetail(order) {
-            try { const res = await axios.get(`/orders/${order.id}`); this.selectedOrder = res.data?.data || order }
+            try {
+                const orderRes = await axios.get(`/orders/${order.id}`)
+                const orderData = orderRes.data?.data || order
+                try {
+                    const revisionRes = await axios.get(`/orders/${order.id}/revisions`)
+                    const revisions = revisionRes.data?.data || []
+                    if (revisions.length) {
+                        const latest = revisions[0]
+                        orderData.last_revision_note = latest.note || null
+                        orderData.last_revision_changes = latest.changes_summary || []
+                        orderData.last_revision_by = latest.revised_by_name || null
+                    }
+                } catch(e) {
+                    orderData.last_revision_note = null
+                    orderData.last_revision_changes = []
+                }
+                this.selectedOrder = orderData
+            }
             catch { this.selectedOrder = order }
             this.showDetail = true
         },
 
-        openUpdateStatus(order) { this.selectedOrder = order; this.statusForm = { status: 'success', cancel_reason: '' }; this.statusError = ''; this.showStatusModal = true },
-        openUpdateStatusFromDetail() { this.statusForm = { status: 'success', cancel_reason: '' }; this.statusError = ''; this.showDetail = false; this.showStatusModal = true },
+        openUpdateStatus(order) {
+            this.selectedOrder = order
+            this.statusForm = { status: 'success', cancel_reason: '' }
+            this.statusFormDirty = false
+            this.statusError = ''
+            this.showStatusModal = true
+        },
+        openUpdateStatusFromDetail() {
+            this.statusForm = { status: 'success', cancel_reason: '' }
+            this.statusFormDirty = false
+            this.statusError = ''
+            this.showDetail = false
+            this.showStatusModal = true
+        },
 
         async submitStatus() {
             if (!this.statusForm.status) { this.statusError = 'Pilih status terlebih dahulu.'; return }
@@ -919,6 +1006,7 @@ export default {
             try {
                 await axios.patch(`/orders/${this.selectedOrder.id}/status`, { status: this.statusForm.status, cancel_reason: this.statusForm.cancel_reason || null })
                 this.showStatusModal = false
+                this.statusFormDirty = false
                 await this.fetchOrders(this.meta.current_page)
                 await this.fetchStats()
             } catch (e) { this.statusError = e.response?.data?.message || 'Terjadi kesalahan, coba lagi.' }
@@ -970,7 +1058,7 @@ export default {
 .or-page { display: flex; flex-direction: column; gap: 20px; }
 
 /* ═══════════════════════════════════════════════════════
-   HERO HEADER — seragam dengan Dashboard
+   HERO HEADER
 ═══════════════════════════════════════════════════════ */
 .or-hero {
     position: relative;
@@ -979,102 +1067,31 @@ export default {
     background: linear-gradient(135deg, #ED1F24 0%, #B01419 60%, #8B0F13 100%);
     margin-bottom: 4px;
 }
-.or-hero__circle {
-    position: absolute;
-    border-radius: 50%;
-    background: white;
-    pointer-events: none;
-}
+.or-hero__circle { position: absolute; border-radius: 50%; background: white; pointer-events: none; }
 .or-hero__circle--1 { width: 192px; height: 192px; top: -32px; right: -32px; opacity: .10; }
 .or-hero__circle--2 { width: 256px; height: 256px; bottom: -40px; right: -96px; opacity: .05; }
 .or-hero__circle--3 { width: 80px; height: 80px; top: 16px; right: 128px; opacity: .10; }
-
-.or-hero__inner {
-    position: relative;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 24px 28px;
-}
-.or-hero__eyebrow {
-    color: rgba(255,255,255,.65);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    margin: 0 0 4px;
-}
+.or-hero__inner { position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 24px 28px; }
+.or-hero__eyebrow { color: rgba(255,255,255,.65); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; margin: 0 0 4px; }
 .or-hero__title { font-size: 22px; font-weight: 700; color: #fff; margin: 0 0 2px; letter-spacing: -.3px; }
 .or-hero__subtitle { font-size: 12px; color: rgba(255,255,255,.65); margin: 0; }
-
 .or-hero__right { display: flex; align-items: center; gap: 12px; }
-.or-hero__live {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #fff;
-    background: rgba(255,255,255,.12);
-    border: 1px solid rgba(255,255,255,.2);
-    padding: 6px 12px;
-    border-radius: 8px;
-}
-.or-hero__live-dot {
-    display: inline-block;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: #34d399;
-    animation: or-pulse 2s ease-in-out infinite;
-}
+.or-hero__live { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #fff; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); padding: 6px 12px; border-radius: 8px; }
+.or-hero__live-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #34d399; animation: or-pulse 2s ease-in-out infinite; }
 @keyframes or-pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
-
-/* Stats strip */
-.or-hero__strip {
-    position: relative;
-    border-top: 1px solid rgba(255,255,255,.12);
-    padding: 14px 28px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0;
-}
-.or-hero__stat {
-    display: flex;
-    flex-direction: column;
-    padding: 0 20px;
-}
+.or-hero__strip { position: relative; border-top: 1px solid rgba(255,255,255,.12); padding: 14px 28px; display: flex; flex-wrap: wrap; gap: 0; }
+.or-hero__stat { display: flex; flex-direction: column; padding: 0 20px; }
 .or-hero__stat + .or-hero__stat { border-left: 1px solid rgba(255,255,255,.15); }
-.or-hero__stat-label {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .07em;
-    color: rgba(255,255,255,.6);
-    margin: 0 0 2px;
-}
-.or-hero__stat-value {
-    font-size: 20px;
-    font-weight: 700;
-    color: #fff;
-    margin: 0;
-    line-height: 1.2;
-}
+.or-hero__stat-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: rgba(255,255,255,.6); margin: 0 0 2px; }
+.or-hero__stat-value { font-size: 20px; font-weight: 700; color: #fff; margin: 0; line-height: 1.2; }
 .or-hero__stat-value--amber { color: #fbbf24; }
 .or-hero__stat-value--green { color: #34d399; }
 .or-hero__stat-value--red   { color: #fca5a5; }
 
 /* ═══════════════════════════════════════════════════════
-   CARD BASE — sama dengan Dashboard card styling
+   CARD BASE
 ═══════════════════════════════════════════════════════ */
-.or-card {
-    background: #fff;
-    border: 1px solid rgba(229,231,235,.8);
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.04);
-    transition: box-shadow .2s, border-color .2s;
-}
+.or-card { background: #fff; border: 1px solid rgba(229,231,235,.8); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.04); transition: box-shadow .2s, border-color .2s; }
 .or-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.07); border-color: rgba(209,213,219,.8); }
 
 /* ─── Filter Bar ─── */
@@ -1083,17 +1100,7 @@ export default {
 .or-filterbar__icon { color: #9ca3af; flex-shrink: 0; }
 .or-filterbar__input { border: none; outline: none; font-size: 13px; color: #111827; width: 100%; background: transparent; }
 .or-filterbar__input::placeholder { color: #9ca3af; }
-.or-select {
-    padding: 6px 10px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 12px;
-    color: #374151;
-    background: #f9fafb;
-    cursor: pointer;
-    outline: none;
-    transition: border-color .15s;
-}
+.or-select { padding: 6px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 12px; color: #374151; background: #f9fafb; cursor: pointer; outline: none; transition: border-color .15s; }
 .or-select:hover { border-color: #d1d5db; }
 .or-select--sm { padding: 4px 8px; font-size: 12px; }
 
@@ -1101,132 +1108,221 @@ export default {
 .or-table-wrap { overflow: visible; position: relative; }
 .or-table-scroll { overflow-x: auto; }
 .or-table { width: 100%; border-collapse: collapse; min-width: 820px; }
-
-.or-th {
-    padding: 10px 16px;
-    font-size: 10px;
-    font-weight: 700;
-    color: #9ca3af;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    text-align: left;
-    background: rgba(249,250,251,.6);
-    border-bottom: 1px solid #f3f4f6;
-    white-space: nowrap;
-}
+.or-th { padding: 10px 16px; font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .06em; text-align: left; background: rgba(249,250,251,.6); border-bottom: 1px solid #f3f4f6; white-space: nowrap; }
 .or-th--action { width: 140px; text-align: right; }
 .or-td--action  { text-align: right; white-space: nowrap; }
-
 .or-tr { transition: background .15s; }
 .or-tr:hover { background: rgba(249,250,251,.6); }
-.or-td {
-    padding: 11px 16px;
-    font-size: 13px;
-    color: #374151;
-    border-bottom: 1px solid #f3f4f6;
-    vertical-align: middle;
-}
-
-/* ─── Table cell content ─── */
-.or-order-id {
-    font-family: ui-monospace, monospace;
-    font-weight: 700;
-    color: #ED1F24;
-    font-size: 12px;
-    background: rgba(237,31,36,.06);
-    border: 1px solid rgba(237,31,36,.12);
-    padding: 2px 7px;
-    border-radius: 6px;
-}
+.or-td { padding: 11px 16px; font-size: 13px; color: #374151; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+.or-order-id { font-family: ui-monospace, monospace; font-weight: 700; color: #ED1F24; font-size: 12px; background: rgba(237,31,36,.06); border: 1px solid rgba(237,31,36,.12); padding: 2px 7px; border-radius: 6px; }
 .or-customer { display: flex; flex-direction: column; gap: 3px; }
 .or-customer__name { font-weight: 600; color: #111827; font-size: 13px; }
 .or-customer__phone { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: #ED1F24; font-weight: 500; text-decoration: none; }
 .or-customer__phone:hover { text-decoration: underline; }
-
 .or-destination { display: flex; flex-direction: column; gap: 2px; }
 .or-destination__main { font-size: 12px; font-weight: 600; color: #374151; }
 .or-destination__sub  { font-size: 11px; color: #9ca3af; }
-.or-destination__pickup-badge {
-    display: inline-flex; align-items: center; gap: 3px;
-    font-size: 10px; font-weight: 700; color: #7c3aed;
-    background: #f5f3ff; border: 1px solid #ddd6fe;
-    border-radius: 20px; padding: 1px 6px; margin-bottom: 2px;
-}
-
+.or-destination__pickup-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 700; color: #7c3aed; background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 20px; padding: 1px 6px; margin-bottom: 2px; }
 .or-courier { display: flex; flex-direction: column; gap: 2px; }
 .or-courier__name    { font-size: 12px; font-weight: 700; color: #111827; }
 .or-courier__service { font-size: 11px; color: #9ca3af; }
-
 .or-total { font-weight: 700; color: #111827; font-size: 13px; }
 .or-date  { font-size: 12px; color: #6b7280; white-space: nowrap; }
-
-/* ─── Badges — aligned with Dashboard ─── */
-.or-badge {
-    display: inline-flex; align-items: center;
-    padding: 2px 8px; border-radius: 20px;
-    font-size: 10px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: .04em;
-    white-space: nowrap; border: 1px solid transparent;
-}
+.or-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; border: 1px solid transparent; }
 .or-badge--amber { background: #fef3c7; color: #92400e; border-color: #fde68a; }
 .or-badge--green { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
 .or-badge--red   { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
-
 .or-badge-rev { display: inline-block; padding: 2px 6px; border-radius: 20px; font-size: 10px; font-weight: 700; background: #ede9fe; color: #7c3aed; margin-left: 4px; vertical-align: middle; }
-
 .or-loading { text-align: center; padding: 40px; color: #9ca3af; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .or-empty { padding: 48px; text-align: center; }
 .or-empty__inner { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .or-empty__inner p    { font-weight: 600; color: #374151; margin: 0; }
 .or-empty__inner span { font-size: 13px; color: #9ca3af; }
-
-/* ─── Pagination footer ─── */
 .or-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 0; }
 .or-footer__info { font-size: 13px; color: #9ca3af; }
 .or-pagination { display: flex; align-items: center; gap: 6px; }
-.or-page-btn {
-    width: 32px; height: 32px; border-radius: 8px;
-    border: 1px solid #e5e7eb; background: #fff;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    color: #6b7280; transition: all .15s;
-}
+.or-page-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #6b7280; transition: all .15s; }
 .or-page-btn:hover:not(:disabled) { background: #f9fafb; border-color: #d1d5db; }
 .or-page-btn:disabled { opacity: .4; cursor: not-allowed; }
 .or-page-info { font-size: 13px; color: #6b7280; padding: 0 4px; }
 
 /* ═══════════════════════════════════════════════════════
-   MODALS — refined to match Dashboard aesthetic
+   MODAL SYSTEM — Enterprise Grade
 ═══════════════════════════════════════════════════════ */
-.or-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); backdrop-filter: blur(3px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-.or-modal { background: #fff; border-radius: 16px; width: 100%; max-width: 580px; box-shadow: 0 20px 60px rgba(0,0,0,.2); display: flex; flex-direction: column; max-height: 90vh; overflow: hidden; border: 1px solid rgba(229,231,235,.5); }
-.or-modal--sm { max-width: 440px; }
 
-.or-modal__header { display: flex; justify-content: space-between; align-items: center; padding: 18px 22px; border-bottom: 1px solid #f3f4f6; flex-shrink: 0; }
+/* Backdrop: lebih gelap dan tidak dismissible via klik (kecuali detail) */
+.or-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.or-modal {
+    background: #fff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 600px;
+    box-shadow:
+        0 0 0 1px rgba(0,0,0,.06),
+        0 8px 24px rgba(0,0,0,.12),
+        0 32px 64px rgba(0,0,0,.16);
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 48px);
+    overflow: hidden;
+    animation: or-modal-in .2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.or-modal--sm { max-width: 460px; }
+
+/* Danger modal: border merah tipis di atas */
+.or-modal--danger {
+    box-shadow:
+        0 0 0 1px rgba(220,38,38,.15),
+        0 8px 24px rgba(0,0,0,.12),
+        0 32px 64px rgba(0,0,0,.16);
+}
+.or-modal--danger::before {
+    content: '';
+    display: block;
+    height: 3px;
+    background: linear-gradient(90deg, #dc2626, #ef4444);
+    flex-shrink: 0;
+}
+
+@keyframes or-modal-in {
+    from { opacity: 0; transform: scale(.96) translateY(8px); }
+    to   { opacity: 1; transform: scale(1)  translateY(0); }
+}
+
+/* ─── Modal Header ─── */
+.or-modal__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f3f4f6;
+    flex-shrink: 0;
+    background: #fafafa;
+}
+.or-modal__header--danger {
+    background: #fef2f2;
+    border-bottom-color: #fecaca;
+}
 .or-modal__header-left { display: flex; align-items: center; gap: 12px; }
-.or-modal__icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.or-modal__icon--gray   { background: #f3f4f6; color: #6b7280; }
-.or-modal__icon--blue   { background: #eff6ff; color: #3b82f6; }
-.or-modal__icon--red    { background: #fef2f2; color: #dc2626; }
-.or-modal__icon--orange { background: #fff7ed; color: #ea580c; }
-.or-modal__title    { font-size: 15px; font-weight: 700; color: #111827; margin: 0 0 2px; }
-.or-modal__subtitle { font-size: 12px; color: #9ca3af; margin: 0; }
-.or-modal__close { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #9ca3af; transition: all .15s; }
-.or-modal__close:hover { background: #f9fafb; color: #374151; border-color: #d1d5db; }
-.or-modal__body { padding: 20px 22px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 20px; }
-.or-modal__footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 22px; border-top: 1px solid #f3f4f6; flex-shrink: 0; }
 
-.or-alert { display: flex; align-items: center; gap: 8px; padding: 10px 22px; background: #fef2f2; border-bottom: 1px solid #fecaca; font-size: 13px; color: #991b1b; }
+.or-modal__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.or-modal__icon--gray   { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
+.or-modal__icon--blue   { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.or-modal__icon--red    { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.or-modal__icon--orange { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
+
+.or-modal__title    { font-size: 15px; font-weight: 700; color: #111827; margin: 0 0 2px; letter-spacing: -.15px; }
+.or-modal__subtitle { font-size: 12px; color: #9ca3af; margin: 0; font-family: ui-monospace, monospace; }
+
+/* Tombol close: explicit, tidak halus — user harus sadar menutup */
+.or-modal__close {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    transition: all .15s;
+    flex-shrink: 0;
+}
+.or-modal__close:hover:not(:disabled) { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
+.or-modal__close:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ─── Modal Body ─── */
+.or-modal__body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    /* Scroll indicator shadow */
+    background:
+        linear-gradient(white 30%, transparent),
+        linear-gradient(transparent, white 70%) 0 100%,
+        radial-gradient(farthest-side at 50% 0, rgba(0,0,0,.08), transparent),
+        radial-gradient(farthest-side at 50% 100%, rgba(0,0,0,.08), transparent) 0 100%;
+    background-repeat: no-repeat;
+    background-size: 100% 40px, 100% 40px, 100% 8px, 100% 8px;
+    background-attachment: local, local, scroll, scroll;
+}
+
+/* ─── Modal Footer ─── */
+.or-modal__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 16px 24px;
+    border-top: 1px solid #f3f4f6;
+    flex-shrink: 0;
+    background: #fafafa;
+}
+
+/* ─── Alert ─── */
+.or-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    background: #fef2f2;
+    border-bottom: 1px solid #fecaca;
+    font-size: 13px;
+    color: #991b1b;
+    font-weight: 500;
+}
 
 /* ─── Status Banner ─── */
-.or-status-banner { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 10px; }
-.or-status-banner--amber { background: #fef3c7; border: 1px solid #fde68a; }
-.or-status-banner--green  { background: #dcfce7; border: 1px solid #bbf7d0; }
-.or-status-banner--red    { background: #fef2f2; border: 1px solid #fecaca; }
-.or-status-banner__label { font-size: 13px; font-weight: 700; }
+.or-status-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 14px;
+    border-radius: 10px;
+    gap: 8px;
+}
+.or-status-banner__left { display: flex; align-items: center; gap: 8px; }
+.or-status-banner__dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.or-status-banner--amber { background: #fffbeb; border: 1px solid #fde68a; }
+.or-status-banner--amber .or-status-banner__dot { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,.2); }
 .or-status-banner--amber .or-status-banner__label { color: #92400e; }
+.or-status-banner--green  { background: #f0fdf4; border: 1px solid #bbf7d0; }
+.or-status-banner--green .or-status-banner__dot  { background: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,.2); }
 .or-status-banner--green  .or-status-banner__label { color: #166534; }
+.or-status-banner--red    { background: #fef2f2; border: 1px solid #fecaca; }
+.or-status-banner--red .or-status-banner__dot    { background: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.2); }
 .or-status-banner--red    .or-status-banner__label { color: #991b1b; }
-.or-status-banner__date { font-size: 12px; color: #6b7280; }
+.or-status-banner__label { font-size: 13px; font-weight: 700; }
+.or-status-banner__date  { font-size: 12px; color: #6b7280; }
 
 /* ─── Cancel Reason ─── */
 .or-cancel-reason { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; }
@@ -1236,13 +1332,14 @@ export default {
 
 /* ─── Sections ─── */
 .or-section { display: flex; flex-direction: column; gap: 12px; }
-.or-section__title { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: #374151; text-transform: uppercase; letter-spacing: .06em; }
-.or-section__title svg { color: #6b7280; }
+.or-section__title { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: .08em; padding-bottom: 8px; border-bottom: 1px solid #f3f4f6; }
+.or-section__title svg { color: #9ca3af; }
 
-.or-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.or-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .or-detail-item { display: flex; flex-direction: column; gap: 3px; }
-.or-detail-label { font-size: 11px; color: #9ca3af; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.or-detail-label { font-size: 10px; color: #9ca3af; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
 .or-detail-value { font-size: 13px; color: #111827; font-weight: 500; }
+.or-detail-meta  { font-size: 11px; color: #9ca3af; }
 .or-detail-link  { font-size: 13px; color: #ED1F24; font-weight: 600; text-decoration: none; }
 .or-detail-link:hover { text-decoration: underline; }
 
@@ -1254,7 +1351,7 @@ export default {
 .or-pickup-box__badge  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #7c3aed; }
 .or-pickup-box__branch { font-size: 14px; font-weight: 700; color: #111827; }
 
-.or-items { display: flex; flex-direction: column; gap: 8px; }
+.or-items { display: flex; flex-direction: column; gap: 6px; }
 .or-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; }
 .or-item__info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .or-item__name    { font-size: 13px; font-weight: 600; color: #111827; }
@@ -1265,66 +1362,156 @@ export default {
 
 .or-notes-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #374151; line-height: 1.6; }
 
+.or-revision-box { background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 8px; padding: 12px 14px; margin-top: 4px; }
+.or-revision-box__label { font-size: 10px; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: .05em; }
+.or-revision-box__note  { margin: 6px 0 0; font-size: 13px; color: #374151; }
+.or-revision-box__list  { margin: 6px 0 0; padding-left: 16px; font-size: 12px; color: #6b7280; }
+
 .or-price-summary { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
 .or-price-row { display: flex; justify-content: space-between; font-size: 13px; color: #6b7280; }
-.or-price-row--total { padding-top: 8px; border-top: 1px solid #e5e7eb; font-weight: 700; color: #111827; font-size: 14px; }
+.or-price-row--total { padding-top: 10px; border-top: 1px dashed #e5e7eb; font-weight: 700; color: #111827; font-size: 15px; margin-top: 2px; }
 .or-price-discount { color: #ED1F24; }
 
 /* ─── Delete Confirm ─── */
-.or-delete-confirm { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 8px 0; }
-.or-delete-confirm__icon { width: 60px; height: 60px; border-radius: 50%; background: #fef2f2; display: flex; align-items: center; justify-content: center; color: #dc2626; }
+.or-delete-confirm {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 4px 0;
+}
+.or-delete-confirm__icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #dc2626;
+    flex-shrink: 0;
+}
+.or-delete-confirm__content { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; }
 .or-delete-confirm__text { font-size: 14px; color: #111827; line-height: 1.6; margin: 0; }
-.or-delete-confirm__sub  { font-size: 12px; color: #9ca3af; margin: 0; }
+.or-delete-confirm__sub  { font-size: 12px; color: #9ca3af; margin: 0; line-height: 1.5; }
 
 /* ─── Status Form ─── */
-.or-field { display: flex; flex-direction: column; gap: 6px; }
+.or-field { display: flex; flex-direction: column; gap: 8px; }
 .or-label { font-size: 12px; font-weight: 600; color: #374151; }
 .or-label__req { color: #ef4444; }
+
+/* Status options: lebih besar dan informatif */
 .or-status-options { display: flex; gap: 10px; }
-.or-status-opt { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; color: #6b7280; transition: all .15s; }
-.or-status-opt:hover { border-color: #d1d5db; color: #374151; }
-.or-status-opt--success   { border-color: #22c55e; background: #dcfce7; color: #166534; }
-.or-status-opt--cancelled { border-color: #fca5a5; background: #fef2f2; color: #991b1b; }
+.or-status-opt {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all .15s;
+    background: #fff;
+}
+.or-status-opt:hover { border-color: #d1d5db; background: #f9fafb; }
+.or-status-opt--success   { border-color: #22c55e; background: #f0fdf4; }
+.or-status-opt--cancelled { border-color: #ef4444; background: #fef2f2; }
 .or-status-radio { display: none; }
-.or-textarea { padding: 8px 11px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; color: #111827; resize: vertical; outline: none; font-family: inherit; width: 100%; box-sizing: border-box; transition: border-color .15s; }
-.or-textarea:focus { border-color: #ED1F24; }
+
+.or-status-opt__icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.or-status-opt__icon--success   { background: #dcfce7; color: #16a34a; }
+.or-status-opt__icon--cancelled { background: #fef2f2; color: #dc2626; }
+.or-status-opt--success   .or-status-opt__icon--success   { background: #22c55e; color: #fff; }
+.or-status-opt--cancelled .or-status-opt__icon--cancelled { background: #ef4444; color: #fff; }
+
+.or-status-opt__text { display: flex; flex-direction: column; gap: 2px; }
+.or-status-opt__label { font-size: 13px; font-weight: 700; color: #111827; }
+.or-status-opt__desc  { font-size: 11px; color: #9ca3af; }
+.or-status-opt--success   .or-status-opt__label { color: #15803d; }
+.or-status-opt--cancelled .or-status-opt__label { color: #b91c1c; }
+
+.or-textarea {
+    padding: 10px 12px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #111827;
+    resize: vertical;
+    outline: none;
+    font-family: inherit;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color .15s, box-shadow .15s;
+    background: #fff;
+    line-height: 1.6;
+}
+.or-textarea:focus {
+    border-color: #ED1F24;
+    box-shadow: 0 0 0 3px rgba(237,31,36,.08);
+}
 
 /* ─── Info Box ─── */
 .or-info-box { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; font-size: 13px; color: #1e40af; line-height: 1.5; }
 .or-info-box svg { flex-shrink: 0; margin-top: 1px; color: #3b82f6; }
 .or-info-box p { margin: 0; }
 
-/* ─── Char Count ─── */
 .or-char-count { font-size: 11px; color: #9ca3af; text-align: right; }
 
-/* ─── Buttons — merah seragam dengan Dashboard CTA ─── */
-.or-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
-.or-btn--primary        { background: #ED1F24; color: #fff; }
-.or-btn--primary:hover  { background: #C81A1E; }
-.or-btn--primary:disabled { opacity: .6; cursor: not-allowed; }
-.or-btn--danger         { background: #dc2626; color: #fff; }
-.or-btn--danger:hover   { background: #b91c1c; }
-.or-btn--danger:disabled { opacity: .6; cursor: not-allowed; }
-.or-btn--ghost          { background: transparent; color: #6b7280; border: 1px solid #e5e7eb; }
-.or-btn--ghost:hover    { background: #f9fafb; }
-.or-btn--invoice        { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-.or-btn--invoice:hover  { background: #dbeafe; }
-.or-btn--orange         { background: #ea580c; color: #fff; }
-.or-btn--orange:hover   { background: #c2410c; }
-.or-btn--orange:disabled { opacity: .6; cursor: not-allowed; }
-.or-btn--revise         { background: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe; }
-.or-btn--revise:hover   { background: #ede9fe; }
+/* ─── Buttons ─── */
+.or-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all .15s;
+    white-space: nowrap;
+    letter-spacing: -.1px;
+}
+.or-btn:disabled { opacity: .55; cursor: not-allowed; transform: none !important; }
 
-/* ─── Spin & Transition ─── */
-.or-spin { animation: or-spin 1s linear infinite; }
-@keyframes or-spin { to { transform: rotate(360deg); } }
-.or-modal-enter-active, .or-modal-leave-active { transition: all .2s; }
-.or-modal-enter-from, .or-modal-leave-to { opacity: 0; transform: scale(.97); }
+.or-btn--primary       { background: #ED1F24; color: #fff; box-shadow: 0 1px 3px rgba(237,31,36,.3); }
+.or-btn--primary:hover:not(:disabled) { background: #C81A1E; box-shadow: 0 2px 6px rgba(237,31,36,.35); }
+.or-btn--danger        { background: #dc2626; color: #fff; box-shadow: 0 1px 3px rgba(220,38,38,.3); }
+.or-btn--danger:hover:not(:disabled)  { background: #b91c1c; box-shadow: 0 2px 6px rgba(220,38,38,.35); }
+.or-btn--ghost         { background: transparent; color: #6b7280; border: 1px solid #e5e7eb; }
+.or-btn--ghost:hover:not(:disabled)   { background: #f9fafb; color: #374151; border-color: #d1d5db; }
+.or-btn--invoice       { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.or-btn--invoice:hover:not(:disabled) { background: #dbeafe; }
+.or-btn--orange        { background: #ea580c; color: #fff; box-shadow: 0 1px 3px rgba(234,88,12,.3); }
+.or-btn--orange:hover:not(:disabled)  { background: #c2410c; }
+.or-btn--revise        { background: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe; }
+.or-btn--revise:hover:not(:disabled)  { background: #ede9fe; }
+
+/* ─── Spin & Transitions ─── */
+.or-spin { animation: or-spin-anim 1s linear infinite; }
+@keyframes or-spin-anim { to { transform: rotate(360deg); } }
+
+.or-modal-enter-active { transition: all .22s cubic-bezier(0.34, 1.2, 0.64, 1); }
+.or-modal-leave-active { transition: all .15s ease-in; }
+.or-modal-enter-from, .or-modal-leave-to { opacity: 0; transform: scale(.97) translateY(6px); }
+
+.or-slide-enter-active { transition: all .2s ease-out; }
+.or-slide-leave-active { transition: all .15s ease-in; }
+.or-slide-enter-from, .or-slide-leave-to { opacity: 0; transform: translateY(-6px); }
 
 /* ═══════════════════════════════════════════════════════
-   INVOICE MODAL — tidak berubah
+   INVOICE MODAL
 ═══════════════════════════════════════════════════════ */
-.or-invoice-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.55); backdrop-filter: blur(4px); z-index: 1100; display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-y: auto; }
+.or-invoice-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(4px); z-index: 1100; display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-y: auto; }
 .or-invoice-shell { width: 100%; max-width: 780px; display: flex; flex-direction: column; gap: 12px; }
 .or-invoice-toolbar { display: flex; justify-content: space-between; align-items: center; background: #1e293b; color: #e2e8f0; border-radius: 12px; padding: 12px 18px; font-size: 13px; font-weight: 600; gap: 12px; }
 .or-invoice-toolbar__left { display: flex; align-items: center; gap: 8px; }
@@ -1404,5 +1591,8 @@ export default {
     .inv-summary { flex-direction: column; }
     .inv-summary__right { min-width: unset; width: 100%; }
     .or-invoice-doc { padding: 24px 20px; }
+    .or-modal__body { padding: 16px; }
+    .or-modal__footer { padding: 12px 16px; }
+    .or-modal__header { padding: 16px; }
 }
 </style>

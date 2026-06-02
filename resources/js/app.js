@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from './router/index.js'
 import { createPinia } from 'pinia'
 import './axios.js'
+import { getToken } from './auth.js'
 
 import '@fontsource/open-sans/400.css'
 import '@fontsource/open-sans/500.css'
@@ -33,7 +34,7 @@ window.Echo = new Echo({
     authEndpoint: '/broadcasting/auth',
     auth: {
         headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${getToken()}`,
             Accept:        'application/json',
         },
     },

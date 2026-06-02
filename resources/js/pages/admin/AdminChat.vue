@@ -468,6 +468,7 @@
 <script>
 import AdminLayout from '../../components/admin/AdminLayout.vue'
 import axios from '@/axios.js'
+import { getUser } from '@/auth.js'
 
 export default {
     name: 'AdminChat',
@@ -520,15 +521,13 @@ export default {
     computed: {
         canManage() {
             try {
-                const user = JSON.parse(localStorage.getItem('user') || '{}')
-                return ['admin', 'manager', 'staff'].includes(user.role)
+                return ['admin', 'manager', 'staff'].includes(getUser()?.role)
             } catch { return false }
         },
 
         isAdmin() {
             try {
-                const user = JSON.parse(localStorage.getItem('user') || '{}')
-                return user.role === 'admin'
+                return getUser()?.role === 'admin'
             } catch { return false }
         },
 
@@ -829,7 +828,7 @@ export default {
         async assignToMyself() {
             try {
                 await axios.patch(`/chat/sessions/${this.activeSession.uuid}/take`)
-                const user = JSON.parse(localStorage.getItem('user') || '{}')
+                const user = getUser() ?? {}   // ← ganti dari localStorage
                 this.activeSession = { ...this.activeSession, status: 'active', assigned_agent_name: user.name, is_mine: true, can_reply: true }
                 const idx = this.sessions.findIndex(s => s.uuid === this.activeSession.uuid)
                 if (idx > -1) { this.sessions[idx].assigned_agent_name = user.name; this.sessions[idx].status = 'active'; this.sessions[idx].is_mine = true }

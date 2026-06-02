@@ -683,6 +683,7 @@ import AdminLayout from '../../components/admin/AdminLayout.vue'
 import OrderReviseModal from './OrderReviseModal.vue'
 import OrderActionMenu from './OrderActionMenu.vue'
 import axios from '../../axios.js'
+import { getPermissions } from '../../auth.js'
 
 const POLL_INTERVAL = 30000 // 30 detik
 const URGENT_HOURS  = 2     // order > 2 jam = urgent
@@ -768,25 +769,25 @@ export default {
             return this.orders.length > 0 && this.orders.every(o => this.selectedIds.includes(o.id))
         },
         canDelete() {
-            try { return JSON.parse(localStorage.getItem('permissions') || '[]').includes('orders_delete') }
+            try { return getPermissions().includes('orders_delete') }
             catch { return false }
         },
         canRequestDelete() {
             try {
-                const p = JSON.parse(localStorage.getItem('permissions') || '[]')
+                const p = getPermissions()
                 return p.includes('orders_view') && !p.includes('orders_delete')
             } catch { return false }
         },
         canRevise() {
-            try { return JSON.parse(localStorage.getItem('permissions') || '[]').includes('orders_revise') }
+            try { return getPermissions().includes('orders_revise') }
             catch { return false }
         },
         canRevisePrice() {
-            try { return JSON.parse(localStorage.getItem('permissions') || '[]').includes('orders_revise_price') }
+            try { return getPermissions().includes('orders_revise_price') }
             catch { return false }
         },
         canReviseCourier() {
-            try { return JSON.parse(localStorage.getItem('permissions') || '[]').includes('orders_revise_courier') }
+            try { return getPermissions().includes('orders_revise_courier') }
             catch { return false }
         },
     },

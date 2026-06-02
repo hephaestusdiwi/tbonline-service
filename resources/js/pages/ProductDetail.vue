@@ -646,26 +646,29 @@ export default {
     },
 
     addToCart() {
-    if (!this.product) return
+        if (!this.product) return
 
-    // Bangun label varian dari selectedOptions
-    const variantLabel = this.selectedVariant
-        ? this.uniqueOptionTypes
-            .map(opt => `${opt.name}: ${this.selectedOptions[opt.id]}`)
-            .join(', ')
-        : null
+        const variantLabel = this.selectedVariant
+            ? this.uniqueOptionTypes.map(opt => opt.name).join(', ')
+            : null
 
-    const item = {
-        id:         this.product.id,
-        name:       this.product.name,
-        photo_1:    this.photoUrl(this.product.photo_1),
-        sell_price: this.effectivePrice,
-        qty:        this.qty,
-        variant_id: this.selectedVariant?.id || null,
-        variant_label: variantLabel, // ← "Size: Small, Color: White"
-    }
-    this.cartStore.addItem(item)
-    this.triggerToast('Produk ditambahkan ke keranjang!')
+        const variantNames = this.selectedVariant
+            ? this.uniqueOptionTypes.map(opt => this.selectedOptions[opt.id]).join(', ')
+            : null
+
+        const item = {
+            id:            this.product.id,        // product_id
+            name:          this.product.name,
+            photo_1:       this.photoUrl(this.product.photo_1),
+            sell_price:    this.effectivePrice,
+            weight:        this.product.weight_kg ? this.product.weight_kg * 1000 : 1000,
+            qty:           this.qty,
+            variant_id:    this.selectedVariant?.id || null,
+            variant_label: variantLabel,
+            variant_names: variantNames,
+        }
+        this.cartStore.addItem(item)
+        this.triggerToast('Produk ditambahkan ke keranjang!')
     },
 
     async shareProduct() {

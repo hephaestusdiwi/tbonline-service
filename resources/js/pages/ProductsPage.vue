@@ -222,8 +222,16 @@
                 <button class="retry-btn" @click="fetchProducts">Coba Lagi</button>
             </div>
 
+            <!-- Search Result Heading -->
+            <div v-if="searchKeyword" class="search-heading">
+                <span>Hasil pencarian untuk</span>
+                <strong>"{{ searchKeyword }}"</strong>
+                <span class="search-count" v-if="!loading">{{ total }} produk ditemukan</span>
+                <button class="clear-search-btn" @click="clearSearch">✕ Hapus pencarian</button>
+            </div>
+
             <!-- Product Grid -->
-            <div v-else class="product-grid" :class="viewMode">
+            <div v-if="!loading && !error" class="product-grid" :class="viewMode">
                 <div
                     v-for="product in products"
                     :key="product.id"
@@ -353,6 +361,7 @@ export default {
 
             products: [],
             allCategories: [],
+            searchKeyword: '',
             activeCategory: 'Semua',
             priceMin: null,
             priceMax: null,
@@ -431,6 +440,7 @@ export default {
         const q = this.$route?.query
         if (q) {
             if (q.category) this.activeCategory = q.category
+            if (q.search)   this.searchKeyword = q.search
             if (q.page)     this.currentPage = parseInt(q.page) || 1
         }
         this.fetchProducts()
@@ -458,6 +468,11 @@ export default {
             this.priceMax  = preset.max < PRICE_ABSOLUTE_MAX ? preset.max : null
             this.applyFilters()
         },
+        clearSearch() {
+            this.searchKeyword = ''
+            this.$router.replace({ name: 'Products', query: {} })
+            this.applyFilters()
+        },
 
         // ── Data fetching ─────────────────────────────────────────────────────
         async fetchProducts() {
@@ -477,6 +492,7 @@ export default {
                 if (this.priceMin)                  params.append('price_min', this.priceMin)
                 if (this.priceMax)                  params.append('price_max', this.priceMax)
                 if (this.sortBy)                    params.append('sort', this.sortBy)
+                if (this.searchKeyword) params.append('search', this.searchKeyword)
 
                 const res = await fetch(`/api/products?${params}`)
                 if (!res.ok) throw new Error('Gagal memuat produk.')
@@ -1237,6 +1253,43 @@ export default {
     border-top-color: #BD2028;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
+}
+
+.search-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  color: #555;
+  flex-wrap: wrap;
+}
+
+.search-heading strong {
+  color: #111;
+  font-size: 1rem;
+}
+
+.search-count {
+  color: #aaa;
+  font-size: 0.8rem;
+}
+
+.clear-search-btn {
+  margin-left: auto;
+  background: none;
+  border: 1.5px solid #ddd;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  color: #888;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.clear-search-btn:hover {
+  border-color: #BD2028;
+  color: #BD2028;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }

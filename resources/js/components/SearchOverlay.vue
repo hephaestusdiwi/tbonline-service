@@ -320,8 +320,8 @@ export default {
     function goToSearch() {
       if (!query.value.trim()) return
       saveRecent(query.value.trim())
-      router.push({ name: 'SearchResults', query: { search: query.value.trim() } })
       close()
+      router.push({ name: 'Products', query: { search: query.value.trim() } })
     }
 
     function selectProduct(product) {

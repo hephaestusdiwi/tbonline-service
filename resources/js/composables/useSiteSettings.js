@@ -9,7 +9,6 @@ export function useSiteSettings() {
         if (loaded.value) return
         try {
             const { data } = await axiosInstance.get('/settings')
-            console.log('settings response:', data)
             settings.value = data
             loaded.value = true
 

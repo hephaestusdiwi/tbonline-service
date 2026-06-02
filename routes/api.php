@@ -94,11 +94,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
 
     // Users
-    Route::get('/users',         [UserController::class, 'index'])->middleware('can:users_view');
-    Route::get('/users/{id}',    [UserController::class, 'show'])->middleware('can:users_view');
-    Route::post('/users',        [UserController::class, 'store'])->middleware('can:users_create');
-    Route::put('/users/{id}',    [UserController::class, 'update'])->middleware('can:users_edit');
-    Route::delete('/users/{id}', [UserController::class, 'destroy'])->middleware('can:users_delete');
+    Route::get   ('/users',                             [UserController::class, 'index'])        ->middleware('can:users_view');
+    Route::post  ('/users',                             [UserController::class, 'store'])         ->middleware('can:users_create');
+    Route::get   ('/users/{user}',                      [UserController::class, 'show'])          ->middleware('can:users_view');
+    Route::put   ('/users/{user}',                      [UserController::class, 'update'])        ->middleware('can:users_edit');
+    Route::delete('/users/{user}',                      [UserController::class, 'destroy'])       ->middleware('can:users_delete');
+    Route::post  ('/users/{user}/reset-password',       [UserController::class, 'resetPassword']) ->middleware('can:users_edit');
+    Route::post  ('/users/{user}/suspend',              [UserController::class, 'suspend'])       ->middleware('can:users_edit');
+    Route::post  ('/users/{user}/activate',             [UserController::class, 'activate'])      ->middleware('can:users_edit');
 
     // Sliders
     Route::post('/sliders',         [SliderController::class, 'store'])->middleware('can:settings_edit');

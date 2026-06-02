@@ -287,17 +287,18 @@
 </template>
 
 <script>
+import { getUser, getPermissions, getToken } from '../../auth.js'
 const POLL_INTERVAL = 30000
 
 export default {
     name: 'Sidebar',
     data() {
         return {
-            permissions: JSON.parse(localStorage.getItem('permissions') || '[]'),
+            permissions: getPermissions(),
             collapsed: false,
             mobileOpen: false,
             openMenus: {},
-            user: JSON.parse(localStorage.getItem('user') || '{}'),
+            user: getUser() ?? {},
 
             logoUrl: window.location.origin + '/storage/logos/logo_1778005737.webp',
 
@@ -487,11 +488,11 @@ export default {
             return this.badgeCounts[key] || 0
         },
         refreshUser() {
-            this.user = JSON.parse(localStorage.getItem('user') || '{}')
+            this.user = getUser() ?? {}
         },
         async fetchPendingOrders() {
             try {
-                const token = localStorage.getItem('token')
+                const token = getToken()
                 const res = await fetch('/api/orders/pending-count', {
                     headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
                 })

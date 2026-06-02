@@ -639,10 +639,10 @@
             <div class="success-ripple r1"/>
             <div class="success-ripple r2"/>
           </div>
-          <h2 class="modal-title">Pesanan Terkirim! 🎉</h2>
+          <h2 class="modal-title">Pesanan Terkirim!</h2>
           <p class="modal-sub">Pesananmu sudah tersimpan dan kami akan segera menghubungimu via WhatsApp untuk konfirmasi.</p>
           <div class="modal-order-badge">
-            <span class="order-badge-label">Order ID</span>
+            <span class="order-badge-label">Nomor Invoice</span>
             <span class="order-badge-val">#{{ orderId }}</span>
           </div>
           <div class="modal-wa-hint">
@@ -652,7 +652,7 @@
             </svg>
             WhatsApp terbuka otomatis di tab baru
           </div>
-          <button class="btn-primary modal-back-btn" @click="finishOrder">Kembali ke Beranda</button>
+          <button class="btn-primary modal-back-btn" @click="finishOrder">Kembali ke Home</button>
         </div>
       </div>
     </transition>
@@ -1019,13 +1019,14 @@ export default {
           promo_code:       this.appliedPromo?.code || null,
           fulfillment_type: this.fulfillmentType,
           items: cartStore.state.items.map(item => ({
-            product_id:    item.id,
-            product_name:  item.name,
-            variant_label: item.variant_label || null,
-            variant_names: item.variant_names || null,
-            qty:           item.qty,
-            sell_price:    item.sell_price,
-            subtotal:      item.sell_price * item.qty,
+              product_id:    item.id,         
+              variant_id:    item.variant_id || null,   
+              product_name:  item.name,
+              variant_label: item.variant_label || null,
+              variant_names: item.variant_names || null,
+              qty:           item.qty,
+              sell_price:    item.sell_price,
+              subtotal:      item.sell_price * item.qty,
           })),
         }
         if (this.fulfillmentType === 'pickup') {

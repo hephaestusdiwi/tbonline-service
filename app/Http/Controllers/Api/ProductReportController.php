@@ -37,8 +37,10 @@ class ProductReportController extends Controller
             ->join('orders', 'order_items.order_id', '=', 'orders.id')
             ->leftJoin('products', 'order_items.product_id', '=', 'products.id')
             ->whereBetween('orders.created_at', [$from->startOfDay(), $to->copy()->endOfDay()])
-            ->where('orders.status', 'success')
-            ->when($status !== 'all', fn($q) => $q->where('orders.status', $status))
+            ->when($status === 'all',
+                fn($q) => $q->where('orders.status', 'success'), // default: hanya success
+                fn($q) => $q->where('orders.status', $status)    // kalau pilih specific
+            )
             ->when($category, fn($q) => $q->where('products.category', $category))
             ->selectRaw('
                 order_items.product_name,

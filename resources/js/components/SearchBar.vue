@@ -143,8 +143,7 @@ export default {
 
         function goToSearch() {
             if (!query.value.trim()) return
-            // Gunakan param ?search= agar kompatibel dengan index() di ProductController
-            router.push({ name: 'SearchResults', query: { search: query.value.trim() } })
+            router.push({ name: 'Products', query: { search: query.value.trim() } })
             emit('search', query.value.trim())
             closeDropdown()
         }

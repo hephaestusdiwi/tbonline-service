@@ -257,6 +257,7 @@ export default {
         sell_price: product.sell_price,
         photo_1: product.photo_1,
         qty: 1,
+        variant_id: null,
       })
     },
   }

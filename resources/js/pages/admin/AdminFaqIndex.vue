@@ -260,11 +260,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useFaqStore } from '../../store/useFaqStore'
 import AdminLayout from '../../components/admin/AdminLayout.vue'
+import { getUser, getPermissions } from '../../auth.js'
 
 const faqStore = useFaqStore()
 
-const user        = computed(() => JSON.parse(localStorage.getItem('user') || '{}'))
-const permissions = computed(() => user.value.permissions ?? [])
+const user        = computed(() => getUser() ?? {})
+const permissions = computed(() => getPermissions())
 const canManage   = computed(() =>
     permissions.value.includes('content.create') ||
     permissions.value.includes('content.publish')

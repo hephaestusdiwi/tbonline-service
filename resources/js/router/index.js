@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { isAuthenticated } from '../auth.js'
 
 import Home from '../pages/Home.vue'
 import ProductsPage from '../pages/ProductsPage.vue'
@@ -87,8 +88,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-    const token = localStorage.getItem('token')
-    if (to.meta.requiresAuth && !token) {
+    if (to.meta.requiresAuth && !isAuthenticated()) {
         next('/login')
     } else {
         next()

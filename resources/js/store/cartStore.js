@@ -26,6 +26,7 @@ export const cartStore = {
   toggle(){ state.isOpen = !state.isOpen },
 
   addItem(product) {
+    console.log('addItem payload:', product)
     const found = state.items.find(
       i => i.id === product.id && i.variant_id === product.variant_id  // ✅
     )

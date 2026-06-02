@@ -1001,16 +1001,65 @@ export default {
             } catch(e) { console.error(e) }
         },
 
-        exportExcel() {
-            const rows = []
-            for (const p of this.filteredProducts) {
-                if (p.variants?.length) {
-                    for (const v of p.variants) rows.push({ name:p.name, category:p.category, brand:p.brand, sku:p.sku, variant_label:v.label, variant_sku:v.sku, sell_price:v.sell_price??p.sell_price, buy_price:p.buy_price, stock_qty:v.stock_qty, published:p.published?'Yes':'No', photo_1:p.photo_1 })
-                } else {
-                    rows.push({ name:p.name, category:p.category, brand:p.brand, sku:p.sku, sell_price:p.sell_price, buy_price:p.buy_price, stock_qty:0, published:p.published?'Yes':'No', photo_1:p.photo_1 })
+        async exportExcel() {
+            try {
+                // Fetch semua produk tanpa pagination
+                const res = await axios.get('/products', {
+                    params: {
+                        with_variants: 1,
+                        per_page: 99999,
+                        page: 1,
+                        search: this.search || undefined,
+                        category: this.filterCategory || undefined,
+                        published: this.filterStatus === 'published' ? 1 : this.filterStatus === 'draft' ? 0 : undefined,
+                    }
+                })
+
+                const paginated = res.data.data
+                const allProducts = paginated.data ?? paginated
+
+                const rows = []
+                for (const p of allProducts) {
+                    if (p.active_variants?.length) {
+                        for (const v of p.active_variants) {
+                            rows.push({
+                                name: p.name,
+                                category: p.category,
+                                brand: p.brand,
+                                sku: p.sku,
+                                variant_label: v.label,
+                                variant_sku: v.sku,
+                                sell_price: v.sell_price ?? p.sell_price,
+                                buy_price: p.buy_price,
+                                stock_qty: v.stock_qty,
+                                published: p.published ? 'Yes' : 'No',
+                                photo_1: p.photo_1,
+                            })
+                        }
+                    } else {
+                        rows.push({
+                            name: p.name,
+                            category: p.category,
+                            brand: p.brand,
+                            sku: p.sku,
+                            sell_price: p.sell_price,
+                            buy_price: p.buy_price,
+                            stock_qty: p.stock_qty ?? 0,
+                            published: p.published ? 'Yes' : 'No',
+                            photo_1: p.photo_1,
+                        })
+                    }
                 }
+
+                const ws = XLSX.utils.json_to_sheet(rows)
+                const wb = XLSX.utils.book_new()
+                XLSX.utils.book_append_sheet(wb, ws, 'Products')
+                XLSX.writeFile(wb, `products_export_${new Date().toISOString().slice(0, 10)}.xlsx`)
+
+            } catch (e) {
+                alert('Gagal export produk.')
+                console.error(e)
             }
-            const ws = XLSX.utils.json_to_sheet(rows); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Products'); XLSX.writeFile(wb, `products_export_${new Date().toISOString().slice(0,10)}.xlsx`)
         },
 
         openImportModal() { this.importStep=1; this.importFile=null; this.importMode='skip'; this.importFormat='olsera'; this.importPreview={total:0,valid:0,errors:0,duplicates:0,rows:[],errorMessages:[]}; this.importResult={success:false,imported:0,skipped:0,updated:0,failed:0,message:''}; this.showImportModal=true },

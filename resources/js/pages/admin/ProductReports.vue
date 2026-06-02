@@ -872,6 +872,7 @@ export default {
                     params.date_to   = this.filters.date_to
                 }
                 const { data } = await axios.get('/product-report', { params })
+                
                 this.report = {
                     period:           data.period           || {},
                     summary:          data.summary          || {},
