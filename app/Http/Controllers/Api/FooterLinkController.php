@@ -8,7 +8,7 @@ use App\Models\FooterLinkGroup;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class FooterlinkController extends Controller
+class FooterLinkController extends Controller
 {
     public function grouped(): JsonResponse
     {

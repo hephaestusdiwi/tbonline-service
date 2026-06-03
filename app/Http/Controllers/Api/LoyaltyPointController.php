@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\LoyaltyPoint;
 use Illuminate\Http\Request;
 
-class LoyaltypointController extends Controller
+class LoyaltyPointController extends Controller
 {
     public function check(Request $request)
     {
