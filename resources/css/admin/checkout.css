@@ -2,6 +2,11 @@
     box-sizing: border-box;
 }
 
+.checkout-page,
+.checkout-page * {
+  max-width: 100%;
+}
+
 .checkout-page {
     min-height: 100vh;
     background: #fff;
@@ -1833,4 +1838,229 @@
 
 .btn-empty-shop:active {
   transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+
+  /* Hard lock horizontal overflow */
+  .checkout-page {
+    overflow-x: hidden;
+  }
+
+  /* Container */
+  .container {
+    padding: 0 12px;
+    width: 100%;
+  }
+
+  /* Grid: single column, no gap, no side padding */
+  .main-grid {
+    padding: 12px 0 40px;
+    gap: 0;
+    width: 100%;
+  }
+
+  /* ── Summary card ── */
+  .right-col {
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
+    box-shadow: none;
+    width: 100%;
+  }
+
+  .summary-card {
+    padding: 16px 12px;
+    position: static;
+    border-radius: 0;
+  }
+
+  /* ── Item row ── */
+  .sum-item {
+    display: grid;
+    grid-template-columns: 64px 1fr auto;
+    grid-template-rows: auto;
+    gap: 0 10px;
+    align-items: start;
+    padding: 12px 0;
+  }
+
+  .sum-img {
+    width: 64px;
+    height: 64px;
+    grid-column: 1;
+    grid-row: 1 / 3;
+  }
+
+  .sum-info {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .sum-price {
+    grid-column: 3;
+    grid-row: 1;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .sum-name {
+    font-size: 0.74rem;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    margin-bottom: 3px;
+  }
+
+  .sum-subtitle {
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sum-variant-pills {
+    gap: 3px;
+    flex-wrap: wrap;
+  }
+
+  .sum-pill {
+    font-size: 10px;
+    padding: 1px 5px;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sum-qty-row {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+
+  /* ── Price rows ── */
+  .price-row {
+    font-size: 0.78rem;
+  }
+
+  .total-val {
+    font-size: 1rem;
+  }
+
+  /* ── Promo ── */
+  .summary-promo {
+    margin-top: 12px;
+  }
+
+  .promo-input-row {
+    display: flex;
+    gap: 6px;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .promo-field-wrap {
+    flex: 1;
+    min-width: 0;
+    padding: 0 10px;
+  }
+
+  .promo-field {
+    font-size: 0.78rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .btn-apply-promo {
+    flex-shrink: 0;
+    padding: 0 16px;
+    font-size: 0.74rem;
+    white-space: nowrap;
+    min-width: fit-content;
+  }
+
+  /* ── Form cards ── */
+  .form-card {
+    padding: 16px 12px;
+    margin-bottom: 6px;
+  }
+
+  .left-col::after {
+    display: none;
+  }
+
+  /* ── Fulfillment toggle ── */
+  .fulfillment-btn {
+    padding: 13px 6px;
+    font-size: 0.76rem;
+    gap: 5px;
+  }
+
+  /* ── Shipping service item ── */
+  .service-item {
+    padding: 10px 8px;
+  }
+
+  .service-info {
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .service-name-wrap {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .service-name {
+    font-size: 0.76rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .service-desc {
+    font-size: 0.66rem;
+  }
+
+  .service-cost {
+    font-size: 0.76rem;
+    white-space: nowrap;
+  }
+
+  .service-etd {
+    font-size: 0.66rem;
+  }
+
+  /* ── Branch list ── */
+  .branch-item {
+    padding: 12px 10px;
+  }
+
+  /* ── Loyalty ── */
+  .loyalty-section {
+    padding: 12px 10px;
+  }
+
+  .loyalty-balance-value {
+    font-size: 18px;
+  }
+
+  .loyalty-input-row {
+    gap: 6px;
+  }
+
+  /* ── Order button ── */
+  .btn-order {
+    padding: 14px;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Modal ── */
+  .modal-box {
+    padding: 28px 20px 24px;
+  }
 }
