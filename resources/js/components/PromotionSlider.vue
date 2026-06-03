@@ -30,6 +30,7 @@
             target="_blank"
             rel="noopener noreferrer"
             class="promo-card"
+            :style="{ width: cardPx + 'px' }"   
             @click.prevent="onCardClick(item, $event)"
           >
             <div class="promo-img-wrap">
@@ -188,18 +189,30 @@ export default {
       const containerW = Math.min(window.innerWidth, CONTAINER_MAX)
 
       let cols, peekFrac
-      if (containerW < 540)      { cols = 1; peekFrac = 0.15 }
-      else if (containerW < 800) { cols = 2; peekFrac = 0.25 }
-      else                       { cols = 3; peekFrac = 0.30 }
+      if (containerW < 540) {
+        cols = 1
+        peekFrac = 0.15
+      } else if (containerW < 800) {
+        cols = 2
+        peekFrac = 0.25
+      } else {
+        cols = 3
+        peekFrac = 0.30
+      }
 
       visibleN.value = cols
-      const usableW  = containerW - 16
-      cardPx.value   = Math.floor((usableW - GAP * cols) / (cols + peekFrac))
+
+      if (containerW < 540) {
+        const productListCardW = Math.floor((containerW - 48 - 10) / 2)
+        cardPx.value = productListCardW
+      } else {
+        const usableW = containerW - 16
+        cardPx.value = Math.floor((usableW - GAP * cols) / (cols + peekFrac))
+      }
 
       if (currentIndex.value > maxIndex.value)
         currentIndex.value = Math.max(0, maxIndex.value)
 
-      // Reset posisi track setelah resize
       nextTick(() => setTrackX(-snapOffset.value))
     }
 
@@ -364,7 +377,7 @@ export default {
   padding: 36px 0 0;
   background: #fff;
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  overflow-x: clip;
+  overflow-x: hidden;
 }
 
 .promo-container {
@@ -426,7 +439,6 @@ export default {
 .promo-track {
   display: flex;
   gap: 12px;
-  /* transition dihandle via :style binding (trackStyle) */
   will-change: transform;
 }
 .promo-card {
@@ -435,7 +447,6 @@ export default {
   border-radius: 6px;
   overflow: hidden;
   text-decoration: none;
-  /* Matikan pointer saat drag agar tidak ada hover effect janggal */
   transition: box-shadow 0.25s, transform 0.25s;
 }
 .promo-card:hover {
@@ -450,8 +461,8 @@ export default {
   transform: none;
 }
 .promo-img-wrap {
-  width: 323px;
-  height: 553px;
+  width: 100%;
+  aspect-ratio: 323 / 553;
   border-radius: 16px;
   background: #f0f0f0;
   overflow: hidden;

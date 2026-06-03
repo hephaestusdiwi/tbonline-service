@@ -1,5 +1,6 @@
 <template>
     <div class="min-h-screen bg-white">
+        <AgeGateModal />
         <Navbar />
         <CartDrawer />
         <HeroSlider />
@@ -24,6 +25,7 @@ import { useSiteSettings }  from '../composables/useSiteSettings'
 import { useSeoMeta } from '../composables/useSeoMeta.js'
 import { useVisitorTracker } from '../composables/useVisitorTracker'
  
+import AgeGateModal from '../components/AgeGateModal.vue'
 import Navbar          from '../components/Navbar.vue'
 import HeroSlider      from '../components/HeroSlider.vue'
 import ProductList     from '../components/ProductList.vue'
@@ -38,7 +40,7 @@ import FaqSection      from '../components/FaqSection.vue'
 export default {
     name: 'Home',
     components: {
-        Navbar, HeroSlider, TopProducts, ProductList, PromotionSlider,
+        Navbar, AgeGateModal, HeroSlider, TopProducts, ProductList, PromotionSlider,
         CartDrawer, CustomerChat, FooterSection, NewsletterBar, FaqSection,
     },
  
@@ -107,5 +109,9 @@ export default {
 .search-section-inner :deep(.search-wrapper) {
     max-width: 100%;
     width: 100%;
+}
+
+.min-h-screen {
+  overflow-x: hidden;
 }
 </style>

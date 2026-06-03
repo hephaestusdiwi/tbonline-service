@@ -903,21 +903,128 @@ function checkMobile() { isMobile.value = window.innerWidth < 768 }
 
 /* ── responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-    .sl-hero__inner { flex-direction: column; align-items: flex-start; gap: 16px; }
+    /* Hero */
+    .sl-hero { padding: 20px 16px; }
+    .sl-hero__inner { flex-direction: column; align-items: flex-start; gap: 12px; }
     .sl-hero__title { font-size: 22px; }
+    .sl-hero__sub { font-size: 13px; }
     .sl-nearest-btn { width: 100%; justify-content: center; }
-    .sl-body { flex-direction: column; height: calc(100vh - 260px); }
-    .sl-sidebar {
-        position: fixed; left: 0; right: 0; bottom: 0;
-        width: 100%; height: 46vh; min-width: unset;
-        border-right: none; border-top: 1px solid #ebebeb;
-        border-radius: 20px 20px 0 0;
-        box-shadow: 0 -4px 20px rgba(0,0,0,.09); z-index: 200;
+
+    /* Body: peta atas, sidebar bawah */
+    .sl-body {
+        flex-direction: column;
+        height: calc(100dvh - 220px);
+        overflow: hidden;
     }
-    .sl-map-wrap { height: 54vh; flex: unset; }
+
+    /* Peta: 45% layar */
+    .sl-map-wrap {
+        flex: none;
+        height: 45dvh;
+        min-height: 200px;
+        width: 100%;
+    }
+
+    /* Sidebar: panel bawah fixed */
+    .sl-sidebar {
+        position: fixed;
+        left: 0; right: 0; bottom: 0;
+        width: 100%;
+        height: 48dvh;
+        min-width: unset;
+        max-height: 55dvh;
+        border-right: none;
+        border-top: 1.5px solid #ebebeb;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -4px 24px rgba(0,0,0,.10);
+        z-index: 200;
+        overflow: hidden;
+    }
+
+    /* Inner sidebar: padding lebih kecil */
+    .sl-sidebar__inner {
+        padding: 10px 12px 0;
+    }
+
+    /* Search lebih compact */
+    .sl-search {
+        height: 40px;
+        margin-bottom: 8px;
+    }
+
+    /* Filter 2 kolom tetap, tapi lebih compact */
+    .sl-filters {
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+    .sl-select {
+        padding: 7px 24px 7px 10px;
+        font-size: 12px;
+    }
+
+    /* Result bar */
+    .sl-result-bar {
+        padding: 2px 0 8px;
+        font-size: 11.5px;
+    }
+
+    /* List scroll */
+    .sl-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 4px 10px 80px; /* 80px = ruang untuk bottom sheet */
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Card address: 1 baris saja di mobile */
+    .sl-card__address {
+        -webkit-line-clamp: 1;
+    }
+
+    /* Card padding lebih compact */
+    .sl-card__body {
+        padding: 10px 8px 10px 12px;
+    }
+
+    /* Bottom sheet detail cabang: z-index di atas sidebar */
+    .sl-sheet {
+        z-index: 500;
+        max-height: 70dvh;
+        overflow-y: auto;
+    }
+
+    .sl-sheet__body {
+        padding: 12px 18px 48px;
+    }
+
+    /* Sheet address lebih compact */
+    .sl-sheet__address {
+        font-size: 12.5px;
+        line-height: 1.5;
+        margin-bottom: 10px;
+    }
+
+    /* Badge count di peta */
+    .sl-map-badge {
+        top: 10px;
+        left: 10px;
+        font-size: 11px;
+        padding: 5px 10px;
+    }
 }
+
 @media (max-width: 480px) {
-    .sl-hero { padding: 24px 16px; }
+    .sl-hero { padding: 18px 14px; }
+    .sl-hero__title { font-size: 20px; }
+
+    /* Sidebar lebih tinggi di layar sangat kecil */
+    .sl-sidebar {
+        height: 50dvh;
+    }
+
+    .sl-map-wrap {
+        height: 43dvh;
+    }
 }
 </style>
 
