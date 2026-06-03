@@ -447,6 +447,15 @@ export default {
         this.fetchFilterOptions()
     },
 
+    watch: {
+        '$route.query'(newQuery) {
+            this.searchKeyword  = newQuery.search   || ''
+            this.activeCategory = newQuery.category || 'Semua'
+            this.currentPage    = parseInt(newQuery.page) || 1
+            this.fetchProducts()
+        }
+    },
+
     methods: {
         // ── Slider handlers ──────────────────────────────────────────────────
         onSliderMinInput() {

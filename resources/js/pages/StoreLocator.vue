@@ -5,32 +5,34 @@
         <!-- ═══════════════════════════════════════
              HERO BANNER
         ════════════════════════════════════════ -->
-        <div class="sl-hero">
-            <div class="sl-hero__inner">
-                <div class="sl-hero__text">
-                    <span class="sl-hero__badge">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                        </svg>
-                        Store Location
-                    </span>
-                    <h1 class="sl-hero__title">Store<br/><span>Terdekat Kami</span></h1>
-                    <p class="sl-hero__sub">Kunjungi cabang kami yang tersebar di seluruh Indonesia.</p>
+        <div class="sl-page-wrap">
+            <div class="sl-hero">
+                <div class="sl-hero__inner">
+                    <div class="sl-hero__text">
+                        <span class="sl-hero__badge">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                            </svg>
+                            Store Location
+                        </span>
+                        <h1 class="sl-hero__title">Store<br/><span>Terdekat Kami</span></h1>
+                        <p class="sl-hero__sub">Kunjungi cabang kami yang tersebar di seluruh Indonesia.</p>
+                    </div>
+                    <button class="sl-nearest-btn" :disabled="geoLoading" @click="handleFindNearest">
+                        <template v-if="!geoLoading">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+                            </svg>
+                            Cabang Terdekat
+                        </template>
+                        <template v-else>
+                            <div class="sl-btn-spinner"></div>
+                            Mencari...
+                        </template>
+                    </button>
                 </div>
-                <button class="sl-nearest-btn" :disabled="geoLoading" @click="handleFindNearest">
-                    <template v-if="!geoLoading">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-                            <circle cx="12" cy="12" r="3"/>
-                            <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
-                        </svg>
-                        Cabang Terdekat
-                    </template>
-                    <template v-else>
-                        <div class="sl-btn-spinner"></div>
-                        Mencari...
-                    </template>
-                </button>
             </div>
         </div>
 
@@ -283,6 +285,8 @@ const selectedProvince = ref('')
 const mapEl            = ref(null)
 const listEl           = ref(null)
 const { siteName, fetchSettings } = useSiteSettings()
+let mapInitialized = false
+let resizeObserver = null
 
 // leaflet refs
 let map          = null
@@ -308,7 +312,6 @@ const filteredBranches = computed(() => {
     return list
 })
 
-// ── lifecycle ──────────────────────────────────────────────────────────────────
 onMounted(async () => {
     checkMobile()
     window.addEventListener('resize', checkMobile)
@@ -317,13 +320,26 @@ onMounted(async () => {
     document.title = `Lokasi Toko Kami - ${siteName.value}`
 
     await nextTick()
-    initMap()
+    resizeObserver = new ResizeObserver((entries) => {
+        const entry = entries[0]
+        const { width, height } = entry.contentRect
+        if (width > 0 && height > 0 && !mapInitialized) {
+            mapInitialized = true
+            initMap()
+            resizeObserver.disconnect() 
+        } else if (width > 0 && height > 0 && map) {
+            map.invalidateSize()
+        }
+    })
+    resizeObserver.observe(mapEl.value)
+
     await fetchBranches()
     fetchCities()
 })
 
 onUnmounted(() => {
     window.removeEventListener('resize', checkMobile)
+    resizeObserver?.disconnect()
     map?.remove()
 })
 
@@ -443,7 +459,8 @@ function initMap() {
         },
     })
     map.addLayer(clusterGroup)
-    // ← renderMarkers() dihapus dari sini
+
+    nextTick(() => map.invalidateSize())
 }
 
 function renderMarkers() {
@@ -594,7 +611,17 @@ async function handleFindNearest() {
     }
 }
 
-function checkMobile() { isMobile.value = window.innerWidth < 768 }
+function checkMobile() {
+    const was = isMobile.value
+    isMobile.value = window.innerWidth < 768
+    
+    // Kalau status mobile berubah, invalidate map size
+    if (was !== isMobile.value && map) {
+        nextTick(() => {
+            map.invalidateSize()
+        })
+    }
+}
 </script>
 
 <style scoped>
@@ -662,6 +689,11 @@ function checkMobile() { isMobile.value = window.innerWidth < 768 }
     border-top-color: #BD2028;
     border-radius: 50%;
     animation: sl-spin .75s linear infinite;
+}
+
+.sl-page-wrap {
+    display: flex;
+    flex-direction: column;
 }
 @keyframes sl-spin { to { transform: rotate(360deg); } }
 
@@ -832,7 +864,7 @@ function checkMobile() { isMobile.value = window.innerWidth < 768 }
 
 /* ── map ─────────────────────────────────────────────────────────────────── */
 .sl-map-wrap { flex: 1; position: relative; overflow: hidden; }
-.sl-map { width: 100%; height: 100%; }
+.sl-map { width: 100%; height: 100%; min-height: 200px; }
 .sl-map-overlay {
     position: absolute; inset: 0;
     background: rgba(255,255,255,.8);
@@ -903,93 +935,138 @@ function checkMobile() { isMobile.value = window.innerWidth < 768 }
 
 /* ── responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
-    /* Hero */
-    .sl-hero { padding: 20px 16px; }
-    .sl-hero__inner { flex-direction: column; align-items: flex-start; gap: 12px; }
-    .sl-hero__title { font-size: 22px; }
-    .sl-hero__sub { font-size: 13px; }
-    .sl-nearest-btn { width: 100%; justify-content: center; }
-
-    /* Body: peta atas, sidebar bawah */
-    .sl-body {
-        flex-direction: column;
-        height: calc(100dvh - 220px);
+    .min-h-screen {
+        height: 100dvh;
         overflow: hidden;
     }
 
-    /* Peta: 45% layar */
-    .sl-map-wrap {
-        flex: none;
-        height: 45dvh;
-        min-height: 200px;
-        width: 100%;
+    .sl-page-wrap {
+        height: calc(100dvh - 0px);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
     }
 
-    /* Sidebar: panel bawah fixed */
+    /* Hero compact */
+    .sl-hero {
+        padding: 14px 16px;
+        flex-shrink: 0;
+    }
+    .sl-hero__inner {
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+    }
+    .sl-hero__badge { display: none; } 
+    .sl-hero__title {
+        font-size: 16px;
+        margin-bottom: 2px;
+    }
+    .sl-hero__sub {
+        font-size: 11px;
+        margin: 0;
+    }
+    .sl-nearest-btn {
+        flex-shrink: 0;
+        white-space: nowrap;
+        padding: 10px 14px;
+        font-size: 12px;
+        width: auto; 
+    }
+
+    .sl-body {
+        flex: 1;
+        flex-direction: column;
+        height: auto;
+        overflow: hidden;
+        display: flex;
+    }
+
+    .sl-map {
+        width: 100%;
+        height: 58dvh;
+        min-height: 200px; 
+    }
+
+    .sl-map-wrap {
+        flex: 1;
+        min-height: 200px;
+        height: calc(58dvh - 0px);
+    }
+
+    /* Sidebar: fixed panel bawah, TIDAK ikut flow */
     .sl-sidebar {
         position: fixed;
         left: 0; right: 0; bottom: 0;
         width: 100%;
-        height: 48dvh;
+        height: 42dvh;
         min-width: unset;
-        max-height: 55dvh;
+        max-height: 42dvh;
         border-right: none;
         border-top: 1.5px solid #ebebeb;
         border-radius: 20px 20px 0 0;
-        box-shadow: 0 -4px 24px rgba(0,0,0,.10);
+        box-shadow: 0 -4px 24px rgba(0,0,0,.12);
         z-index: 200;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
     }
 
-    /* Inner sidebar: padding lebih kecil */
+    /* Drag handle di atas sidebar */
+    .sl-sidebar::before {
+        content: '';
+        display: block;
+        width: 36px; height: 4px;
+        background: #e0e0e0;
+        border-radius: 2px;
+        margin: 10px auto 6px;
+        flex-shrink: 0;
+    }
+
     .sl-sidebar__inner {
-        padding: 10px 12px 0;
+        padding: 6px 12px 0;
+        flex-shrink: 0;
     }
 
-    /* Search lebih compact */
     .sl-search {
-        height: 40px;
-        margin-bottom: 8px;
+        height: 38px;
+        margin-bottom: 6px;
     }
 
-    /* Filter 2 kolom tetap, tapi lebih compact */
     .sl-filters {
         gap: 6px;
-        margin-bottom: 8px;
-    }
-    .sl-select {
-        padding: 7px 24px 7px 10px;
-        font-size: 12px;
+        margin-bottom: 6px;
     }
 
-    /* Result bar */
-    .sl-result-bar {
-        padding: 2px 0 8px;
+    .sl-select {
+        padding: 6px 24px 6px 10px;
         font-size: 11.5px;
     }
 
-    /* List scroll */
+    .sl-result-bar {
+        padding: 0 0 6px;
+        font-size: 11px;
+    }
+
     .sl-list {
         flex: 1;
         overflow-y: auto;
-        padding: 4px 10px 80px; /* 80px = ruang untuk bottom sheet */
+        padding: 4px 10px 16px;
         -webkit-overflow-scrolling: touch;
     }
 
-    /* Card address: 1 baris saja di mobile */
     .sl-card__address {
         -webkit-line-clamp: 1;
     }
 
-    /* Card padding lebih compact */
     .sl-card__body {
-        padding: 10px 8px 10px 12px;
+        padding: 9px 8px 9px 12px;
     }
 
-    /* Bottom sheet detail cabang: z-index di atas sidebar */
+    /* Sheet detail di atas sidebar */
     .sl-sheet {
         z-index: 500;
-        max-height: 70dvh;
+        max-height: 65dvh;
         overflow-y: auto;
     }
 
@@ -997,38 +1074,24 @@ function checkMobile() { isMobile.value = window.innerWidth < 768 }
         padding: 12px 18px 48px;
     }
 
-    /* Sheet address lebih compact */
-    .sl-sheet__address {
-        font-size: 12.5px;
-        line-height: 1.5;
-        margin-bottom: 10px;
+    .sl-map-badge {
+        top: 10px; left: 10px;
+        font-size: 11px; padding: 5px 10px;
     }
 
-    /* Badge count di peta */
-    .sl-map-badge {
-        top: 10px;
-        left: 10px;
-        font-size: 11px;
-        padding: 5px 10px;
+    /* Zoom control jangan tertutup sidebar */
+    :deep(.leaflet-bottom.leaflet-right) {
+        bottom: 44dvh !important;
     }
 }
 
 @media (max-width: 480px) {
-    .sl-hero { padding: 18px 14px; }
-    .sl-hero__title { font-size: 20px; }
-
-    /* Sidebar lebih tinggi di layar sangat kecil */
-    .sl-sidebar {
-        height: 50dvh;
-    }
-
-    .sl-map-wrap {
-        height: 43dvh;
-    }
+    .sl-hero__title { font-size: 15px; }
+    .sl-nearest-btn { padding: 9px 12px; font-size: 11px; }
+    .sl-sidebar { height: 44dvh; max-height: 44dvh; }
 }
-</style>
 
-<style>
+
 /* popup global */
 .sl-popup .leaflet-popup-content-wrapper {
     border-radius: 16px !important;
