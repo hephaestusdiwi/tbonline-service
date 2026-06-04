@@ -432,6 +432,8 @@ function initMap() {
         preferCanvas: true,
     })
 
+    setTimeout(() => map.invalidateSize({ pan: false }), 300)
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
         maxZoom: 19,
@@ -936,72 +938,42 @@ function checkMobile() {
 /* ── responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 767px) {
     .min-h-screen {
-        height: 100dvh;
-        overflow: hidden;
+        height: auto;
+        overflow: visible;
     }
 
     .sl-page-wrap {
-        height: calc(100dvh - 0px);
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-    }
-
-    /* Hero compact */
-    .sl-hero {
-        padding: 14px 16px;
         flex-shrink: 0;
-    }
-    .sl-hero__inner {
-        flex-direction: row;
-        align-items: center;
-        gap: 12px;
-    }
-    .sl-hero__badge { display: none; } 
-    .sl-hero__title {
-        font-size: 16px;
-        margin-bottom: 2px;
-    }
-    .sl-hero__sub {
-        font-size: 11px;
-        margin: 0;
-    }
-    .sl-nearest-btn {
-        flex-shrink: 0;
-        white-space: nowrap;
-        padding: 10px 14px;
-        font-size: 12px;
-        width: auto; 
     }
 
     .sl-body {
-        flex: 1;
-        flex-direction: column;
+        display: block;
         height: auto;
-        overflow: hidden;
-        display: flex;
-    }
-
-    .sl-map {
-        width: 100%;
-        height: 58dvh;
-        min-height: 200px; 
+        overflow: visible;
+        position: relative;
     }
 
     .sl-map-wrap {
-        flex: 1;
-        min-height: 200px;
-        height: calc(58dvh - 0px);
+        display: block;
+        width: 100%;
+        height: 55dvh;
+        position: relative;
     }
 
-    /* Sidebar: fixed panel bawah, TIDAK ikut flow */
+    .sl-map {
+        position: absolute;
+        inset: 0;
+        width: 100% !important;
+        height: 100% !important;
+    }
+
     .sl-sidebar {
-        position: fixed;
-        left: 0; right: 0; bottom: 0;
+        position: relative;
+        left: auto; right: auto; bottom: auto;
         width: 100%;
-        height: 42dvh;
+        height: 50dvh;
+        max-height: 50dvh;
         min-width: unset;
-        max-height: 42dvh;
         border-right: none;
         border-top: 1.5px solid #ebebeb;
         border-radius: 20px 20px 0 0;
@@ -1012,7 +984,6 @@ function checkMobile() {
         flex-direction: column;
     }
 
-    /* Drag handle di atas sidebar */
     .sl-sidebar::before {
         content: '';
         display: block;
@@ -1023,72 +994,16 @@ function checkMobile() {
         flex-shrink: 0;
     }
 
-    .sl-sidebar__inner {
-        padding: 6px 12px 0;
-        flex-shrink: 0;
-    }
-
-    .sl-search {
-        height: 38px;
-        margin-bottom: 6px;
-    }
-
-    .sl-filters {
-        gap: 6px;
-        margin-bottom: 6px;
-    }
-
-    .sl-select {
-        padding: 6px 24px 6px 10px;
-        font-size: 11.5px;
-    }
-
-    .sl-result-bar {
-        padding: 0 0 6px;
-        font-size: 11px;
-    }
-
-    .sl-list {
-        flex: 1;
-        overflow-y: auto;
-        padding: 4px 10px 16px;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .sl-card__address {
-        -webkit-line-clamp: 1;
-    }
-
-    .sl-card__body {
-        padding: 9px 8px 9px 12px;
-    }
-
-    /* Sheet detail di atas sidebar */
-    .sl-sheet {
-        z-index: 500;
-        max-height: 65dvh;
-        overflow-y: auto;
-    }
-
-    .sl-sheet__body {
-        padding: 12px 18px 48px;
-    }
-
-    .sl-map-badge {
-        top: 10px; left: 10px;
-        font-size: 11px; padding: 5px 10px;
-    }
-
-    /* Zoom control jangan tertutup sidebar */
     :deep(.leaflet-bottom.leaflet-right) {
-        bottom: 44dvh !important;
+        bottom: 20px !important;
     }
 }
+
 
 @media (max-width: 480px) {
     .sl-hero__title { font-size: 15px; }
     .sl-nearest-btn { padding: 9px 12px; font-size: 11px; }
-    .sl-sidebar { height: 44dvh; max-height: 44dvh; }
+    .sl-sidebar { height: 55dvh; max-height: 55dvh; }
 }
 
 

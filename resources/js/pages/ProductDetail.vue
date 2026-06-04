@@ -247,7 +247,7 @@
               v-for="item in suggestedProducts"
               :key="item.id"
               class="pd-sug-card"
-              @click="$router.push({ name: 'ProductDetail', params: { id: item.id } })"
+              @click="$router.push({ name: 'ProductDetail', params: { slug: productSlug(item) } })"
             >
               <!-- Badges -->
               <div class="pd-sug-badges">
@@ -445,18 +445,18 @@ export default {
   },
 
     watch: {
-    '$route.params.id'(newId, oldId) {
-      if (newId !== oldId) {
-        this.suggestedProducts = []
-        this.fetchProduct().then(() => {
-          if (this.product) {
-            this.setSeoMeta()
-            this.fetchSuggestions()
-          }
-        })
-      }
-    }
-  },
+        '$route.params.slug'(newSlug, oldSlug) {  
+            if (newSlug !== oldSlug) {
+                this.suggestedProducts = []
+                this.fetchProduct().then(() => {
+                    if (this.product) {
+                        this.setSeoMeta()
+                        this.fetchSuggestions()
+                    }
+                })
+            }
+        }
+    },
 
   async mounted() {
       await this.fetchProduct()
@@ -469,19 +469,28 @@ export default {
 
   methods: {
     async fetchProduct() {
-      this.loading = true
-      this.error   = null
-      try {
-        const id  = this.$route.params.id
-        const res = await fetch(`/api/products/${id}`)
-        if (!res.ok) throw new Error('Produk tidak ditemukan.')
-        const json   = await res.json()
-        this.product = json.data ?? json
-      } catch (e) {
-        this.error = e.message
-      } finally {
-        this.loading = false
-      }
+        this.loading = true
+        this.error   = null
+        try {
+            const slug = this.$route.params.slug  
+            const res  = await fetch(`/api/products/${slug}`)
+            if (!res.ok) throw new Error('Produk tidak ditemukan.')
+            const json   = await res.json()
+            this.product = json.data ?? json
+        } catch (e) {
+            this.error = e.message
+        } finally {
+            this.loading = false
+        }
+    },
+
+    productSlug(product) {
+        const base = product.name
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-')
+        return `${base}-${product.id}`
     },
 
     async fetchSuggestions() {

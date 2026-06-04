@@ -326,8 +326,17 @@ export default {
 
     function selectProduct(product) {
       if (query.value.trim()) saveRecent(query.value.trim())
-      router.push({ name: 'ProductDetail', params: { id: product.id } })
+      router.push({ name: 'ProductDetail', params: { slug: productSlug(product) } })
       close()
+    }
+
+    function productSlug(product) {
+        const base = product.name
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-')
+        return `${base}-${product.id}`
     }
 
     function highlight(text, q) {
@@ -357,7 +366,7 @@ export default {
       isExpanded, showDropdown, containerStyle,
       popularKeywords, recentSearches,
       close, onAfterLeave, clearQuery, setQuery, clearRecent,
-      goToSearch, selectProduct, highlight, formatPrice,
+      goToSearch, productSlug, selectProduct, highlight, formatPrice,
       photoUrl 
     }
   }

@@ -132,7 +132,9 @@ export default {
 
     props: {
         limit: { type: Number, default: 10 },
+        searchQuery: { type: String, default: '' },
     },
+
 
     data() {
         return {
@@ -144,9 +146,16 @@ export default {
         }
     },
 
+    watch: {                         
+        searchQuery(val) {
+            this.fetchProducts()
+        }
+    },
+
     mounted() {
         this.fetchProducts()
     },
+    
 
     methods: {
         async fetchProducts() {
@@ -159,6 +168,7 @@ export default {
                     in_stock: 1,
                     page: 1,
                     per_page: this.limit,
+                    ...(this.searchQuery && { search: this.searchQuery }),
                 })
 
                 const res = await fetch(`/api/products?${params}`)
@@ -193,6 +203,22 @@ export default {
             return product.stock_qty === 0
         },
 
+        productSlug(product) {
+            const base = product.name
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .trim()
+                .replace(/\s+/g, '-')
+            return `${base}-${product.id}`
+        },
+
+        goToProduct(product) {
+            this.$router.push({
+                name: 'ProductDetail',
+                params: { slug: this.productSlug(product) }
+            })
+        },
+
         addToCart(product) {
             cartStore.addItem(product)
         },
@@ -210,11 +236,7 @@ export default {
         goToAllProducts() {
             this.$router.push({ name: 'Products' })
         },
-
-        goToProduct(product) {
-            this.$router.push({ name: 'ProductDetail', params: { id: product.id } })
-        },
-
+        
         formatPrice(val) {
             if (!val && val !== 0) return '-'
             return new Intl.NumberFormat('id-ID', {

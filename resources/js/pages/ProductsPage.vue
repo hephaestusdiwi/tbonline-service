@@ -483,6 +483,15 @@ export default {
             this.applyFilters()
         },
 
+        productSlug(product) {
+            const base = product.name
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .trim()
+                .replace(/\s+/g, '-')
+            return `${base}-${product.id}`
+        },
+
         // ── Data fetching ─────────────────────────────────────────────────────
         async fetchProducts() {
             this.loading = true
@@ -564,7 +573,7 @@ export default {
         },
 
         goToProduct(product) {
-            this.$router.push({ name: 'ProductDetail', params: { id: product.id } })
+            this.$router.push({ name: 'ProductDetail', params: { slug: this.productSlug(product) } })
         },
 
         addToCart(product) {

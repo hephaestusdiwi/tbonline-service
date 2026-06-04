@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Agent;
 
 use App\Http\Controllers\Controller;
 use App\Models\UserOnlineStatus;
+use App\Events\AgentStatusChanged;
 use Illuminate\Http\{Request, JsonResponse};
 
 class AgentStatusController extends Controller
@@ -18,6 +19,13 @@ class AgentStatusController extends Controller
             ]
         );
 
+        $onlineCount = UserOnlineStatus::where('is_online', true)->count();
+
+        broadcast(new AgentStatusChanged(
+            anyOnline: true,
+            onlineCount: $onlineCount
+        ));
+
         return response()->json(['message' => 'Status updated to online.']);
     }
 
@@ -30,6 +38,13 @@ class AgentStatusController extends Controller
                 'last_ping_at' => now(),
             ]
         );
+
+        $onlineCount = UserOnlineStatus::where('is_online', true)->count();
+
+        broadcast(new AgentStatusChanged(
+            anyOnline: $onlineCount > 0,
+            onlineCount: $onlineCount
+        ));
 
         return response()->json(['message' => 'Status updated to offline.']);
     }

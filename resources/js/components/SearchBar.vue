@@ -138,7 +138,16 @@ export default {
         function selectProduct(product) {
             query.value = ''
             results.value = []
-            router.push({ name: 'ProductDetail', params: { id: product.id } })
+            router.push({ name: 'ProductDetail', params: { slug: productSlug(product) } })
+        }
+
+        function productSlug(product) {
+            const base = product.name
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .trim()
+                .replace(/\s+/g, '-')
+            return `${base}-${product.id}`
         }
 
         function goToSearch() {

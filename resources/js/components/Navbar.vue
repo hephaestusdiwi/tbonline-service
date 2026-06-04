@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar" :class="{ 'menu-open': mobileOpen }">
     <AnnouncementBar
-      v-if="mounted"
+      v-if="mounted && showAnnouncement"
       bg-color="#000000"
       text-color="#ffffff"
       :interval="4000"
@@ -106,7 +106,8 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router' 
 import axios from '../axios.js'
 import AnnouncementBar from './AnnouncementBar.vue'
 import { cartStore } from '../store/cartStore'
@@ -122,6 +123,9 @@ export default {
     const mobileOpen     = ref(false)
     const searchIconRef  = ref(null)
     const searchIconRect = ref(null)
+    const route = useRoute()
+
+    const showAnnouncement = computed(() => !route.meta.hideAnnouncement)
 
     const mounted = ref(false)
     onMounted(() => { mounted.value = true })
@@ -156,6 +160,7 @@ export default {
       siteLogo,
       siteName,
       mounted,
+      showAnnouncement,
     }
   },
 

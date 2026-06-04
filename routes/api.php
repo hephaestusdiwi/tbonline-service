@@ -64,6 +64,14 @@ Route::prefix('visitor')->group(function () {
     Route::patch('/time', [VisitorStatsController::class, 'updateTime']);
 });
 
+Route::get('/agents/status', function () {
+    $onlineCount = \App\Models\UserOnlineStatus::where('is_online', true)->count();
+    return response()->json([
+        'any_online'   => $onlineCount > 0,
+        'online_count' => $onlineCount,
+    ]);
+});
+
 Route::prefix('rajaongkir')->group(function () {
     Route::get('/search-destination', [RajaOngkirController::class, 'searchDestination']);
     Route::post('/shipping-cost',     [RajaOngkirController::class, 'shippingCost']);

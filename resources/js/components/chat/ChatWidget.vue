@@ -33,7 +33,8 @@
             <div>
               <p class="brand-name">Customer Support</p>
               <p class="brand-status">
-                <span class="status-dot"></span> Online sekarang
+                <span class="status-dot" :class="agentOnline ? 'dot-online' : 'dot-offline'"></span>
+                {{ agentOnline ? 'Online sekarang' : 'Agen sedang offline' }}
               </p>
             </div>
           </div>
@@ -143,6 +144,7 @@ const error        = ref('')
 const sessionUuid  = ref(null)
 const focusedField = ref(null)
 const unreadCount  = ref(0)
+const agentOnline = ref(true)
 
 const form       = ref({ name: '', phone: '' })
 const formErrors = ref({ name: '', phone: '' })
@@ -152,6 +154,11 @@ onMounted(async () => {
     isOpen.value = true
     unreadCount.value = 0
   })
+
+  
+  await fetchAgentStatus()     
+  subscribeAgentStatus() 
+
   const savedUuid  = localStorage.getItem('chat_session_uuid')
   const savedToken = localStorage.getItem('chat_guest_token')
 
@@ -175,6 +182,10 @@ onMounted(async () => {
       localStorage.removeItem('chat_guest_token')
     }
   }
+})
+
+onBeforeUnmount(() => {  
+  unsubscribeAgentStatus()
 })
 
 function toggleChat() {
@@ -218,6 +229,27 @@ async function startSession() {
   } finally {
     isLoading.value = false
   }
+}
+
+async function fetchAgentStatus() {
+  try {
+    const { data } = await axios.get('/agents/status')
+    agentOnline.value = data.any_online ?? true
+  } catch {
+    agentOnline.value = true
+  }
+}
+
+function subscribeAgentStatus() {
+  if (!window.Echo) return
+  window.Echo.channel('agents.status')
+    .listen('.status.changed', (e) => {
+      agentOnline.value = e.any_online ?? true
+    })
+}
+
+function unsubscribeAgentStatus() {
+  window.Echo?.leave('agents.status')
 }
 
 function onNewMessage() {
@@ -357,9 +389,16 @@ function onNewMessage() {
 .status-dot {
   width: 7px;
   height: 7px;
-  background: #4ade80;
   border-radius: 50%;
+}
+
+.dot-online {
+  background: #4ade80;
   animation: pulse-dot 2s infinite;
+}
+
+.dot-offline {
+  background: #9ca3af; 
 }
 
 @keyframes pulse-dot {

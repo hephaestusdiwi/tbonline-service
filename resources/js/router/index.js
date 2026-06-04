@@ -29,7 +29,7 @@ import AdminFaqForm  from '../pages/admin/AdminFaqForm.vue'
 const routes = [
     { path: '/', component: Home },
     { path: '/products', name: 'Products', component: ProductsPage },
-    { path: '/products/:id', name: 'ProductDetail', component: ProductDetail },
+    { path: '/products/:slug', name: 'ProductDetail', component: ProductDetail },
     { path: '/login', component: Login },
     { path: '/admin/dashboard', component: Dashboard, meta: { requiresAuth: true } },
     { path: '/admin/users', component: Users, meta: { requiresAuth: true } },
@@ -65,7 +65,7 @@ const routes = [
     { path: '/informasi-pengiriman',   component: () => import('../pages/StaticContentPage.vue') },
     { path: '/informasi-pengembalian', component: () => import('../pages/StaticContentPage.vue') },
     { path: '/tb-point', name: 'TbPoint', component: () => import('../pages/MembershipTB.vue') },
-    { path: '/store-location', name: 'StoreLocator', component: () => import('../pages/StoreLocator.vue') },
+    { path: '/store-location', name: 'StoreLocator', component: () => import('../pages/StoreLocator.vue'), meta: { hideAnnouncement: true } },
     { path: '/admin/articles/:id/edit', component: () => import('../pages/admin/ArticleForm.vue'), meta: { requiresAuth: true } },
     { path: '/admin/faqs',          component: AdminFaqIndex, meta: { requiresAuth: true } },
     { path: '/admin/faqs/create',   component: AdminFaqForm,  meta: { requiresAuth: true } },

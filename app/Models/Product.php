@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Product extends Model
 {
     protected $fillable = [
-        'name', 'alternative_name', 'classification_id', 'category',
+        'name', 'slug', 'alternative_name', 'classification_id', 'category',
         'collections', 'brand', 'condition_id', 'sku', 'barcode',
         'buy_price', 'market_price', 'sell_price', 'pos_sell_price',
         'pos_sell_price_dynamic', 'comission', 'track_inventory',
@@ -111,6 +111,42 @@ class Product extends Model
                             ->whereColumn('product_id', 'products.id')
                     )
                     ->limit($limit);
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Product $product) {
+            if (empty($product->slug)) {
+                $product->slug = Str::slug($product->name);
+            }
+        });
+
+        static::updating(function (Product $product) {
+            if ($product->isDirty('name') && empty($product->slug)) {
+                $product->slug = Str::slug($product->name);
+            }
+        });
+    }
+
+    public static function findBySlug(string $slugWithId): self
+    {
+        // Extract ID dari bagian akhir, misal "sepatu-nike-1045" → 1045
+        if (preg_match('/-(\d+)$/', $slugWithId, $m)) {
+            return static::findOrFail((int) $m[1]);
+        }
+
+        // Fallback: kalau ternyata pure ID dikirim (backward compat)
+        if (is_numeric($slugWithId)) {
+            return static::findOrFail((int) $slugWithId);
+        }
+
+        abort(404, 'Produk tidak ditemukan.');
+    }
+
+    public function getRouteSlugAttribute(): string
+    {
+        $base = $this->slug ?: Str::slug($this->name);
+        return $base . '-' . $this->id;
     }
 
     public function isFeatured(): bool

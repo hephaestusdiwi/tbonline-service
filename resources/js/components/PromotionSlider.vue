@@ -144,7 +144,7 @@ export default {
 
     // ── Computed (hanya untuk state non-drag) ──────────────
     const maxIndex = computed(() =>
-      Math.max(0, promotions.value.length - visibleN.value - 1)
+      Math.max(0, promotions.value.length - 1)
     )
 
     const snapOffset = computed(() =>
@@ -189,23 +189,19 @@ export default {
       const containerW = Math.min(window.innerWidth, CONTAINER_MAX)
 
       let cols, peekFrac
+      
       if (containerW < 540) {
         cols = 1
         peekFrac = 0.15
+        cardPx.value = Math.floor(containerW * 0.85)
       } else if (containerW < 800) {
         cols = 2
         peekFrac = 0.25
+        const usableW = containerW - 16
+        cardPx.value = Math.floor((usableW - GAP * cols) / (cols + peekFrac))
       } else {
         cols = 3
         peekFrac = 0.30
-      }
-
-      visibleN.value = cols
-
-      if (containerW < 540) {
-        const productListCardW = Math.floor((containerW - 48 - 10) / 2)
-        cardPx.value = productListCardW
-      } else {
         const usableW = containerW - 16
         cardPx.value = Math.floor((usableW - GAP * cols) / (cols + peekFrac))
       }

@@ -186,7 +186,7 @@ export default {
       else                cols = 5
       visibleN.value = cols
 
-      if (ww < 540)       { cardPx.value = 170; cardHeight.value = 400 }
+      if (ww < 540)       { cardPx.value = Math.floor((ww - 48 - 10) / 2); cardHeight.value = 370 }
       else if (ww < 800)  { cardPx.value = 240; cardHeight.value = 400 }
       else if (ww < 1024) { cardPx.value = 220; cardHeight.value = 420 }
       else                { cardPx.value = 240; cardHeight.value = 500 }
@@ -199,10 +199,18 @@ export default {
     function prev() { snapTo(currentIndex.value - 1) }
     function next() { snapTo(currentIndex.value + 1) }
 
-    // ── Card click: hanya navigate kalau tidak drag ──
+    function productSlug(product) {
+        const base = product.name
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-')
+        return `${base}-${product.id}`
+    }
+
     function handleCardClick(product) {
-      if (movedEnough) return
-      router.push(`/products/${product.id}`)
+        if (movedEnough) return
+        router.push({ name: 'ProductDetail', params: { slug: productSlug(product) } })
     }
 
     // ── Drag ──
@@ -325,6 +333,7 @@ export default {
       trackStyle, fillStyle,
       prev, next,
       handleCardClick,
+      productSlug,  
       onMouseDown, onTouchStart, onTouchMove, onTouchEnd,
       formatPrice, photoUrl,
     }

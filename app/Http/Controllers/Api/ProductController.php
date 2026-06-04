@@ -229,8 +229,18 @@ class ProductController extends Controller
     /**
      * GET /api/products/{id}
      */
-    public function show(int $id): JsonResponse
+    public function show(string $slug): JsonResponse
     {
+        $id = null;
+
+        if (preg_match('/-(\d+)$/', $slug, $m)) {
+            $id = (int) $m[1];
+        } elseif (is_numeric($slug)) {
+            $id = (int) $slug;
+        } else {
+            abort(404, 'Produk tidak ditemukan.');
+        }
+
         $product = Product::with([
             'optionTypes.values',
             'variants.optionValues.optionType',
