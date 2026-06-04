@@ -49,9 +49,28 @@
         <transition name="fade">
           <div v-if="!sessionUuid" class="chat-form-wrapper">
             <div class="form-hero">
-              <div class="hero-wave">👋</div>
-              <h3 class="hero-title">Halo! Ada yang bisa kami bantu?</h3>
-              <p class="hero-subtitle">Isi data berikut untuk mulai mengobrol dengan tim kami.</p>
+              <!-- Online: emoji wave, Offline: logo toko -->
+              <div class="hero-wave" :class="{ 'no-anim': !agentOnline }">
+                <template v-if="agentOnline">👋</template>
+                <img
+                  v-else-if="storeLogo"
+                  :src="storeLogo"
+                  alt="Logo"
+                  style="height:60px; width:auto; object-fit:contain; transition: opacity 0.3s ease;"
+                />
+                <span v-else>🕐</span>
+              </div>
+
+              <h3 class="hero-title">
+                {{ agentOnline ? 'Halo! Ada yang bisa kami bantu?' : 'Hai kak!' }}
+              </h3>
+
+              <p class="hero-subtitle">
+                {{ agentOnline
+                  ? 'Isi data berikut untuk mulai mengobrol dengan tim kami.'
+                  : 'Kami sedang di luar jam operasional. Silakan tinggalkan pesan, dan tim kami akan segera menghubungi Kakak saat jam kerja.'
+                }}
+              </p>
             </div>
 
             <div class="form-fields">
@@ -145,6 +164,7 @@ const sessionUuid  = ref(null)
 const focusedField = ref(null)
 const unreadCount  = ref(0)
 const agentOnline = ref(true)
+const storeLogo = ref(null)
 
 const form       = ref({ name: '', phone: '' })
 const formErrors = ref({ name: '', phone: '' })
@@ -157,6 +177,7 @@ onMounted(async () => {
 
   
   await fetchAgentStatus()     
+  await fetchStoreLogo() 
   subscribeAgentStatus() 
 
   const savedUuid  = localStorage.getItem('chat_session_uuid')
@@ -229,6 +250,14 @@ async function startSession() {
   } finally {
     isLoading.value = false
   }
+}
+
+async function fetchStoreLogo() {
+  try {
+    const { data } = await axios.get('/settings')
+    const path = data.site_logo_footer?.value ?? null
+    storeLogo.value = path ? import.meta.env.VITE_API_URL.replace('/api', '') + path : null
+  } catch { /* silent */ }
 }
 
 async function fetchAgentStatus() {
@@ -339,7 +368,7 @@ function onNewMessage() {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: "Poppins", sans-serif;
 }
 
 /* ── Header ── */
@@ -390,6 +419,7 @@ function onNewMessage() {
   width: 7px;
   height: 7px;
   border-radius: 50%;
+  display: inline-block;
 }
 
 .dot-online {
@@ -398,7 +428,7 @@ function onNewMessage() {
 }
 
 .dot-offline {
-  background: #9ca3af; 
+  background: #9ca3af;
 }
 
 @keyframes pulse-dot {
@@ -441,14 +471,29 @@ function onNewMessage() {
   padding: 26px 22px 20px;
   text-align: center;
   border-bottom: 1px solid #e8f0fe;
+  min-height: 140px; 
+  transition: all 0.3s ease;
 }
 
 .hero-wave {
   font-size: 36px;
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;  
+  transition: all 0.3s ease;
+}
+
+.hero-wave.no-anim {
+  animation: none;
+  font-size: unset;
+}
+
+.hero-wave img {
   display: block;
-  animation: wave 2s ease-in-out infinite;
-  transform-origin: 70% 70%;
+  margin: 0 auto 10px;
+  animation: none;  /* matiin wave animation untuk img */
 }
 
 @keyframes wave {
@@ -462,7 +507,7 @@ function onNewMessage() {
 .hero-title {
   margin: 0 0 6px;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
   color: #111827;
 }
 
@@ -484,6 +529,13 @@ function onNewMessage() {
   display: flex;
   flex-direction: column;
   gap: 5px;
+}
+
+.hero-subtitle {
+  margin: 0;
+  font-size: 12.5px;
+  color: #6b7280;
+  line-height: 1.65;
 }
 
 .field-label {

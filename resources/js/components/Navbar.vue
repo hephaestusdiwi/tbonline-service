@@ -202,7 +202,7 @@ export default {
 .navbar-inner {
   max-width: 80rem;
   margin: 0 auto;
-  padding: 1rem 1.25rem;
+  padding: 1.25rem 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -229,7 +229,7 @@ export default {
 
 .desktop-link {
   font-family: 'Poppins', sans-serif;
-  font-size: 0.875rem;
+  font-size: 1.05rem;
   font-weight: 500;
   color: rgba(255,255,255,0.88);
   text-decoration: none;
@@ -252,7 +252,7 @@ export default {
   color: rgba(255,255,255,0.9);
   transition: color 0.2s;
   padding: 0.25rem;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   display: flex;
   align-items: center;
   justify-content: center;

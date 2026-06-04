@@ -15,7 +15,7 @@ import { useHead } from '@vueuse/head'
 export function useSeoMeta({ title, description, image, type = 'website', jsonLd } = {}) {
     const _title    = isRef(title)       ? title        : computed(() => title || 'TB Store')
     const _desc     = isRef(description) ? description  : computed(() => description || '')
-    const _image    = isRef(image)       ? image        : computed(() => image || '/images/og-default.jpg')
+    const _image    = isRef(image)       ? image        : computed(() => image || 'https://tbstore.id/storage/logos/favicon_1779286394.png')
     const _url      = computed(() => typeof window !== 'undefined'
         ? window.location.origin + window.location.pathname : '/')
 

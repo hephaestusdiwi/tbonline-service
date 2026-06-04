@@ -65,7 +65,10 @@ Route::prefix('visitor')->group(function () {
 });
 
 Route::get('/agents/status', function () {
-    $onlineCount = \App\Models\UserOnlineStatus::where('is_online', true)->count();
+    $onlineCount = \App\Models\UserOnlineStatus::where('is_online', true)
+        ->where('last_ping_at', '>=', now()->subMinutes(5))
+        ->count();
+
     return response()->json([
         'any_online'   => $onlineCount > 0,
         'online_count' => $onlineCount,

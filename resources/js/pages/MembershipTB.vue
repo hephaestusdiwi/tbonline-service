@@ -3,21 +3,46 @@
 
     <!-- ===== DESKTOP LAYOUT ===== -->
     <div class="desktop-layout" v-if="!isMobile">
-      <div class="desktop-hero" ref="heroRef">
-        <div class="hero-badge animate-item" style="--d:0ms">🏆 Program Loyalitas</div>
-        <h1 class="hero-heading animate-item" style="--d:100ms">TB Point<br/><span>Membership</span></h1>
-        <p class="hero-sub animate-item" style="--d:200ms">Dapatkan poin disetiap transaksi yang kamu lakukan.</p>
 
-        <div class="desktop-benefits">
-          <div
-            class="benefit-row animate-item"
-            v-for="(s, i) in slides" :key="s.title"
-            :style="{ '--d': (300 + i * 80) + 'ms' }"
-          >
-            <div class="benefit-emoji">{{ s.emoji }}</div>
-            <div>
-              <div class="benefit-title">{{ s.title }}</div>
-              <div class="benefit-desc">{{ s.description }}</div>
+      <!-- Left Column: Topnav + Hero -->
+      <div class="desktop-left">
+
+        <!-- Desktop Topnav -->
+        <div class="desktop-topnav">
+          <button class="topnav-back" @click="goHome">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Kembali
+          </button>
+
+          <div class="topnav-brand">
+            <img v-if="siteLogo" :src="siteLogo" :alt="siteName" class="topnav-logo-img" />
+            <span v-else class="topnav-logo-text">{{ siteName }}</span>
+          </div>
+
+          <div class="topnav-right">
+            <span class="topnav-badge">🏆 TB Point</span>
+          </div>
+        </div>
+
+        <!-- Hero -->
+        <div class="desktop-hero" ref="heroRef">
+          <div class="hero-badge animate-item" style="--d:0ms">🏆 Program Loyalitas</div>
+          <h1 class="hero-heading animate-item" style="--d:100ms">TB Point<br/><span>Membership</span></h1>
+          <p class="hero-sub animate-item" style="--d:200ms">Dapatkan poin disetiap transaksi yang kamu lakukan.</p>
+
+          <div class="desktop-benefits">
+            <div
+              class="benefit-row animate-item"
+              v-for="(s, i) in slides" :key="s.title"
+              :style="{ '--d': (300 + i * 80) + 'ms' }"
+            >
+              <div class="benefit-emoji">{{ s.emoji }}</div>
+              <div>
+                <div class="benefit-title">{{ s.title }}</div>
+                <div class="benefit-desc">{{ s.description }}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -47,9 +72,6 @@
             </button>
           </div>
 
-          <div class="card-chips">
-            <span class="chip" v-for="b in benefits" :key="b">{{ b }}</span>
-          </div>
         </div>
       </div>
     </div>
@@ -133,9 +155,6 @@
                 <div class="input-prefix">+62</div>
                 <input v-model="phoneNumber" type="tel" placeholder="812-3456-7890" class="phone-input" @input="formatPhone" maxlength="15"/>
               </div>
-              <div class="benefit-chips" v-if="modalType === 'register'">
-                <span class="chip" v-for="b in benefits" :key="b">{{ b }}</span>
-              </div>
               <div class="modal-actions">
                 <button class="btn btn-primary full-width" @click="modalType==='check' ? sendCheckWA() : sendRegisterWA()" :disabled="!isPhoneValid">
                   <font-awesome-icon :icon="['fab', 'whatsapp']" />
@@ -155,26 +174,27 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-const { siteName, fetchSettings, adminWhatsapp } = useSiteSettings()
-useHead({
-  title: computed(() => `TB Point - Jadi Member Dan Dapatkan Promo Spesial | ${siteName.value || ''}`)
-})
-
 import { useHead } from '@vueuse/head'
 import { useSiteSettings } from '../composables/useSiteSettings'
 
 const router = useRouter()
-const isMobile = ref(false)
+const { siteName, siteLogo, fetchSettings, adminWhatsapp } = useSiteSettings()
+
+useHead({
+  title: computed(() => `TB Point - Jadi Member Dan Dapatkan Promo Spesial | ${siteName.value || ''}`)
+})
+
+const isMobile     = ref(false)
 const currentSlide = ref(0)
 const slideDirection = ref('slide-left')
-const modalOpen = ref(false)
-const modalType = ref('check')
-const phoneNumber = ref('')
-const panelReady = ref(false)
-const heroRef = ref(null)
-const benefits = ['Poin Reward', 'Diskon Eksklusif', 'Free Ongkir', 'Birthday Gift']
+const modalOpen    = ref(false)
+const modalType    = ref('check')
+const phoneNumber  = ref('')
+const panelReady   = ref(false)
+const heroRef      = ref(null)
+
 let touchStartX = 0
-let aoObserver = null
+let aoObserver  = null
 
 const slides = [
   {
@@ -235,13 +255,11 @@ function initDesktopAnimations() {
 }
 
 function initMobileAnimations() {
-  // Hero image: already handled by CSS keyframe on mount
-  // Panel slides up after short delay
   setTimeout(() => { panelReady.value = true }, 150)
 }
 
 onMounted(async () => {
-  await fetchSettings()  // siteName akan terupdate, computed otomatis ikut
+  await fetchSettings()
   checkMobile()
   window.addEventListener('resize', checkMobile)
 
@@ -287,7 +305,7 @@ function formatPhone() {
   phoneNumber.value = val
 }
 function buildWAUrl(msg) {
-    return `https://wa.me/${adminWhatsapp.value}?text=${encodeURIComponent(msg)}`
+  return `https://wa.me/${adminWhatsapp.value}?text=${encodeURIComponent(msg)}`
 }
 function sendCheckWA() {
   if (!isPhoneValid.value) return
@@ -338,7 +356,7 @@ function sendRegisterWA() {
 }
 
 /* ============================================================
-   DESKTOP
+   DESKTOP LAYOUT
    ============================================================ */
 .desktop-layout {
   display: grid;
@@ -346,30 +364,120 @@ function sendRegisterWA() {
   min-height: 100vh;
 }
 
-.desktop-hero {
-  background: linear-gradient(145deg, #BD2028 0%, #8b0000 100%);
-  padding: 80px 64px;
+/* Left column wraps topnav + hero, shares the red background */
+.desktop-left {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  background: linear-gradient(145deg, #BD2028 0%, #8b0000 100%);
   position: relative;
   overflow: hidden;
 }
-.desktop-hero::before {
+
+/* Decorative circles on left column */
+.desktop-left::before {
   content: '';
   position: absolute;
   width: 500px; height: 500px;
   background: rgba(255,255,255,0.04);
   border-radius: 50%;
   top: -100px; right: -100px;
+  pointer-events: none;
 }
-.desktop-hero::after {
+.desktop-left::after {
   content: '';
   position: absolute;
   width: 300px; height: 300px;
   background: rgba(255,255,255,0.05);
   border-radius: 50%;
   bottom: -60px; left: -60px;
+  pointer-events: none;
+}
+
+/* ── Desktop Topnav ─────────────────────────────────────── */
+.desktop-topnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 64px;
+  background: rgba(0, 0, 0, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.topnav-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  color: white;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+.topnav-back:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateX(-2px);
+}
+.topnav-back:active {
+  transform: scale(0.97);
+}
+
+.topnav-brand {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.topnav-logo-img {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.topnav-logo-text {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: white;
+  letter-spacing: -0.03em;
+}
+
+.topnav-right {
+  display: flex;
+  align-items: center;
+}
+
+.topnav-badge {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+/* ── Desktop Hero ───────────────────────────────────────── */
+.desktop-hero {
+  /* background handled by .desktop-left */
+  background: transparent;
+  padding: 64px 64px 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  flex: 1;
 }
 
 .hero-badge {
@@ -415,6 +523,7 @@ function sendRegisterWA() {
 .benefit-title { font-size: 15px; font-weight: 700; color: white; margin-bottom: 4px; }
 .benefit-desc { font-size: 13px; color: rgba(255,255,255,0.65); line-height: 1.5; }
 
+/* ── Desktop Card (Right Column) ────────────────────────── */
 .desktop-card-wrap {
   background: #f7f7f7;
   display: flex; align-items: center; justify-content: center;
@@ -455,15 +564,12 @@ function sendRegisterWA() {
 /* ============================================================
    MOBILE ENTRANCE ANIMATIONS
    ============================================================ */
-
-/* Hero: image drops in from top */
 @keyframes heroImgIn {
   0%   { opacity: 0; transform: translateY(-30px) scale(0.85); }
   60%  { opacity: 1; transform: translateY(6px) scale(1.03); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Panel slides up */
 .mob-panel {
   transform: translateY(60px);
   opacity: 0;
@@ -474,7 +580,6 @@ function sendRegisterWA() {
   opacity: 1;
 }
 
-/* Buttons stagger in after panel */
 .mob-actions {
   opacity: 0;
   transform: translateY(16px);
@@ -564,7 +669,6 @@ function sendRegisterWA() {
   50%       { opacity: 1;   transform: scale(1.2) rotate(15deg); }
 }
 
-/* Panel */
 .mob-panel {
   flex: 1; background: white;
   border-radius: 28px 28px 0 0;
@@ -604,7 +708,7 @@ function sendRegisterWA() {
 .mob-safe { height: 28px; flex-shrink: 0; }
 
 /* ============================================================
-   SHARED
+   SHARED COMPONENTS
    ============================================================ */
 .btn {
   width: 100%; padding: 15px 20px; border-radius: 16px;
@@ -624,7 +728,7 @@ function sendRegisterWA() {
 .btn-primary:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; transform: none; }
 
 .btn-outline {
-  background: transparent; color: #BD2028; border: 2px solid #BD2028;
+  background: transparent; color: #BD2028; border: 1px solid #BD2028;
 }
 .btn-outline:hover { background: rgba(189,32,40,0.06); transform: translateY(-1px); }
 
@@ -646,7 +750,6 @@ function sendRegisterWA() {
   font-size: 12px; font-weight: 600; color: #BD2028;
   background: rgba(189,32,40,0.08); padding: 5px 12px;
   border-radius: 20px; border: 1px solid rgba(189,32,40,0.15);
-  display: none;
 }
 
 .petal {
@@ -662,7 +765,9 @@ function sendRegisterWA() {
   50% { opacity: 0.85; }
 }
 
-/* Modal */
+/* ============================================================
+   MODAL
+   ============================================================ */
 .modal-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.5);
   display: flex; align-items: flex-end; justify-content: center;
@@ -692,7 +797,7 @@ function sendRegisterWA() {
 
 .input-group {
   width: 100%; display: flex; align-items: center;
-  border: 2px solid #f0f0f0; border-radius: 14px;
+  border: 1px solid #f0f0f0; border-radius: 14px;
   overflow: hidden; background: #fafafa; margin-bottom: 16px;
   transition: border-color 0.2s;
 }
@@ -717,7 +822,9 @@ function sendRegisterWA() {
 }
 .btn-text:hover { color: #888; }
 
-/* Transitions */
+/* ============================================================
+   TRANSITIONS
+   ============================================================ */
 .slide-left-enter-active, .slide-left-leave-active,
 .slide-right-enter-active, .slide-right-leave-active {
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);

@@ -9,6 +9,9 @@ use Illuminate\Http\{Request, JsonResponse};
 
 class AgentStatusController extends Controller
 {
+    // Anggap offline kalau ping terakhir > 5 menit yang lalu
+    private const ONLINE_TIMEOUT_MINUTES = 5;
+
     public function goOnline(Request $request): JsonResponse
     {
         UserOnlineStatus::updateOrCreate(
@@ -19,10 +22,10 @@ class AgentStatusController extends Controller
             ]
         );
 
-        $onlineCount = UserOnlineStatus::where('is_online', true)->count();
+        $onlineCount = $this->countOnline();
 
         broadcast(new AgentStatusChanged(
-            anyOnline: true,
+            anyOnline: $onlineCount > 0,
             onlineCount: $onlineCount
         ));
 
@@ -39,7 +42,7 @@ class AgentStatusController extends Controller
             ]
         );
 
-        $onlineCount = UserOnlineStatus::where('is_online', true)->count();
+        $onlineCount = $this->countOnline();
 
         broadcast(new AgentStatusChanged(
             anyOnline: $onlineCount > 0,
@@ -47,5 +50,12 @@ class AgentStatusController extends Controller
         ));
 
         return response()->json(['message' => 'Status updated to offline.']);
+    }
+
+    private function countOnline(): int
+    {
+        return UserOnlineStatus::where('is_online', true)
+            ->where('last_ping_at', '>=', now()->subMinutes(self::ONLINE_TIMEOUT_MINUTES))
+            ->count();
     }
 }
