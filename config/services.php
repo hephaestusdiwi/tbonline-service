@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'rajaongkir' => [
+        'api_key'   => env('RAJAONGKIR_API_KEY'),
+        'origin_id' => env('VITE_RAJAONGKIR_ORIGIN_ID'),
+    ],
+
 ];

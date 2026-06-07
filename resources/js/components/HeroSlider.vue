@@ -49,6 +49,7 @@
                         autoplay
                         muted
                         playsinline
+                        preload="auto"
                         @ended="next"
                     />
                 </div>

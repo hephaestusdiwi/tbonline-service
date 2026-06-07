@@ -13,7 +13,7 @@ class RajaOngkirController extends Controller
 
     public function __construct()
     {
-        $this->apiKey = env('RAJAONGKIR_API_KEY', '');
+        $this->apiKey = config('services.rajaongkir.api_key');
     }
 
     /**

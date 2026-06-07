@@ -6,21 +6,6 @@ import { createPinia } from 'pinia'
 import './axios.js'
 import { getToken } from './auth.js'
 
-import '@fontsource/open-sans/400.css'
-import '@fontsource/open-sans/500.css'
-import '@fontsource/open-sans/600.css'
-import '@fontsource/open-sans/700.css'
-
-import '@fontsource/poppins/400.css'
-import '@fontsource/poppins/500.css'
-import '@fontsource/poppins/600.css'
-import '@fontsource/poppins/700.css'
-
-import '@fontsource/roboto/400.css'
-import '@fontsource/roboto/500.css'
-import '@fontsource/roboto/600.css'
-import '@fontsource/roboto/700.css'
-
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js'
 
