@@ -34,6 +34,21 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
+        // Set online langsung saat login
+        \App\Models\UserOnlineStatus::updateOrCreate(
+            ['user_id' => $user->id],
+            ['is_online' => true, 'last_ping_at' => now()]
+        );
+
+        $onlineCount = \App\Models\UserOnlineStatus::where('is_online', true)
+            ->where('last_ping_at', '>=', now()->subMinutes(2))
+            ->count();
+
+        broadcast(new \App\Events\AgentStatusChanged(
+            anyOnline: $onlineCount > 0,
+            onlineCount: $onlineCount
+        ));
+
         return response()->json([
             'token' => $token,
             'user'  => [
@@ -49,6 +64,22 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        // Set offline dulu sebelum token dihapus
+        \App\Models\UserOnlineStatus::updateOrCreate(
+            ['user_id' => $request->user()->id],
+            ['is_online' => false, 'last_ping_at' => now()]
+        );
+
+        // Broadcast biar ChatWidget langsung update
+        $onlineCount = \App\Models\UserOnlineStatus::where('is_online', true)
+            ->where('last_ping_at', '>=', now()->subMinutes(2))
+            ->count();
+
+        broadcast(new \App\Events\AgentStatusChanged(
+            anyOnline: $onlineCount > 0,
+            onlineCount: $onlineCount
+        ));
+
         $request->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'Logout berhasil']);
     }
