@@ -642,7 +642,10 @@ export default {
         perPage()      { this.currentPage = 1 },
     },
 
-    mounted() { this.fetchBranches() },
+    mounted() { 
+        document.title = 'Branches - Two Brothers Vape System'
+        this.fetchBranches() 
+    },
 
     methods: {
         emptyForm() {

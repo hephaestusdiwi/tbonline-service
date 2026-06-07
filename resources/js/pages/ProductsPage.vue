@@ -336,6 +336,9 @@ import Navbar from '../components/Navbar.vue'
 import CartDrawer from '../components/CartDrawer.vue'
 import CustomerChat from '../components/chat/ChatWidget.vue'
 import FooterSection from '../components/FooterSection.vue'
+import { ref, computed, watch } from 'vue'
+import { useHead } from '@vueuse/head'
+import { useSeoMeta } from '../composables/useSeoMeta.js'
 
 const PRICE_ABSOLUTE_MIN = 0
 const PRICE_ABSOLUTE_MAX = 10_000_000
@@ -349,7 +352,24 @@ export default {
     },
 
     setup() {
-        return { cartStore }
+        const activeCategory = ref('Semua')
+
+        const pageTitle = computed(() =>
+            activeCategory.value !== 'Semua'
+                ? activeCategory.value
+                : 'Semua Produk'
+        )
+
+        useHead({
+            title: computed(() => `${pageTitle.value} | TB Store`),
+        })
+
+        useSeoMeta({
+            title: pageTitle,
+            description: 'Temukan produk vape original, mod, pod system, atomizer, liquid premium, dan aksesoris vape terlengkap di TB Store.',
+        })
+
+        return { cartStore, activeCategory }
     },
 
     data() {

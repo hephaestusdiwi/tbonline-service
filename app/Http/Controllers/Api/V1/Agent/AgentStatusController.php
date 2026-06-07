@@ -9,8 +9,8 @@ use Illuminate\Http\{Request, JsonResponse};
 
 class AgentStatusController extends Controller
 {
-    // Anggap offline kalau ping terakhir > 5 menit yang lalu
-    private const ONLINE_TIMEOUT_MINUTES = 5;
+    // Anggap offline kalau ping terakhir > 2 menit yang lalu
+    private const ONLINE_TIMEOUT_MINUTES = 2;
 
     public function goOnline(Request $request): JsonResponse
     {

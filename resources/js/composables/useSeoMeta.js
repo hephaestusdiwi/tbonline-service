@@ -20,7 +20,9 @@ export function useSeoMeta({ title, description, image, type = 'website', jsonLd
         ? window.location.origin + window.location.pathname : '/')
 
     useHead({
-        title: computed(() => `${_title.value} | TB Store`),
+        ...(title !== undefined && {
+            title: computed(() => `${_title.value} | TB Store`),
+        }),
         meta: [
             { name: 'description',          content: _desc },
             { name: 'robots',               content: 'index, follow' },

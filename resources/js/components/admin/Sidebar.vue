@@ -129,6 +129,29 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Logout Button Mobile  -->
+                <div class="relative px-3 py-3 border-t border-gray-100 bg-gray-50/50">
+                    <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white border border-gray-100 shadow-sm">
+                        <div class="w-8 h-8 rounded-lg flex-shrink-0 overflow-hidden">
+                            <img v-if="user.avatar_url" :src="user.avatar_url" :alt="user.name" class="w-full h-full object-cover" />
+                            <div v-else class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                                style="background: linear-gradient(135deg, #ED1F24, #7f1d1d);">
+                                {{ userInitials }}
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-bold text-gray-800 truncate" style="font-size: 0.8rem;">{{ user.name || 'Administrator' }}</p>
+                            <p class="capitalize truncate text-gray-400" style="font-size: 0.7rem;">{{ user.role || 'Admin' }}</p>
+                        </div>
+                        <button @click="handleLogout" title="Logout"
+                                class="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg border border-red-100 bg-red-50 hover:bg-red-100 transition-all duration-200">
+                            <svg class="w-3.5 h-3.5" style="color: #ED1F24;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
         </transition>
 
@@ -281,13 +304,38 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
                     </svg>
                 </div>
+
+                <div class="relative px-3 py-3 border-t border-gray-100 bg-gray-50/30">
+                    <div :class="['flex items-center gap-3 px-3 py-2.5 rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-200',
+                                collapsed ? 'justify-center' : '']">
+                        <div class="w-8 h-8 rounded-lg flex-shrink-0 overflow-hidden">
+                            <img v-if="user.avatar_url" :src="user.avatar_url" :alt="user.name" class="w-full h-full object-cover" />
+                            <div v-else class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                                style="background: linear-gradient(135deg, #ED1F24, #7f1d1d);">
+                                {{ userInitials }}
+                            </div>
+                        </div>
+                        <div v-if="!collapsed" class="flex-1 min-w-0">
+                            <p class="font-bold text-gray-800 truncate" style="font-size: 0.8rem;">{{ user.name || 'Administrator' }}</p>
+                            <p class="capitalize truncate text-gray-400" style="font-size: 0.7rem;">{{ user.role || 'Admin' }}</p>
+                        </div>
+                        <button @click="handleLogout" :title="collapsed ? 'Logout' : ''"
+                                :class="['flex-shrink-0 flex items-center justify-center rounded-lg border border-red-100 bg-red-50 hover:bg-red-100 transition-all duration-200',
+                                        collapsed ? 'w-8 h-8' : 'w-7 h-7']">
+                            <svg class="w-3.5 h-3.5" style="color: #ED1F24;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <script>
-import { getUser, getPermissions, getToken } from '../../auth.js'
+import axios from '../../axios.js'
+import { getUser, getPermissions, getToken, clearAuth } from '../../auth.js'
 const POLL_INTERVAL = 30000
 
 export default {
@@ -480,6 +528,16 @@ export default {
                     }
                 })
             })
+        },
+        async handleLogout() {
+            try {
+                await axios.post('/logout')
+            } catch (e) {
+                // tetap logout meski error
+            } finally {
+                clearAuth()
+                this.$router.push('/login')
+            }
         },
         handleKeydown(e) {
             if (e.key === 'Escape') this.mobileOpen = false

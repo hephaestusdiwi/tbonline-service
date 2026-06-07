@@ -264,6 +264,7 @@ import 'leaflet.markercluster'
 import axiosInstance from '../axios'
 import { useHead } from '@vueuse/head'
 import { useSiteSettings } from '../composables/useSiteSettings'
+import { useSeoMeta } from '../composables/useSeoMeta.js'
 
 import Navbar      from '../components/Navbar.vue'
 import FooterSection from '../components/FooterSection.vue'
@@ -285,6 +286,18 @@ const selectedProvince = ref('')
 const mapEl            = ref(null)
 const listEl           = ref(null)
 const { siteName, fetchSettings } = useSiteSettings()
+useHead({
+    title: computed(() =>
+        siteName.value
+            ? `Lokasi Toko | ${siteName.value}`
+            : 'Lokasi Toko | TB Store'
+    ),
+})
+
+useSeoMeta({
+    title: 'Lokasi Toko',
+    description: 'Temukan cabang TB Store terdekat di kotamu. Lihat alamat, jam operasional, dan petunjuk arah ke seluruh cabang TwoBrothers Vapestore.',
+})
 let mapInitialized = false
 let resizeObserver = null
 
@@ -317,7 +330,6 @@ onMounted(async () => {
     window.addEventListener('resize', checkMobile)
 
     await fetchSettings()
-    document.title = `Lokasi Toko Kami - ${siteName.value}`
 
     await nextTick()
     resizeObserver = new ResizeObserver((entries) => {

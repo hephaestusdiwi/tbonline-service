@@ -87,11 +87,18 @@ const router = createRouter({
     },
 })
 
-router.beforeEach((to, from, next) => {
-    if (to.meta.requiresAuth && !isAuthenticated()) {
-        next('/login')
+router.afterEach((to) => {
+    let favicon = document.querySelector("link[rel='icon']")
+    if (!favicon) {
+        favicon = document.createElement('link')
+        favicon.rel = 'icon'
+        document.head.appendChild(favicon)
+    }
+    favicon.type = 'image/png'
+    if (to.path.startsWith('/admin')) {
+        favicon.href = '/storage/logos/tbgroup.png'
     } else {
-        next()
+        favicon.href = '/storage/logos/favicon_1779286394.png'
     }
 })
 

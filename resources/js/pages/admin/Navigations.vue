@@ -301,6 +301,7 @@ export default {
     },
 
     mounted() {
+        document.title = 'Navigations - Two Brothers Vape System'
         this.fetchNavigations()
     },
 

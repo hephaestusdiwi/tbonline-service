@@ -350,9 +350,7 @@ export default {
     },
 
     mounted() {
-        document.title = 'Loyalty Points - Admin'
-        const favicon = document.querySelector("link[rel='icon']")
-        if (favicon) favicon.href = '/storage/logos/favicon.webp'
+        document.title = 'Loyalty Points - Two Brothers Vape System'
         this.fetchStats()
         this.fetchRecentTransactions()
     },

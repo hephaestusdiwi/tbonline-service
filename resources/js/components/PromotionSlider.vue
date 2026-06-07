@@ -372,13 +372,13 @@ export default {
 .promo-section {
   padding: 36px 0 0;
   background: #fff;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: "Poppins", sans-serif;
   overflow-x: hidden;
 }
 
 .promo-container {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1180px;
   margin-left: auto;
   margin-right: auto;
   padding-left: 16px;
@@ -422,7 +422,7 @@ export default {
 }
 .promo-scroller {
   overflow: hidden;
-  padding-left: max(16px, calc((100% - 1280px) / 2 + 16px));
+  padding-left: calc((100vw - 1180px) / 2 + 1rem);
   user-select: none;
   -webkit-user-select: none;
   cursor: grab;

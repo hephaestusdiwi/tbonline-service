@@ -813,6 +813,7 @@ export default {
     },
 
     mounted() {
+        document.title = 'Orders - Two Brothers Vape System'
         this.fetchOrders()
         this.fetchStats()
         window.addEventListener('keydown', this.handleEscape)

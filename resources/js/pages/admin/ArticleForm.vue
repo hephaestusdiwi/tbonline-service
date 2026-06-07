@@ -750,6 +750,7 @@ function formatDate(d) {
 
 // ── Load ───────────────────────────────────────────────────────
 onMounted(async () => {
+    document.title = 'New Article - Two Brothers Vape System'
     if (isEditing.value) {
         await contentStore.fetchOne(route.params.id)
         const c = contentStore.currentItem

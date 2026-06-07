@@ -538,6 +538,7 @@ export default {
     },
 
     mounted() {
+        document.title = 'Sliders - Two Brothers Vape System'
         this.fetchSliders()
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {

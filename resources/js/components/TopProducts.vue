@@ -18,10 +18,14 @@
       >
         <div class="tp-track" ref="trackRef" :style="trackStyle">
           <div
-            v-for="product in products"
-            :key="product.id"
-            class="tp-card"
-            :style="{ width: cardPx + 'px', flexBasis: cardPx + 'px', height: cardHeight + 'px' }"
+              v-for="product in products"
+              :key="product.id"
+              class="tp-card"
+              :style="{ 
+                  width: cardPx + 'px', 
+                  flexBasis: cardPx + 'px', 
+                  height: cardHeight ? cardHeight + 'px' : 'auto'  // ← tambah kondisi
+              }"
           >
             <div class="card-img-wrap" @click="handleCardClick(product)">
               <img
@@ -186,7 +190,7 @@ export default {
       else                cols = 5
       visibleN.value = cols
 
-      if (ww < 540)       { cardPx.value = Math.floor((ww - 48 - 10) / 2); cardHeight.value = 370 }
+      if (ww < 540)       { cardPx.value = Math.floor((ww - 50) / 2) - 7; cardHeight.value = null }
       else if (ww < 800)  { cardPx.value = 240; cardHeight.value = 400 }
       else if (ww < 1024) { cardPx.value = 220; cardHeight.value = 420 }
       else                { cardPx.value = 240; cardHeight.value = 500 }
@@ -349,7 +353,7 @@ export default {
 }
 .tp-container {
   width: 100%;
-  max-width: 1280px;
+  max-width: 1180px;
   margin: 0 auto;
   padding: 0 16px;
 }
@@ -367,7 +371,7 @@ export default {
 }
 .tp-scroller {
   overflow: hidden;
-  padding-left: max(16px, calc((100% - 1280px) / 2 + 16px));
+  padding-left: max(16px, calc((100% - 1180px) / 2 + 16px));
   user-select: none;
   -webkit-user-select: none;
   cursor: grab;
@@ -399,10 +403,10 @@ export default {
   border-radius: 8px;
   overflow: hidden;
   aspect-ratio: 1 / 1;
-  background: rgba(255,255,255,0.15);
+  background: #BD2028;
   flex-shrink: 0;
 }
-.card-img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.35s; }
+.card-img { width: 100%; height: 90%; object-fit: cover; display: block; transition: transform 0.35s; }
 .tp-card:hover .card-img { transform: scale(1.05); }
 .tp-scroller.is-dragging .tp-card:hover .card-img { transform: none; }
 .card-img-empty { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
@@ -476,7 +480,7 @@ export default {
 }
 .tp-arrow:hover { background: #BD2028; border-color: #BD2028; color: #fff; }
 .tp-arrow.is-hidden { opacity: 0; pointer-events: none; }
-.tp-arrow--prev { left: max(4px, calc((100% - 1280px) / 2 + 4px)); }
+.tp-arrow--prev { left: max(4px, calc((100% - 1180px) / 2 + 4px)); }
 .tp-arrow--next { right: 10px; }
 
 .tp-progress-bar {
@@ -513,7 +517,8 @@ export default {
 
 @media (max-width: 640px) {
   .tp-arrow { display: none; }
-  .tp-scroller { padding-left: 16px; }
+  .tp-scroller { padding-left: 25px; }
+  .tp-container { padding: 0 25px }
 }
 
 @media (max-width: 420px) {
@@ -522,6 +527,7 @@ export default {
     .price-row {
       margin-top: 10px;
     }
+    .tp-track { gap: 20px; }
     .btn-cart     { padding: 8px 4px; font-size: 0.72rem; }
     .product-card {
         height: 370px;

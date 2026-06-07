@@ -793,6 +793,7 @@ export default {
     },
 
     mounted() {
+        document.title = 'Orders Pending - Two Brothers Vape System'
         this.fetchOrders()
         this.startPolling()
     },

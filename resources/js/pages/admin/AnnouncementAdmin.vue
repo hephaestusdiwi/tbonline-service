@@ -359,6 +359,7 @@ export default {
     },
 
     async mounted() {
+        document.title = 'Announcements Bar - Two Brothers Vape System'
         await this.fetchAnnouncements()
         this.startPreviewTimer()
     },

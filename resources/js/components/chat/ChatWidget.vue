@@ -256,7 +256,7 @@ async function fetchStoreLogo() {
   try {
     const { data } = await axios.get('/settings')
     const path = data.site_logo_footer?.value ?? null
-    storeLogo.value = path ? import.meta.env.VITE_API_URL.replace('/api', '') + path : null
+    storeLogo.value = path ? `https://tbstore.id${path}` : null
   } catch { /* silent */ }
 }
 

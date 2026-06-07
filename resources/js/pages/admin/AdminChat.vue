@@ -891,9 +891,7 @@ export default {
     },
 
     async mounted() {
-        document.title = 'Live Chat — Admin Panel'
-        const favicon = document.querySelector("link[rel='icon']")
-        if (favicon) favicon.href = '/storage/logos/favicon.webp'
+        document.title = 'Live Chat - Two Brothers Vape System'
 
         await this.fetchSessions()
         this.fetchPendingCount()
@@ -912,10 +910,17 @@ export default {
                 this.agentOnline = true
             }
         } catch {}
+
+        this._agentPingInterval = setInterval(() => {
+            if (this.agentOnline) {
+                axios.post('/agent/status/online').catch(() => {})
+            }
+        }, 60_000)
     },
 
     beforeUnmount() {
         clearInterval(this._pollInterval)
+        clearInterval(this._agentPingInterval)
         clearTimeout(this.typingTimer)
         Object.keys(this.echoChannels).forEach(uuid => window.Echo?.leave(`chat.session.${uuid}`))
         window.Echo?.leave('queue.admin')

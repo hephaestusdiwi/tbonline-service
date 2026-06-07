@@ -450,5 +450,8 @@ const changePage = (page) => {
     fetchComplaints(page)
 }
 
-onMounted(() => fetchComplaints())
+onMounted(() => {
+    document.title = 'Complaints Pages - Two Brothers Vape System'
+    fetchComplaints()
+})
 </script>

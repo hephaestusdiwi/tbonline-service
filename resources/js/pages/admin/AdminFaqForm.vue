@@ -396,6 +396,7 @@ async function handleSubmit() {
 
 // ── Load ───────────────────────────────────────────────────────
 onMounted(async () => {
+    document.title = 'Add FAQ - Two Brothers Vape System'
     await faqStore.fetchCategories()
 
     if (isEditing.value) {

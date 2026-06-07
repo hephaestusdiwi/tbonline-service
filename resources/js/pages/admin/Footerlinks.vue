@@ -477,6 +477,7 @@ export default {
     },
 
     mounted() {
+        document.title = 'Footer Links - Two Brothers Vape System'
         this.fetchGroups()
     },
 

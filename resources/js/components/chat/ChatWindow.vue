@@ -504,7 +504,7 @@ async function sendPing() {
 
 function startHeartbeat() {
   sendPing()
-  heartbeatInterval = setInterval(sendPing, 20000)
+  heartbeatInterval = setInterval(sendPing, 10000)
 }
 
 function sendLeave() {
@@ -524,7 +524,7 @@ function handleVisibilityChange() {
     leaveTimer = setTimeout(() => {
       const url = import.meta.env.VITE_API_URL + '/chat/sessions/' + props.sessionUuid + '/leave'
       navigator.sendBeacon(url)
-    }, 30000)
+    }, 15000)
   } else {
     clearTimeout(leaveTimer)
   }

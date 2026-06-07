@@ -674,7 +674,7 @@ export default {
     },
 
     mounted() {
-        document.title = 'Visitor Statistics - Admin'
+        document.title = 'Visitor Statistics - Two Brothers Vape System'
         this.fetchAll()
 
         // Auto-refresh setiap 5 menit

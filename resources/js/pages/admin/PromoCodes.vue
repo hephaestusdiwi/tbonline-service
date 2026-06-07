@@ -538,7 +538,10 @@ export default {
         perPage()      { this.currentPage = 1 },
     },
 
-    mounted() { this.fetchPromoCodes() },
+    mounted() {
+        document.title = 'Promo Codes - Two Brothers Vape System'
+        this.fetchPromoCodes() 
+        },
 
     methods: {
         emptyForm() {

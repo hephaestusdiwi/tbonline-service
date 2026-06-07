@@ -46,39 +46,25 @@ export default {
  
     setup() {
         const activeSearchQuery = ref('')
-        const { siteName }      = useSiteSettings()
- 
-        useHead({ title: computed(() => siteName.value || 'TB Store') })
+        const { siteName, settings, fetchSettings } = useSiteSettings()
+
+        useHead({
+            title: 'TB Store by TwoBrothers Vapestore | Belanja Kebutuhan Vape Jadi Mudah',
+            meta: computed(() => {
+                const code = settings.value?.google_site_verification?.value
+                return code ? [{ name: 'google-site-verification', content: code }] : []
+            }),
+        })
 
         useSeoMeta({
-            title:       'Home',
-            description: 'Belanja kebutuhan vape berkualitas di TB Store. Dijamin aman dan proses cepat',
+            description: 'TB Store menyediakan produk vape original, mod, pod system, atomizer, liquid premium, dan aksesoris vape terpercaya.',
         })
- 
-        useVisitorTracker({
-            page:      '/',
-            pageTitle: 'Home - TB Store',
-        })
- 
-        function onSearch(query) {
-            activeSearchQuery.value = query
-        }
- 
-        return { activeSearchQuery, onSearch }
-    },
- 
-    async mounted() {
-        try {
-            const { fetchSettings, settings } = useSiteSettings()
-            await fetchSettings()
- 
-            const googleCode = settings.value?.google_site_verification?.value
-            if (googleCode) {
-                useHead({ meta: [{ name: 'google-site-verification', content: googleCode }] })
-            }
-        } catch (e) {
-            console.error('Failed to load site settings:', e)
-        }
+
+        useVisitorTracker({ page: '/', pageTitle: 'Home - TB Store' })
+
+        fetchSettings().catch(e => console.error('Failed to load site settings:', e))
+
+        return { activeSearchQuery, onSearch: (q) => { activeSearchQuery.value = q } }
     },
 }
 </script>

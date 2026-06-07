@@ -333,6 +333,7 @@ function formatDate(d) {
 }
 
 onMounted(async () => {
+    document.title = 'FAQ Management - Two Brothers Vape System'
     await Promise.all([fetchData(), faqStore.fetchCategories()])
 })
 </script>

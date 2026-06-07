@@ -206,6 +206,7 @@ export default {
     },
 
     mounted() {
+        document.title = 'Roles & Permissions - Two Brothers Vape System'
         this.fetchRoles()
     },
 

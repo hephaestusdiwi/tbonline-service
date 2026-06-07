@@ -966,6 +966,7 @@ export default {
     },
 
     mounted() {
+        document.title = 'Product Reports - Two Brothers Vape System'
         const today = new Date().toISOString().slice(0, 10)
         this.filters.date_from = today
         this.filters.date_to   = today

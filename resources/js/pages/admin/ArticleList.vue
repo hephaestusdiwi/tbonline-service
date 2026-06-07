@@ -428,6 +428,8 @@ export default {
     },
 
     async mounted() {
+        document.title = 'Articles List - Two Brothers Vape System'
+
         const [all, pub, dft] = await Promise.all([
             this.store.fetchList({ type: 'article', per_page: 1, page: 1 }),
             this.store.fetchList({ type: 'article', status: 'published', per_page: 1, page: 1 }),

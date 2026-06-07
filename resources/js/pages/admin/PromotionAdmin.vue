@@ -543,7 +543,10 @@ export default {
             }[type] ?? 'bg-gray-100 text-gray-500 border-gray-200'
         }
 
-        onMounted(fetchList)
+        onMounted(() => {
+            document.title = 'Promotion Banners - Two Brothers Vape System'
+            fetchList()
+        })
 
         return {
             promotions, listLoading, saving, modalOpen, isEditing,

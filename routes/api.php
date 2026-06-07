@@ -66,7 +66,7 @@ Route::prefix('visitor')->group(function () {
 
 Route::get('/agents/status', function () {
     $onlineCount = \App\Models\UserOnlineStatus::where('is_online', true)
-        ->where('last_ping_at', '>=', now()->subMinutes(5))
+        ->where('last_ping_at', '>=', now()->subMinutes(2))
         ->count();
 
     return response()->json([
@@ -242,13 +242,9 @@ Route::middleware('auth:sanctum')->prefix('chat')->group(function () {
 });
 
 // ── Agent ────────────────────────────────────────────────────────────────
-Route::middleware(['auth:sanctum', 'can:chat_manage'])->prefix('agent')->group(function () {
-    // Route::get ('dashboard',                        [Agent\AgentController::class, 'dashboard']);
-    Route::post('status/online',                    [Agent\AgentStatusController::class, 'goOnline']);
-    Route::post('status/offline',                   [Agent\AgentStatusController::class, 'goOffline']);
-    // Route::get ('sessions/assigned',                [Agent\AgentController::class, 'assignedSessions']);
-    // Route::post('queue/{entry}/accept',             [Agent\AgentController::class, 'acceptQueue']);
-    // Route::post('sessions/{session:uuid}/transfer', [Agent\AgentController::class, 'transfer']);
+Route::middleware(['auth:sanctum', 'can:chat_view'])->prefix('agent')->group(function () {
+    Route::post('status/online',  [Agent\AgentStatusController::class, 'goOnline']);
+    Route::post('status/offline', [Agent\AgentStatusController::class, 'goOffline']);
 });
 
 // ── Chat Admin ───────────────────────────────────────────────────────────

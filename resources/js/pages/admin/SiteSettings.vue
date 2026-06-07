@@ -1236,6 +1236,7 @@ export default {
     },
 
     async mounted() {
+        document.title = 'Site Settings - Two Brothers Vape System'
         await Promise.all([this.fetchSettings(), this.fetchShippingCouriers()])
     },
 

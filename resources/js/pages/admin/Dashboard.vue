@@ -868,8 +868,6 @@ export default {
 
     mounted() {
         document.title = 'Dashboard - Two Brothers Vape System'
-        const favicon = document.querySelector("link[rel='icon']")
-        if (favicon) favicon.href = '/storage/logos/favicon.webp'
         this.updateClock()
         this.timeInterval = setInterval(this.updateClock, 1000)
         this.fetchAll()

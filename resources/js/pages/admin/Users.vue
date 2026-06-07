@@ -499,6 +499,7 @@ const InfoRow = {
 // v-click-outside directive
 const vClickOutside = {
   mounted(el, binding) {
+    document.title = 'Users - Two Brothers Vape System'
     el._clickOutside = (e) => { if (!el.contains(e.target)) binding.value(e) }
     document.addEventListener('click', el._clickOutside)
   },

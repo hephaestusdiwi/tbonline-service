@@ -1,5 +1,6 @@
 <template>
     <section class="product-section">
+        <AppContainer>
         <!-- Section Header -->
         <div class="section-header">
             <h2 class="section-title">Semua Produk</h2>
@@ -33,6 +34,7 @@
                 v-for="product in products"
                 :key="product.id"
                 class="product-card"
+                :style="cardHeight ? { height: cardHeight + 'px' } : {}"
                 @click="goToProduct(product)"
             >
                 <!-- Image Area -->
@@ -41,20 +43,6 @@
                     <span v-if="getDiscount(product)" class="discount-badge">
                         -{{ getDiscount(product) }}%
                     </span>
-
-                    <!-- Wishlist Button -->
-                    <button
-                        class="wishlist-btn"
-                        :class="{ active: wishlist.has(product.id) }"
-                        @click.stop="toggleWishlist(product)"
-                        title="Wishlist"
-                    >
-                        <svg viewBox="0 0 24 24" width="15" height="15"
-                            :fill="wishlist.has(product.id) ? 'currentColor' : 'none'"
-                            stroke="currentColor" stroke-width="2.2">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                        </svg>
-                    </button>
 
                     <!-- Product Image -->
                     <img
@@ -81,25 +69,22 @@
                 <!-- Card Body -->
                 <div class="card-body">
                     <p class="product-name">{{ product.name }}</p>
-
-                    <!-- Stock Warning -->
                     <p v-if="product.stock_qty && product.stock_qty <= 15 && !isOutOfStock(product)" class="stock-warning">
                         <span class="stock-dot" />
                         Hanya tersisa {{ product.stock_qty }}
                     </p>
-
-                    <!-- Price -->
                     <div class="price-row">
                         <span class="price-main" :class="{ discounted: product.market_price > product.sell_price }">
                             {{ formatPrice(product.sell_price) }}
                         </span>
-                        <span
-                            v-if="product.market_price && product.market_price > product.sell_price"
-                            class="price-strike"
-                        >{{ formatPrice(product.market_price) }}</span>
+                        <span v-if="product.market_price && product.market_price > product.sell_price" class="price-strike">
+                            {{ formatPrice(product.market_price) }}
+                        </span>
                     </div>
+                </div>
 
-                    <!-- CTA Button -->
+                <!-- card-footer: TARUH btn-cart di sini -->
+                <div class="card-footer">
                     <button
                         class="btn-cart"
                         @click.stop="hasVariants(product) ? goToProduct(product) : addToCart(product)"
@@ -117,14 +102,18 @@
         <div v-if="!loading && !error && products.length === 0" class="state-box">
             <p>Tidak ada produk ditemukan.</p>
         </div>
+        </AppContainer>
     </section>
 </template>
 
 <script>
 import { cartStore } from '../store/cartStore'
+import AppContainer from './AppContainer.vue'
 
 export default {
     name: 'ProductList',
+
+    components: { AppContainer },
 
     setup() {
         return { cartStore }
@@ -142,7 +131,7 @@ export default {
             loading: false,
             error: null,
             total: 0,
-            wishlist: new Set(),
+            cardHeight: 500,
         }
     },
 
@@ -154,6 +143,12 @@ export default {
 
     mounted() {
         this.fetchProducts()
+        this.calcCardHeight()
+        window.addEventListener('resize', this.calcCardHeight)
+    },
+
+    beforeUnmount() {
+        window.removeEventListener('resize', this.calcCardHeight)
     },
     
 
@@ -192,6 +187,14 @@ export default {
             return `${base}/storage/${path}`
         },
 
+        calcCardHeight() {
+            const ww = window.innerWidth
+            if (ww < 540)       this.cardHeight = null  // ← auto, sama seperti TopProducts!
+            else if (ww < 800)  this.cardHeight = 400
+            else if (ww < 1024) this.cardHeight = 420
+            else                this.cardHeight = 500
+        },
+
         hasVariants(product) {
             return Array.isArray(product.active_variants) && product.active_variants.length > 0
         },
@@ -221,16 +224,6 @@ export default {
 
         addToCart(product) {
             cartStore.addItem(product)
-        },
-
-        toggleWishlist(product) {
-            const next = new Set(this.wishlist)
-            if (next.has(product.id)) {
-                next.delete(product.id)
-            } else {
-                next.add(product.id)
-            }
-            this.wishlist = next
         },
 
         goToAllProducts() {
@@ -281,7 +274,6 @@ export default {
     padding-bottom: 18px;
     border-bottom: 1.5px solid #ebebeb;
 }
-
 .section-title {
     font-family: "Poppins", sans-serif;
     font-size: 1rem;
@@ -289,7 +281,6 @@ export default {
     color: #BD2028;
     margin: 0;
 }
-
 .all-products-btn {
     padding: 8px 22px;
     background: #BD2028;
@@ -304,11 +295,7 @@ export default {
     border-radius: 5px;
     transition: background 0.2s, color 0.2s;
 }
-
-.all-products-btn:hover {
-    background: #000000;
-    color: #ffffff;
-}
+.all-products-btn:hover { background: #000; color: #fff; }
 
 /* ─── Grid ─── */
 .products-grid {
@@ -316,23 +303,20 @@ export default {
     grid-template-columns: repeat(5, 1fr);
     gap: 16px;
 }
-
 @media (max-width: 1100px) { .products-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 720px)  { .products-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
-@media (max-width: 420px)  { .products-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+@media (max-width: 720px)  { .products-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; } }
 
 /* ─── Card ─── */
 .product-card {
-    height: 480px;
+    /* TIDAK ada height fixed — biarkan konten yang tentukan */
     background: #BD2028;
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     cursor: pointer;
     transition: transform 0.18s, box-shadow 0.18s;
 }
-
 .product-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 10px 28px rgba(189, 32, 40, 0.35);
@@ -341,25 +325,22 @@ export default {
 /* ─── Image Area ─── */
 .card-img-wrap {
     position: relative;
-    margin: 10px 10px 0 10px;
-    border-radius: 6px;
+    margin: 10px 10px 0;
+    border-radius: 8px;
     overflow: hidden;
     aspect-ratio: 1 / 1;
-    background: rgba(255, 255, 255, 0.15);
+    background: #BD2028;
     flex-shrink: 0;
 }
 
 .card-img {
     width: 100%;
-    height: 100%;
+    height: 90%;    
     object-fit: cover;
     display: block;
     transition: transform 0.3s;
 }
-
-.product-card:hover .card-img {
-    transform: scale(1.05);
-}
+.product-card:hover .card-img { transform: scale(1.05); }
 
 .card-img-empty {
     width: 100%;
@@ -368,7 +349,6 @@ export default {
     align-items: center;
     justify-content: center;
 }
-
 .card-img-empty svg {
     width: 2.5rem;
     height: 2.5rem;
@@ -378,8 +358,7 @@ export default {
 /* Discount Badge */
 .discount-badge {
     position: absolute;
-    top: 8px;
-    left: 8px;
+    top: 8px; left: 8px;
     z-index: 3;
     background: #fff;
     color: #BD2028;
@@ -391,50 +370,19 @@ export default {
     line-height: 1.4;
 }
 
-/* Wishlist Button */
-.wishlist-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    z-index: 3;
-    width: 32px;
-    height: 32px;
-    background: rgba(255, 255, 255, 0.85);
-    border: none;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #c0c0c0;
-    transition: color 0.2s, background 0.2s, transform 0.18s;
-}
-
-.wishlist-btn:hover {
-    background: #ffffff;
-    color: #BD2028;
-    transform: scale(1.12);
-}
-
-.wishlist-btn.active {
-    color: #BD2028;
-    background: #ffffff;
-}
-
 /* Out of Stock */
 .out-of-stock {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.45);
+    background: rgba(0,0,0,0.45);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 4;
 }
-
 .out-of-stock span {
-    background: #000000;
-    color: #ffffff;
+    background: #000;
+    color: #fff;
     font-size: 0.68rem;
     font-weight: 800;
     letter-spacing: 0.12em;
@@ -446,23 +394,30 @@ export default {
 /* ─── Card Body ─── */
 .card-body {
     font-family: "Poppins", sans-serif;
-    padding: 10px 12px 14px;
+    padding: 10px 12px 0;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
     flex: 1;
+    min-height: 161px;  
+}
+
+.card-footer {
+    padding: 8px 12px 14px;
+    margin-top: auto;
 }
 
 .product-name {
     font-family: "Poppins", sans-serif;
     font-size: 1.10rem;
-    padding: 20px 20px 10px 20px;
+    padding: 10px 20px;
     font-weight: 500;
     text-align: center;
     color: #fff;
-    line-height: 1.35;
+    line-height: 1.4;
+    min-height: 4em;   /* ← sama dengan TopProducts */
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -478,10 +433,8 @@ export default {
     font-weight: 600;
     margin: 0;
 }
-
 .stock-dot {
-    width: 7px;
-    height: 7px;
+    width: 7px; height: 7px;
     border-radius: 50%;
     background: #FFD580;
     flex-shrink: 0;
@@ -493,75 +446,54 @@ export default {
     gap: 6px;
     align-items: center;
     justify-content: center;
-    margin-top: 2px;
+    padding-bottom: 4px;
 }
-
 .price-main {
-    font-size: 1rem;
-    font-weight: 400;
-    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 600;
     color: #fff;
 }
-
-.price-main.discounted {
-    color: #FFD580;
-}
-
+.price-main.discounted { color: #FFD580; }
 .price-strike {
     font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255,255,255,0.5);
     text-decoration: line-through;
 }
 
-/* CTA Button */
 .btn-cart {
     font-family: "Poppins", sans-serif;
-    margin-top: auto;
     width: 100%;
     background: transparent;
     color: #fff;
-    border: 1px solid #fff;
-    border-radius: 4px;
-    padding: 16px 4px;
-    font-size: 0.85rem;
+    border: 1.5px solid rgba(255,255,255,0.8);
+    border-radius: 6px;
+    padding: 18px 4px;
+    font-size: 0.8rem;
     font-weight: 500;
     letter-spacing: 0.06em;
     cursor: pointer;
     transition: background 0.15s;
 }
-
-.btn-cart:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: #fff;
-}
-
-.btn-cart:active:not(:disabled) {
-    background: rgba(255, 255, 255, 0.25);
-}
-
-.btn-cart:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
+.btn-cart:hover:not(:disabled)  { background: rgba(255,255,255,0.15); }
+.btn-cart:active:not(:disabled) { background: rgba(255,255,255,0.25); }
+.btn-cart:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ─── State Boxes ─── */
 .state-box {
     text-align: center;
     padding: 80px 24px;
-    color: #999999;
+    color: #999;
     font-size: 0.9rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 16px;
 }
-
 .state-box.error { color: #c00; }
-
 .retry-btn {
     padding: 10px 28px;
     background: #BD2028;
-    color: #ffffff;
+    color: #fff;
     border: none;
     font-family: "Poppins", sans-serif;
     font-size: 0.82rem;
@@ -571,40 +503,29 @@ export default {
     border-radius: 50px;
     transition: background 0.2s;
 }
-
-.retry-btn:hover { background: #000000; }
+.retry-btn:hover { background: #000; }
 
 /* ─── Skeleton ─── */
-.skeleton-card {
-    background: #d63a42;
-}
-
+.skeleton-card { background: #d63a42; }
 .skeleton-img {
     margin: 10px 10px 0;
-    border-radius: 6px;
+    border-radius: 8px;
     aspect-ratio: 1 / 1;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255,255,255,0.2);
     animation: pulse 1.4s ease-in-out infinite;
 }
-
 .skeleton-line {
     height: 11px;
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255,255,255,0.2);
     animation: pulse 1.4s ease-in-out infinite;
     margin: 4px 12px;
 }
-
-.skeleton-line.short {
-    width: 60%;
-    margin-left: auto;
-    margin-right: auto;
-}
-
+.skeleton-line.short { width: 60%; margin-left: auto; margin-right: auto; }
 .skeleton-btn {
     height: 36px;
-    border-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.3);
     margin: 6px 12px 0;
     animation: pulse 1.4s ease-in-out infinite;
 }
@@ -614,13 +535,9 @@ export default {
     50%       { opacity: 0.5; }
 }
 
-/* ─── Mobile ─── */
 @media (max-width: 420px) {
-    .product-name { font-size: 1rem; padding: 15px 10px 10px 10px;}
-    .price-main   { font-size: 0.88rem; }
-    .btn-cart     { padding: 8px 4px; font-size: 0.72rem; }
-    .product-card {
-        height: 370px;
+    .btn-cart {
+        padding: 8px 4px;
     }
 }
 </style>

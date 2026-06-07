@@ -176,12 +176,22 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHead } from '@vueuse/head'
 import { useSiteSettings } from '../composables/useSiteSettings'
+import { useSeoMeta } from '../composables/useSeoMeta.js'
 
 const router = useRouter()
 const { siteName, siteLogo, fetchSettings, adminWhatsapp } = useSiteSettings()
 
 useHead({
-  title: computed(() => `TB Point - Jadi Member Dan Dapatkan Promo Spesial | ${siteName.value || ''}`)
+  title: computed(() =>
+    siteName.value
+      ? `TB Point | ${siteName.value}`
+      : 'TB Point | TB Store'
+  ),
+})
+
+useSeoMeta({
+  title: 'TB Point',
+  description: 'Dapatkan poin di setiap transaksi dan tukarkan dengan diskon eksklusif. Daftar membership TB Point sekarang dan nikmati berbagai keuntungan belanja di TB Store.',
 })
 
 const isMobile     = ref(false)

@@ -873,9 +873,7 @@ export default {
     },
 
     mounted() {
-        document.title = 'Daftar Produk - Two Brothers Vape System'
-        const favicon = document.querySelector("link[rel='icon']")
-        if (favicon) favicon.href = '/storage/logos/favicon.webp'
+        document.title = 'Products - Two Brothers Vape System'
         this.fetchProducts()
     },
 

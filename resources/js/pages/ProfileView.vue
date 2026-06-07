@@ -438,6 +438,14 @@ export default {
         },
     },
 
+    watch: {
+        profile(val) {
+            if (val?.name) {
+                document.title = `${val.name} - Two Brothers Vape System`
+            }
+        }
+    },
+
     mounted() {
         this.fetchProfile()
     },
