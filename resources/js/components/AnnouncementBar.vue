@@ -39,17 +39,6 @@
       </svg>
     </button>
 
-    <!-- Dots indikator -->
-    <div v-if="items.length > 1" class="ab-dots">
-      <button
-        v-for="(_, i) in items"
-        :key="i"
-        :class="['ab-dot', i === current ? 'ab-dot--active' : '']"
-        @click="goTo(i)"
-        :aria-label="`Pengumuman ${i + 1}`"
-      />
-    </div>
-
   </div>
 </template>
 
@@ -118,13 +107,6 @@ export default {
       startTimer()
     }
 
-    function goTo(i) {
-      stopTimer()
-      transitionName.value = i > current.value ? 'ab-slide-left' : 'ab-slide-right'
-      current.value = i
-      startTimer()
-    }
-
     onMounted(async () => {
       await fetchAnnouncements()
       startTimer()
@@ -137,7 +119,7 @@ export default {
 
     return {
       items, current, transitionName, barStyle,
-      next, prev, goTo,
+      next, prev,
     }
   },
 }
@@ -227,32 +209,6 @@ export default {
 }
 .ab-arrow:hover { opacity: 1; }
 
-/* ─── Dots ───────────────────────────────────────────────── */
-.ab-dots {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  gap: 4px;
-}
-
-.ab-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--ab-text, #fff);
-  opacity: 0.35;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: opacity .2s, transform .2s;
-}
-.ab-dot--active {
-  opacity: 1;
-  transform: scale(1.3);
-}
-
 /* ─── Transisi slide — SATU definisi saja ────────────────── */
 .ab-slide-left-enter-active,
 .ab-slide-left-leave-active,
@@ -273,7 +229,6 @@ export default {
     height: auto;          /* hapus fixed height */
     padding: 10px 12px;     /* beri ruang atas bawah */
   }
-  .ab-dots  { display: none; }
   .ab-text  { font-size: 13px; } /* ← turunkan sedikit dari 14px */
   .ab-arrow { display: none; }
 }

@@ -1,5 +1,5 @@
 <template>
-    <AdminLayout title="Live Chat">
+    <AdminLayout title="Live Chat" main-class="overflow-hidden flex flex-col">
 
         <!-- ═══════════════════════════════════════════
              HERO HEADER — sama persis dengan Dashboard
@@ -51,7 +51,7 @@
         <!-- ═══════════════════════════════════════════
              MAIN CHAT AREA — 3-column layout
         ═══════════════════════════════════════════ -->
-        <div class="flex gap-4 h-[calc(100vh-17rem)] min-h-[500px]">
+        <div class="flex gap-4 min-h-0 flex-1 overflow-hidden">
 
             <!-- ── SIDEBAR KIRI ── -->
             <div class="w-72 shrink-0 flex flex-col bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
@@ -810,9 +810,12 @@ export default {
             if (!reason?.trim()) return
             try {
                 await axios.patch(`/chat/sessions/${this.activeSession.uuid}/close`, { reason: reason.trim() })
-                this.activeSession = { ...this.activeSession, status: 'closed' }
+                this.activeSession = { ...this.activeSession, status: 'closed', close_reason: reason.trim() }
                 const idx = this.sessions.findIndex(s => s.uuid === this.activeSession.uuid)
-                if (idx > -1) this.sessions[idx].status = 'closed'
+                if (idx > -1) {
+                    this.sessions[idx].status = 'closed'
+                    this.sessions[idx].close_reason = reason.trim()
+                }
             } catch { alert('Gagal menutup sesi') }
         },
 
