@@ -687,18 +687,6 @@ export default {
                             this.sessions[idx].last_message    = e.message.content
                             this.sessions[idx].last_message_at = e.message.sent_at
                         }
-                        if (e.message.sender_type === 'customer') {
-                            this.playNotifSound()
-                            this.startTitleBlink()
-                            if (Notification.permission === 'granted' && !document.hasFocus()) {
-                                const notif = new Notification(`💬 ${e.message.sender_name || 'Visitor'}`, {
-                                    body: e.message.content,
-                                    icon: '/favicon.ico',
-                                })
-                                notif.onclick = () => { window.focus(); notif.close(); this.stopTitleBlink() }
-                                setTimeout(() => notif.close(), 5000)
-                            }
-                        }
                     }
                 })
                 .listen('.typing.started', (e) => {

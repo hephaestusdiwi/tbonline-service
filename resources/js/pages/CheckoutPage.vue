@@ -700,6 +700,7 @@ export default {
       branches: [],
       selectedBranch: null,
       loadingBranches: false,
+      submitStep: 0,
       form: { name: '', phone: '', email: '', address: '', postal_code: '', notes: '' },
       errors: {},
       destinationSearch: '',
@@ -984,6 +985,7 @@ export default {
         })
         return
       }
+
       if (this.appliedPromo) {
         const shippingCost = this.fulfillmentType === 'pickup' ? 0 : (this.selectedShipping?.cost || 0)
         try {
@@ -995,7 +997,6 @@ export default {
           })
           this.discountAmount = res.data.discount_amount
         } catch (err) {
-          console.log('Validation errors:', err?.response?.data) 
           this.promoError = err?.response?.data?.message || 'Kode promo tidak valid untuk nomor ini.'
           this.appliedPromo = null
           this.discountAmount = 0
@@ -1007,7 +1008,10 @@ export default {
           return
         }
       }
+
       this.isSubmitting = true
+      this.submitStep = 1
+
       try {
         let payload = {
           customer_name:    this.form.name,
@@ -1019,16 +1023,17 @@ export default {
           promo_code:       this.appliedPromo?.code || null,
           fulfillment_type: this.fulfillmentType,
           items: cartStore.state.items.map(item => ({
-              product_id:    item.id,         
-              variant_id:    item.variant_id || null,   
-              product_name:  item.name,
-              variant_label: item.variant_label || null,
-              variant_names: item.variant_names || null,
-              qty:           item.qty,
-              sell_price:    item.sell_price,
-              subtotal:      item.sell_price * item.qty,
+            product_id:    item.id,
+            variant_id:    item.variant_id || null,
+            product_name:  item.name,
+            variant_label: item.variant_label || null,
+            variant_names: item.variant_names || null,
+            qty:           item.qty,
+            sell_price:    item.sell_price,
+            subtotal:      item.sell_price * item.qty,
           })),
         }
+
         if (this.fulfillmentType === 'pickup') {
           payload = {
             ...payload,
@@ -1059,17 +1064,23 @@ export default {
             shipping_custom_note: isCustom ? this.customShippingNote : null,
           }
         }
+
         const response = await axiosInstance.post(`/orders`, payload)
         const orderId = response.data?.data?.invoice_number || response.data?.data?.id || 'N/A'
         this.orderId = orderId
+
+        this.submitStep = 2
         const waNumber = this.storeWhatsapp || '6281293139223'
         window.open(`https://wa.me/${waNumber}?text=${this.buildWhatsAppMessage(orderId)}`, '_blank')
+
         cartStore.clearCart()
         this.showSuccess = true
+
       } catch (err) {
         alert(err?.response?.data?.message || 'Terjadi kesalahan. Coba lagi.')
       } finally {
         this.isSubmitting = false
+        this.submitStep = 0
       }
     },
 
