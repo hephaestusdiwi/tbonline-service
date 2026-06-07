@@ -11,9 +11,9 @@
              <Navbar :title="title"/>
 
              <!-- page content -->
-              <main class="flex-1 overflow-y-auto p-6" :class="mainClass">
+                <main class="flex-1 overflow-y-auto p-6">
                     <slot />
-              </main>
+                </main>
          </div>
     </div>
 </template>
@@ -30,7 +30,7 @@ export default {
      },
      props: {
         title: { type: String, default: 'Dashboard' },
-        mainClass: { type: String, default: 'overflow-y-auto' }  
+        mainClass: { type: String, default: 'overflow-y-auto' }
     }
 }
 </script>

@@ -1,5 +1,5 @@
 <template>
-    <AdminLayout title="Live Chat" main-class="overflow-hidden flex flex-col">
+    <AdminLayout title="Live Chat">
 
         <!-- ═══════════════════════════════════════════
              HERO HEADER — sama persis dengan Dashboard
@@ -51,7 +51,7 @@
         <!-- ═══════════════════════════════════════════
              MAIN CHAT AREA — 3-column layout
         ═══════════════════════════════════════════ -->
-        <div class="flex gap-4 min-h-0 flex-1 overflow-hidden">
+        <div class="flex gap-4 overflow-hidden" style="height: calc(100vh - 280px)">
 
             <!-- ── SIDEBAR KIRI ── -->
             <div class="w-72 shrink-0 flex flex-col bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
@@ -873,7 +873,12 @@ export default {
             }[status] || 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-400 border border-gray-200'
         },
 
-        scrollToBottom() { this.$refs.msgBottom?.scrollIntoView({ behavior: 'smooth' }) },
+        scrollToBottom() {
+            const container = this.$refs.msgContainer
+            if (container) {
+                container.scrollTop = container.scrollHeight
+            }
+        },
 
         fmtTime(iso) {
             if (!iso) return ''

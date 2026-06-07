@@ -78,7 +78,7 @@ class ChatService
     {
         $session->update([
             'status'        => 'closed',
-            'closed_reason' => $reason,
+            'close_reason' => $reason,
             'closed_at'     => now(),
         ]);
 
