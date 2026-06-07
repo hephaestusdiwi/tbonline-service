@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('chat:close-idle')->everyMinute();
+Schedule::command('chat:mark-inactive-visitors')->everyMinute();
