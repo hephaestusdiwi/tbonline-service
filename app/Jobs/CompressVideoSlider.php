@@ -48,14 +48,15 @@ class CompressVideoSlider implements ShouldQueue, ShouldBeUnique
                 'ffmpeg.binaries'  => env('FFMPEG_PATH',  '/usr/bin/ffmpeg'),
                 'ffprobe.binaries' => env('FFPROBE_PATH', '/usr/bin/ffprobe'),
                 'timeout'          => 3600,
-                'ffmpeg.threads'   => 2,
+                'ffmpeg.threads'   => 1,
             ]);
 
             $video  = $ffmpeg->open($rawFullPath);
             $format = new X264('libmp3lame', 'libx264');
             $format
-                ->setKiloBitrate(800)
-                ->setAudioKiloBitrate(128);
+                ->setKiloBitrate(500)    
+                ->setAudioKiloBitrate(96)    
+                ->setAdditionalParameters(['-preset', 'ultrafast']);
 
             $video->save($format, $outputFullPath);
 
