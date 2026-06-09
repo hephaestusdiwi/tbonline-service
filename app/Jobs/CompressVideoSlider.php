@@ -7,6 +7,7 @@ use FFMpeg\FFMpeg;
 use FFMpeg\Format\Video\X264;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -14,24 +15,24 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class CompressVideoSlider implements ShouldQueue
+class CompressVideoSlider implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $timeout = 600;
-    public int $tries = 2;
+    public int $timeout   = 600;
+    public int $tries     = 1;    
+    public int $uniqueFor = 3600;
 
-    /**
-     * Create a new job instance.
-     */
     public function __construct(
         public Slider $slider,
         public string $rawPath
     ) {}
 
-    /**
-     * Execute the job.
-     */
+    public function uniqueId(): string
+    {
+        return (string) $this->slider->id;
+    }
+
     public function handle(): void
     {
         $rawFullPath = Storage::disk('public')->path($this->rawPath);
@@ -59,13 +60,12 @@ class CompressVideoSlider implements ShouldQueue
             $video->save($format, $outputFullPath);
 
             $this->slider->update([
-                'file_path' => $outputRelative,
+                'file_path'     => $outputRelative,
                 'is_processing' => false,
             ]);
+
         } catch (\Throwable $e) {
             Log::error('Video compression failed for slider ' . $this->slider->id . ': ' . $e->getMessage());
-
-            // Gagal kompresi — tetap pakai file raw, tandai selesai
             $this->slider->update(['is_processing' => false]);
         } finally {
             Storage::disk('public')->delete($this->rawPath);
