@@ -52,7 +52,7 @@ class CompressVideoSlider implements ShouldQueue, ShouldBeUnique
             ]);
 
             $video  = $ffmpeg->open($rawFullPath);
-            $format = new X264('aac', 'libx264');
+            $format = new X264('libmp3lame', 'libx264');
             $format
                 ->setKiloBitrate(800)
                 ->setAudioKiloBitrate(128);
