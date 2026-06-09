@@ -971,8 +971,8 @@ export default {
       const message =
         `Halo admin, saya sudah melakukan pemesanan.\n` +
         `Invoice: #${orderId}\n\n` +
-        `🔗 ${invoiceUrl}\n` +
-        `Mohon diproses ya 🙏`
+        ` ${invoiceUrl}\n` +
+        `Mohon diproses ya `
 
       return encodeURIComponent(message)
     },

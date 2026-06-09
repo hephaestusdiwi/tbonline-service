@@ -515,6 +515,13 @@ export default {
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
+@media (max-width: 720px) {
+    .product-name {
+        padding: 5px 10px;
+        font-size: 0.9rem;
+    }
+}
+
 @media (max-width: 640px) {
   .tp-arrow { display: none; }
   .tp-scroller { padding-left: 25px; }
@@ -522,7 +529,6 @@ export default {
 }
 
 @media (max-width: 420px) {
-    .product-name { font-size: 1rem; padding: 15px 10px 10px 10px;}
     .price-main   { font-size: 0.88rem; }
     .price-row {
       margin-top: 10px;

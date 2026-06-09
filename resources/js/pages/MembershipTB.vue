@@ -319,12 +319,12 @@ function buildWAUrl(msg) {
 }
 function sendCheckWA() {
   if (!isPhoneValid.value) return
-  window.open(buildWAUrl(`Halo Admin, saya ingin mengecek poin membership saya.\n\nNomor HP: +62${phoneNumber.value}\n\nMohon bantuannya, terima kasih! 🙏`), '_blank')
+  window.open(buildWAUrl(`Halo Admin, saya ingin mengecek poin membership saya.\n\nNomor HP: +62${phoneNumber.value}\n\nMohon bantuannya, terima kasih! `), '_blank')
   closeModal()
 }
 function sendRegisterWA() {
   if (!isPhoneValid.value) return
-  window.open(buildWAUrl(`Halo Admin, saya ingin mendaftar sebagai member TB Point.\n\nNomor HP: +62${phoneNumber.value}\n\nMohon bantuannya untuk proses pendaftaran, terima kasih! 🙏`), '_blank')
+  window.open(buildWAUrl(`Halo Admin, saya ingin mendaftar sebagai member TB Point.\n\nNomor HP: +62${phoneNumber.value}\n\nMohon bantuannya untuk proses pendaftaran, terima kasih! `), '_blank')
   closeModal()
 }
 </script>

@@ -41,12 +41,8 @@
                 <div class="item-details">
                   <div class="item-name">{{ item.name }}</div>
                     <div class="item-variants" v-if="item.variant_label">
-                      <span
-                        v-for="(variant, idx) in parseVariants(item.variant_label)"
-                        :key="idx"
-                        class="item-variant-line"
-                      >
-                        {{ variant.label }}: <span class="variant-value">{{ variant.value }}</span>
+                      <span class="item-variant-line">
+                        {{ item.variant_label }}: <span class="variant-value">{{ item.variant_names }}</span>
                       </span>
                     </div>
                   <div class="item-price">{{ formatPriceDot(item.sell_price) }}</div>

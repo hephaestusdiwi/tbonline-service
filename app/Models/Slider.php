@@ -11,11 +11,13 @@ class Slider extends Model
         'type',
         'file_path',
         'order',
-        'is_active'
+        'is_active',
+        'is_processing'
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_processing' => 'boolean',
     ];
 
     // Accessor to get the full URL file

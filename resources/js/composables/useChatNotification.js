@@ -43,7 +43,6 @@ function showBrowserNotif(message) {
 export function useChatNotification() {
 
     async function subscribe() {
-        console.log('🔔 subscribe dipanggil')
         if (!window.Echo) return
 
         if ('Notification' in window && Notification.permission === 'default') {
@@ -53,11 +52,9 @@ export function useChatNotification() {
         try {
             const { data } = await axios.get('/chat/sessions')
             const sessions = data.data || data
-            console.log('📋 sessions:', sessions.length)
 
             // Subscribe semua session, bukan cuma active/queued
             sessions.forEach(s => {
-                console.log('📡 subscribe session:', s.uuid, s.status)
                 subscribeSession(s.uuid)
             })
         } catch (e) {

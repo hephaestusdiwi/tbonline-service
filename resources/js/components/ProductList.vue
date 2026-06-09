@@ -540,4 +540,10 @@ export default {
         padding: 8px 4px;
     }
 }
+@media (max-width: 720px) {
+    .product-name {
+        padding: 5px 10px;
+        font-size: 0.9rem;
+    }
+}
 </style>

@@ -352,6 +352,7 @@ export default {
 
             badgeCounts: {
                 pending_orders: 0,
+                pending_chats: 0,
             },
 
             pollTimer: null,
@@ -421,8 +422,9 @@ export default {
                         },
                         {
                             icon: 'comments', label: 'Live Chat',
+                            badgeKey: 'pending_chats', 
                             children: [
-                                { path: '/admin/chat', label: 'Chat Dashboard' },
+                                { path: '/admin/chat',       label: 'Chat Dashboard', badgeKey: 'pending_chats' },
                                 { path: '/admin/complaints', label: 'Komplain'},
                             ]
                         },
@@ -561,9 +563,29 @@ export default {
                 console.warn('[Sidebar] Gagal fetch pending orders:', e)
             }
         },
+        async fetchPendingChats() {
+            try {
+                const token = getToken()
+                const res = await fetch('/api/chat/sessions', {
+                    headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+                })
+                if (!res.ok) return
+                const data = await res.json()
+                const sessions = data.data || data
+                this.badgeCounts.pending_chats = sessions.filter(s => 
+                    ['queued', 'active'].includes(s.status)
+                ).length
+            } catch (e) {
+                console.warn('[Sidebar] Gagal fetch pending chats:', e)
+            }
+        },
         startPolling() {
             this.fetchPendingOrders()
-            this.pollTimer = setInterval(this.fetchPendingOrders, POLL_INTERVAL)
+            this.fetchPendingChats() 
+            this.pollTimer = setInterval(() => {
+                this.fetchPendingOrders()
+                this.fetchPendingChats()
+            }, POLL_INTERVAL)
         },
         stopPolling() {
             if (this.pollTimer) { clearInterval(this.pollTimer); this.pollTimer = null }

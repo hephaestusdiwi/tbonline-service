@@ -7,6 +7,7 @@ use App\Models\Slider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Jobs\CompressVideoSlider;
 
 class SliderController extends Controller
 {
@@ -65,7 +66,7 @@ class SliderController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'type'  => 'required|in:image,video',
-            'file'  => 'required|file|max:51200',
+            'file'  => 'required|file|max:204800',
             'order' => 'nullable|integer',
         ]);
 
@@ -80,18 +81,31 @@ class SliderController extends Controller
             return response()->json(['message' => 'File video harus mp4 atau webm'], 422);
         }
 
-        // Konversi ke WebP jika tipe image, simpan langsung jika video
-        $path = $request->type === 'image'
-            ? $this->convertAndStoreAsWebp($file)
-            : $file->store('sliders', 'public');
+        if ($request->type === 'image') {
+            $path = $this->convertAndStoreAsWebp($file);
 
-        $slider = Slider::create([
-            'title'     => $request->title,
-            'type'      => $request->type,
-            'file_path' => $path,
-            'order'     => $request->order ?? 0,
-            'is_active' => true,
-        ]);
+            $slider = Slider::create([
+                'title'         => $request->title,
+                'type'          => 'image',
+                'file_path'     => $path,
+                'order'         => $request->order ?? 0,
+                'is_active'     => true,
+                'is_processing' => false,
+            ]);
+        } else {
+            $rawPath = $file->store('sliders/raw', 'public');
+
+            $slider = Slider::create([
+                'title'         => $request->title,
+                'type'          => 'video',
+                'file_path'     => $rawPath,
+                'order'         => $request->order ?? 0,
+                'is_active'     => true,
+                'is_processing' => true,
+            ]);
+
+            CompressVideoSlider::dispatch($slider, $rawPath);
+        }
 
         return response()->json($slider, 201);
     }
@@ -105,27 +119,35 @@ class SliderController extends Controller
             'title'     => 'sometimes|required|string|max:255',
             'order'     => 'nullable|integer',
             'is_active' => 'nullable|boolean',
-            'file'      => 'nullable|file|max:51200',
+            'file'      => 'nullable|file|max:204800',
         ]);
 
         if ($request->hasFile('file')) {
-            // Hapus file lama
             Storage::disk('public')->delete($slider->file_path);
 
             $file      = $request->file('file');
             $extension = strtolower($file->getClientOriginalExtension());
             $isVideo   = in_array($extension, ['mp4', 'webm']);
-            $type      = $isVideo ? 'video' : 'image';
 
-            // Konversi ke WebP jika gambar
-            $path = $isVideo
-                ? $file->store('sliders', 'public')
-                : $this->convertAndStoreAsWebp($file);
+            if ($isVideo) {
+                $rawPath = $file->store('sliders/raw', 'public');
 
-            $slider->update([
-                'type'      => $type,
-                'file_path' => $path,
-            ]);
+                $slider->update([
+                    'type'          => 'video',
+                    'file_path'     => $rawPath,
+                    'is_processing' => true,
+                ]);
+
+                CompressVideoSlider::dispatch($slider, $rawPath);
+            } else {
+                $path = $this->convertAndStoreAsWebp($file);
+
+                $slider->update([
+                    'type'          => 'image',
+                    'file_path'     => $path,
+                    'is_processing' => false,
+                ]);
+            }
         }
 
         $slider->update([

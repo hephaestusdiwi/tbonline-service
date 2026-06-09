@@ -343,7 +343,6 @@
   margin: 0 0 8px;
 }
 
-/* btn-checkout sudah ada, tapi kalau perlu override width */
 .empty-state .btn-checkout {
   width: auto;
   padding: 14px 40px;
@@ -352,10 +351,73 @@
 /* ── Responsive ── */
 @media (max-width: 860px) {
   .cart-layout { grid-template-columns: 1fr; }
-  .cart-header { flex-direction: column; gap: 10px; }
+  .cart-header { flex-wrap: nowrap;
+  flex-direction: row; gap: 10px; }
+  .cart-title {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+    .cart-item {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
 }
 
 @media (max-width: 600px) {
   .cart-item { flex-wrap: wrap; }
   .item-qty-wrap { margin-left: 88px; /* align under details, after img */ }
+  .item-name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+}
+
+
+@media (max-width: 480px) {
+  .cart-container {
+    padding: 20px 16px;
+  }
+
+  .cart-page .page-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .cart-item {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .item-img {
+    width: 60px;
+    height: 60px;
+  }
+
+  .item-details {
+    padding-right: 36px;
+  }
+
+  .item-qty-wrap {
+    margin-left: 72px;
+  }
+
+  .summary-box {
+    padding: 16px;
+  }
+
+  .btn-checkout {
+    padding: 14px;
+    font-size: 0.8rem;
+  }
+
+  .empty-state {
+    padding: 60px 20px;
+  }
+
+  .empty-state .btn-checkout {
+    width: 100%;
+    padding: 14px 20px;
+  }
 }

@@ -127,8 +127,17 @@
                                 <div class="relative w-20 h-12 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0">
                                     <img v-if="slider.type === 'image'" :src="slider.file_url" class="w-full h-full object-cover" />
                                     <video v-else :src="slider.file_url" class="w-full h-full object-cover" />
-                                    <div class="absolute bottom-1 right-1 w-5 h-5 rounded-md flex items-center justify-center"
-                                         :class="slider.type === 'image' ? 'bg-blue-500' : 'bg-amber-500'">
+
+                                    <!-- Badge processing -->
+                                    <div v-if="slider.is_processing"
+                                        class="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                        <span class="text-[9px] font-bold text-white text-center leading-tight px-1">
+                                            ⏳ Processing
+                                        </span>
+                                    </div>
+
+                                    <div v-else class="absolute bottom-1 right-1 w-5 h-5 rounded-md flex items-center justify-center"
+                                        :class="slider.type === 'image' ? 'bg-blue-500' : 'bg-amber-500'">
                                         <svg v-if="slider.type === 'image'" class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                                         <svg v-else class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                                     </div>
@@ -540,12 +549,23 @@ export default {
     mounted() {
         document.title = 'Sliders - Two Brothers Vape System'
         this.fetchSliders()
+
+        this._pollInterval = setInterval(() => {
+            if (this.sliders.some(s => s.is_processing)) {
+                this.fetchSliders(false) 
+            }
+        }, 5000)
+
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 if (this.showPreview) this.closePreview()
                 else if (this.showModal) this.closeModal()
             }
         })
+    },
+
+    beforeUnmount() {
+        clearInterval(this._pollInterval)
     },
 
     watch: {
