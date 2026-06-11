@@ -422,8 +422,7 @@
   white-space: nowrap;
 }
 .pd-chip:hover:not(:disabled) {
-  border-color: var(--ink);
-  color: var(--ink);
+  border-color: var(--tb-color);
 }
 .pd-chip--active {
   border-color: var(--tb-color);

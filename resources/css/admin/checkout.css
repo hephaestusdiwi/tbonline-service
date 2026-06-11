@@ -113,11 +113,9 @@
 
 .card-title {
     font-family: "Poppins", sans-serif;
-    font-size: 1rem;
-    font-weight: 300;
+    font-size: 1.1rem;
+    font-weight: 500;
     margin: 0;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
     margin: 0;
 }
 
@@ -142,7 +140,7 @@
     background: transparent;
     color: #333;
     font-size: 0.84rem;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     font-family: inherit;
@@ -450,13 +448,13 @@
 }
 
 .search-input-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-    border: 1.5px solid #d1d5db;
-    border-radius: 8px;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  overflow: hidden;
 }
 
 .search-input-wrap:focus-within {
@@ -469,27 +467,32 @@
 }
 
 .search-icon {
-    position: absolute;
-    left: 12px;
-    color: #aaa;
-    pointer-events: none;
+  flex-shrink: 0;
+  color: #aaa;
+  padding: 0 8px 0 12px;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  min-width: 35px;   
+  height: 100%;
 }
 
 .form-input.search-field {
-    border: none;
-    border-radius: 0;
-    padding: 10px 36px;
-    box-shadow: none;
+  border: none;
+  border-radius: 0;
+  padding: 10px 36px 10px 0;
+  box-shadow: none;
+  flex: 1;
+  min-width: 0;
 }
 
 .form-label-static {
     font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    font-weight: 400;
+    letter-spacing: 0.02em;
     color: #555;
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .form-input.search-field:focus {
@@ -817,6 +820,10 @@
     top: 80px;
 }
 
+.summary-header {
+  display: none; 
+}
+
 .summary-title {
     font-weight: 700;
     font-size: 0.95rem;
@@ -973,15 +980,14 @@
 }
 
 .total-label {
-    font-size: 0.82rem;
-    font-weight: 700;
-    text-transform: uppercase;
+    font-size: 1.05rem;
+    font-weight: 600;
     letter-spacing: 0.06em;
 }
 
 .total-val {
     font-size: 1.15rem;
-    font-weight: 900;
+    font-weight: 500;
     color: #333;
 }
 
@@ -1183,10 +1189,9 @@
     background: #333;
     color: #fff;
     border: none;
-    font-size: 0.78rem;
-    font-weight: 500;
+    font-size: 0.88rem;
+    font-weight: 300;
     letter-spacing: 0.06em;
-    text-transform: uppercase;
     cursor: pointer;
     transition: background 0.2s;
     white-space: nowrap;
@@ -1840,7 +1845,104 @@
   transform: translateY(0);
 }
 
+.mobile-order-btn-wrap {
+  display: none;
+}
+
 @media (max-width: 480px) {
+
+  html, body {
+    overflow-x: hidden;
+  }
+
+  .left-col,
+  .right-col,
+  .form-card,
+  .summary-card {
+    overflow-x: hidden;
+  }
+
+  .destination-dropdown {
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
+
+  .fulfillment-toggle {
+    width: 100%;
+  }
+  
+  .fulfillment-btn {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .summary-title {
+    display: none;
+  }
+
+  .summary-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: #fdf1f1;
+    border-bottom: 1px solid #f0e0e0;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 10px 10px 0 0;
+  }
+
+  .summary-header-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #BD2028;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+
+  .summary-toggle-label {
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: #BD2028;
+  }
+
+  .summary-header-total {
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: #1a1a1a;
+  }
+
+  .summary-chevron {
+    stroke: #BD2028;
+    transition: transform 0.3s ease;
+    transform: rotate(-90deg); /* default: collapsed → panah ke kanan */
+  }
+
+  .summary-chevron.open {
+    transform: rotate(0deg); /* expanded → panah ke bawah */
+  }
+
+  /* Body collapsed by default di mobile */
+  .summary-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+  }
+
+  .summary-body.expanded {
+    max-height: 2000px; /* cukup besar untuk semua konten */
+  }
+
+  .mobile-order-btn-wrap {
+    display: block;
+    padding: 16px 12px 32px;
+  }
+
+  .desktop-order-btn-wrap {
+    display: none;
+  }
 
   /* Hard lock horizontal overflow */
   .checkout-page {
@@ -1905,14 +2007,16 @@
     font-size: 0.82rem;
     white-space: nowrap;
     flex-shrink: 0;
+    font-weight: 400;
   }
 
   .sum-name {
-    font-size: 0.74rem;
+    font-size: 0.90rem;
     white-space: normal;
     word-break: break-word;
     overflow-wrap: break-word;
-    margin-bottom: 3px;
+    padding: 5px 2px;
+    font-weight: 500;
   }
 
   .sum-subtitle {
@@ -1947,7 +2051,7 @@
   }
 
   .total-val {
-    font-size: 1rem;
+    font-size: 1.1rem;
   }
 
   /* ── Promo ── */
@@ -1994,7 +2098,7 @@
 
   /* ── Fulfillment toggle ── */
   .fulfillment-btn {
-    padding: 13px 6px;
+    padding: 20px 12px;
     font-size: 0.76rem;
     gap: 5px;
   }

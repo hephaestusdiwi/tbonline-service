@@ -2,25 +2,27 @@
     <transition name="agegate-fade">
         <div v-if="visible" class="agegate-overlay">
             <div class="agegate-card">
-                <!-- Logo -->
                 <div class="agegate-logo-wrap">
                     <img v-if="logoUrl" :src="logoUrl" alt="Logo" class="agegate-logo" />
                     <span v-else class="agegate-logo-text">{{ siteName || 'Store' }}</span>
                 </div>
 
-                <!-- Heading -->
                 <h2 class="agegate-title">Apakah kamu sudah berusia 21 tahun ke atas?</h2>
                 <p class="agegate-desc">
                     Situs ini berisi produk dengan nikotin dan hanya untuk pengguna dewasa (21+).
                 </p>
 
-                <!-- Buttons -->
                 <button class="agegate-btn agegate-btn--yes" @click="confirm">
                     YA, SAYA SUDAH 21+
                 </button>
                 <button class="agegate-btn agegate-btn--no" @click="deny">
                     SAYA BELUM 21
                 </button>
+
+                <!-- Peringatan muncul inline setelah tombol -->
+                <p v-if="denied" class="agegate-warning">
+                    Maaf, Anda harus berusia minimal 21 tahun untuk mengakses situs ini.
+                </p>
 
                 <hr class="agegate-divider" />
 
@@ -44,26 +46,23 @@ export default {
     data() {
         return {
             visible: false,
+            denied: false,
             logoUrl: null,
             siteName: '',
         }
     },
 
     async mounted() {
-        // Hanya tampil di mobile
         if (window.innerWidth > 768) return
+        if (localStorage.getItem(STORAGE_KEY)) return
 
-        // Kalau sudah pernah konfirmasi, skip
-        if (sessionStorage.getItem(STORAGE_KEY)) return
-
-        // Ambil logo & site name dari settings
         try {
             const { fetchSettings, settings } = useSiteSettings()
             await fetchSettings()
             const s = settings.value
-            if (s?.site_logo_footer?.value)      this.logoUrl  = s.site_logo_footer.value
-            else if (s?.site_logo?.value)        this.logoUrl  = s.site_logo.value
-            if (s?.site_name?.value)             this.siteName = s.site_name.value
+            if (s?.site_logo_footer?.value)  this.logoUrl  = s.site_logo_footer.value
+            else if (s?.site_logo?.value)    this.logoUrl  = s.site_logo.value
+            if (s?.site_name?.value)         this.siteName = s.site_name.value
         } catch (e) {
             console.error('AgeGate: failed to load settings', e)
         }
@@ -74,13 +73,12 @@ export default {
 
     methods: {
         confirm() {
-            sessionStorage.setItem(STORAGE_KEY, '1')
+            localStorage.setItem(STORAGE_KEY, '1')
             this.close()
         },
 
         deny() {
-            // Redirect ke Google atau halaman lain
-            window.location.href = 'https://www.google.com'
+            this.denied = true
         },
 
         close() {
@@ -92,6 +90,15 @@ export default {
 </script>
 
 <style scoped>
+.agegate-warning {
+    font-size: 14px;
+    font-weight: 500;
+    color: #BD2028;
+    margin: 0;
+    line-height: 1.5;
+    text-align: center;
+}
+
 .agegate-overlay {
     font-family: 'Poppins', sans-serif;
     position: fixed;
@@ -136,7 +143,7 @@ export default {
 
 .agegate-title {
     font-size: 20px;
-    font-weight: 600;
+    font-weight: 400;
     color: #111;
     margin: 0;
     line-height: 1.35;
@@ -150,11 +157,10 @@ export default {
 }
 
 .agegate-btn {
-    width: 100%;
     padding: 15px 20px;
     border-radius: 8px;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 500;
     letter-spacing: 0.04em;
     cursor: pointer;
     transition: opacity 0.15s ease;

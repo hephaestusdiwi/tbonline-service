@@ -1,7 +1,13 @@
 <template>
   <nav class="navbar" :class="{ 'menu-open': mobileOpen }">
+    <!-- 
+      FIX: Hapus v-if dari sini. AnnouncementBar selalu di-mount,
+      visibility dikontrol dari dalam komponen itu sendiri via v-if items.length.
+      Kalau v-if di sini, Vue bisa destroy parent node saat Transition
+      AnnouncementBar masih jalan → insertBefore error di mobile.
+    -->
     <AnnouncementBar
-      v-if="mounted && showAnnouncement"
+      :enabled="showAnnouncement"
       bg-color="#000000"
       text-color="#ffffff"
       :interval="4000"
@@ -107,7 +113,7 @@
 
 <script>
 import { ref, onMounted, computed } from 'vue'
-import { useRoute } from 'vue-router' 
+import { useRoute } from 'vue-router'
 import axios from '../axios.js'
 import AnnouncementBar from './AnnouncementBar.vue'
 import { cartStore } from '../store/cartStore'
@@ -123,12 +129,11 @@ export default {
     const mobileOpen     = ref(false)
     const searchIconRef  = ref(null)
     const searchIconRect = ref(null)
-    const route = useRoute()
+    const route          = useRoute()
 
+    // Diteruskan sebagai prop ke AnnouncementBar,
+    // bukan sebagai v-if yang destroy komponen dari luar
     const showAnnouncement = computed(() => !route.meta.hideAnnouncement)
-
-    const mounted = ref(false)
-    onMounted(() => { mounted.value = true })
 
     const { siteLogo, siteName, fetchSettings } = useSiteSettings()
     fetchSettings()
@@ -159,7 +164,6 @@ export default {
       closeMobile,
       siteLogo,
       siteName,
-      mounted,
       showAnnouncement,
     }
   },
@@ -197,6 +201,8 @@ export default {
   top: 0;
   z-index: 50;
   box-shadow: 0 1px 0 rgba(0,0,0,0.12);
+  /* Jaga konten tidak ketimpa status bar di mobile Safari (notch/dynamic island) */
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 .navbar-inner {
@@ -287,7 +293,6 @@ export default {
 }
 
 /* ─── Hamburger ─────────────────────────────────────────────── */
-/* Show only on mobile */
 .hamburger {
   display: flex;
   flex-direction: column;
@@ -317,9 +322,9 @@ export default {
 .apple-overlay {
   position: fixed;
   inset: 0;
-  z-index: 49;                      /* just below navbar z-50 */
-  background: #f5f5f7;              /* Apple's off-white */
-  padding: 5rem 2rem 2.5rem;        /* top clears the navbar bar */
+  z-index: 49;
+  background: #f5f5f7;
+  padding: 5rem 2rem 2.5rem;
   padding-top: calc(5rem + env(safe-area-inset-top, 0px));
   display: flex;
   flex-direction: column;
@@ -358,7 +363,7 @@ export default {
 .apple-link {
   display: block;
   font-family: 'SF Pro Display', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 2rem;                  /* ~32px — Apple's nav font size */
+  font-size: 2rem;
   font-weight: 600;
   letter-spacing: -0.025em;
   line-height: 1.2;
@@ -372,8 +377,8 @@ export default {
   transition: color 0.15s;
 }
 
-.apple-link:active     { color: #BD2028; }
-.apple-link--active    { color: #BD2028; }
+.apple-link:active  { color: #BD2028; }
+.apple-link--active { color: #BD2028; }
 
 @keyframes link-in {
   to { opacity: 1; transform: translateY(0); }

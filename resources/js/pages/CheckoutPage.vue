@@ -34,7 +34,7 @@
         <!-- STEP 1: Fulfillment Toggle -->
         <div class="form-card">
           <div class="card-head">
-            <h2 class="card-title">Cara Terima</h2>
+            <h2 class="card-title">Metode Pembelian</h2>
           </div>
           <div class="fulfillment-toggle">
             <button
@@ -345,261 +345,8 @@
           </div>
         </div>
 
-      </div>
-
-      <!-- RIGHT: Summary -->
-      <div class="right-col">
-        <div class="summary-card">
-          <h2 class="summary-title">Ringkasan Pesanan</h2>
-
-          <div class="summary-items">
-            <div v-for="item in cart.state.items" :key="item.id" class="sum-item">
-
-              <!-- Image -->
-              <div class="sum-img">
-                <img v-if="item.photo_1" :src="item.photo_1" :alt="item.name"/>
-                <div v-else class="sum-no-img">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
-                    <rect x="3" y="3" width="18" height="18" rx="2"/>
-                    <circle cx="8.5" cy="8.5" r="1.5"/>
-                    <polyline points="21 15 16 10 5 21"/>
-                  </svg>
-                </div>
-                <!-- Qty badge di pojok bawah kiri -->
-                <span class="sum-qty-corner">{{ item.qty }}</span>
-              </div>
-
-              <!-- Info -->
-              <div class="sum-info">
-                <p class="sum-name">{{ item.name }}</p>
-                <p v-if="item.variant_label && item.variant_names" class="sum-subtitle">
-                  {{ item.variant_label }}: {{ item.variant_names }}
-                </p>
-                <!-- Variant pills -->
-                <div v-if="item.variant_names" class="sum-variant-pills">
-                  <span
-                    v-for="v in item.variant_names.split(',')"
-                    :key="v"
-                    class="sum-pill"
-                  >{{ v.trim() }} ↓</span>
-                </div>
-                <!-- Qty row -->
-                <div class="sum-qty-row">
-                  <span class="sum-qty-label">Qty {{ item.qty }}</span>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10">
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
-                </div>
-              </div>
-
-              <!-- Price -->
-              <span class="sum-price">{{ formatPrice(item.sell_price * item.qty) }}</span>
-            </div>
-          </div>
-
-          <div class="summary-divider"/>
-
-          <div class="price-rows">
-            <div class="price-row">
-              <span>Subtotal</span>
-              <span>{{ formatPrice(cart.totalPrice) }}</span>
-            </div>
-            <div class="price-row">
-              <span>{{ fulfillmentType === 'pickup' ? 'Ambil di toko' : 'Ongkos Kirim' }}</span>
-              <template v-if="fulfillmentType === 'pickup'">
-                <span class="pickup-free-badge">GRATIS</span>
-              </template>
-              <template v-else-if="isCustomShipping">
-                <span class="ongkir-note">Dikonfirmasi via WA</span>
-              </template>
-              <template v-else>
-                <span v-if="selectedShipping" class="shipping-cost-val">{{ formatPrice(selectedShipping.cost) }}</span>
-                <span v-else class="ongkir-note">Belum dipilih</span>
-              </template>
-            </div>
-            <div v-if="appliedPromo" class="price-row discount-row">
-              <span>Diskon ({{ appliedPromo.code }})</span>
-              <span class="discount-val">− {{ formatPrice(discountAmount) }}</span>
-            </div>
-            <div v-if="fulfillmentType === 'delivery' && selectedShipping && !isCustomShipping" class="price-row courier-detail-row">
-              <span class="courier-detail-label">{{ selectedShipping.code.toUpperCase() }} {{ selectedShipping.service }}</span>
-              <span class="courier-detail-etd">est. {{ selectedShipping.etd }}</span>
-            </div>
-            <div v-if="fulfillmentType === 'delivery' && isCustomShipping" class="price-row courier-detail-row">
-              <span class="courier-detail-label">Atur Sendiri</span>
-              <span class="courier-detail-etd">via WhatsApp</span>
-            </div>
-            <div v-if="fulfillmentType === 'pickup' && selectedBranch" class="price-row courier-detail-row">
-              <span class="courier-detail-label">{{ selectedBranch.name }}</span>
-              <span class="courier-detail-etd">Ambil langsung</span>
-            </div>
-          </div>
-
-          <div class="summary-divider"/>
-
-          <div class="total-row">
-            <span class="total-label">Total</span>
-            <span class="total-val">{{ formatPrice(grandTotal) }}</span>
-          </div>
-          <p v-if="fulfillmentType === 'delivery' && !selectedShipping && !isCustomShipping" class="total-note">
-            *Belum termasuk ongkos kirim
-          </p>
-          <p v-if="fulfillmentType === 'delivery' && isCustomShipping" class="total-note">
-            *Belum termasuk ongkos kirim (dikonfirmasi via WhatsApp)
-          </p>
-
-          <!-- Promo — dipindah ke dalam summary card -->
-          <div class="summary-promo">
-            <div v-if="!appliedPromo" class="promo-input-row">
-              <div class="promo-field-wrap" :class="{ 'has-error': promoError }">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" class="promo-icon">
-                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                  <line x1="7" y1="7" x2="7.01" y2="7"/>
-                </svg>
-                <input
-                  v-model="promoCode"
-                  type="text"
-                  class="promo-field"
-                  placeholder="Kode promo"
-                  :disabled="isCheckingPromo"
-                  @keyup.enter="applyPromo"
-                  style="text-transform: uppercase"
-                />
-              </div>
-              <button class="btn-apply-promo" @click="applyPromo" :disabled="!promoCode.trim() || isCheckingPromo">
-                <span v-if="isCheckingPromo" class="spinner"/>
-                <span v-else>Pakai</span>
-              </button>
-            </div>
-            <p v-if="promoError" class="promo-error">{{ promoError }}</p>
-            <div v-if="appliedPromo" class="promo-applied">
-              <div class="promo-applied-left">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
-                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                  <line x1="7" y1="7" x2="7.01" y2="7"/>
-                </svg>
-                <span class="promo-applied-code">{{ appliedPromo.code }}</span>
-                <span class="promo-applied-save">hemat {{ formatPrice(discountAmount) }}</span>
-              </div>
-              <button class="promo-remove-btn" @click="removePromo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <template id="loyalty-widget-snippet">
- 
-            <!-- Loyalty Point Info Box -->
-            <div class="loyalty-section">
-              <div class="loyalty-header">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-                <span class="loyalty-label">Loyalty Point</span>
-              </div>
-          
-              <!-- Cek saldo: input nomor HP -->
-              <div v-if="!loyaltyChecked" class="loyalty-check-row">
-                <p class="loyalty-hint">Masukkan nomor HP untuk cek saldo point kamu</p>
-                <div class="loyalty-input-row">
-                  <div class="loyalty-field-wrap" :class="{ 'has-error': loyaltyError }">
-                    <span class="input-prefix" style="font-size:12px">+62</span>
-                    <input
-                      v-model="loyaltyPhone"
-                      type="tel"
-                      class="loyalty-field"
-                      placeholder="8xx xxxx xxxx"
-                      :disabled="loyaltyLoading"
-                      @input="loyaltyPhone = loyaltyPhone.replace(/\D/g, '')"
-                      @keyup.enter="checkLoyaltyBalance"
-                    />
-                  </div>
-                  <button
-                    class="btn-check-loyalty"
-                    @click="checkLoyaltyBalance"
-                    :disabled="loyaltyPhone.length < 8 || loyaltyLoading"
-                  >
-                    <span v-if="loyaltyLoading" class="spinner"/>
-                    <span v-else>Cek</span>
-                  </button>
-                </div>
-                <p v-if="loyaltyError" class="loyalty-error">{{ loyaltyError }}</p>
-              </div>
-          
-              <!-- Hasil: tampilkan saldo -->
-              <div v-else class="loyalty-result">
-                <div class="loyalty-balance-box">
-                  <div class="loyalty-balance-left">
-                    <span class="loyalty-balance-label">Saldo Point kamu</span>
-                    <span class="loyalty-balance-phone">{{ loyaltyData.phone }}</span>
-                  </div>
-                  <div class="loyalty-balance-right">
-                    <span class="loyalty-balance-value">{{ loyaltyData.balance.toLocaleString('id-ID') }}</span>
-                    <span class="loyalty-balance-unit">point</span>
-                  </div>
-                </div>
-          
-                <!-- Alert: point segera kadaluarsa -->
-                <div v-if="loyaltyData.expiring_soon > 0" class="loyalty-expiring-alert">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
-                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                  </svg>
-                  <span>{{ loyaltyData.expiring_soon.toLocaleString('id-ID') }} point akan kadaluarsa dalam 30 hari</span>
-                </div>
-          
-                <!-- Info point yang akan didapat dari order ini -->
-                <div class="loyalty-earn-preview">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
-                    <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
-                  </svg>
-                  <span>Dari pesanan ini kamu akan mendapat <strong>+{{ pointsWillEarn.toLocaleString('id-ID') }} point</strong> (berlaku 3 bulan)</span>
-                </div>
-          
-                <!-- Info cara pakai -->
-                <div class="loyalty-redeem-info">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                  <span>Untuk menggunakan point, hubungi staff kami via WhatsApp. 1 point = Rp 1 diskon.</span>
-                </div>
-          
-                <!-- Riwayat singkat (3 terakhir) -->
-                <div v-if="loyaltyData.history && loyaltyData.history.length > 0" class="loyalty-history">
-                  <p class="loyalty-history-title">Riwayat Terakhir</p>
-                  <div
-                    v-for="h in loyaltyData.history.slice(0, 3)"
-                    :key="h.id"
-                    class="loyalty-history-item"
-                  >
-                    <div class="loyalty-history-left">
-                      <span class="loyalty-history-type" :class="h.type">
-                        {{ h.type === 'earn' ? '+ Earn' : h.type === 'expire' ? '− Hangus' : '− Pakai' }}
-                      </span>
-                      <span class="loyalty-history-desc">{{ h.description }}</span>
-                    </div>
-                    <div class="loyalty-history-right">
-                      <span class="loyalty-history-points" :class="h.points > 0 ? 'positive' : 'negative'">
-                        {{ h.points > 0 ? '+' : '' }}{{ h.points.toLocaleString('id-ID') }}
-                      </span>
-                      <span class="loyalty-history-date">{{ h.created_at }}</span>
-                    </div>
-                  </div>
-                </div>
-          
-                <!-- Tombol reset -->
-                <button class="loyalty-reset-btn" @click="resetLoyalty">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11">
-                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                  </svg>
-                  Ganti nomor
-                </button>
-              </div>
-            </div>
-          
-          </template>
-
+        <!-- Mobile-only order button — HARUS DI SINI, paling bawah left-col -->
+        <div class="mobile-order-btn-wrap">
           <button class="btn-order" @click="submitOrder" :disabled="isSubmitting">
             <transition name="btn-fade" mode="out-in">
               <span v-if="isSubmitting" key="loading" class="btn-submitting">
@@ -620,6 +367,186 @@
           </button>
           <p class="wa-note">Pesananmu akan tersimpan & dikirim ke WhatsApp kami untuk konfirmasi.</p>
         </div>
+
+      </div>
+
+      <!-- RIGHT: Summary -->
+      <div class="right-col">
+        <div class="summary-card">
+
+          <!-- Header toggle (hanya aktif di mobile) -->
+          <div class="summary-header" @click="summaryExpanded = !summaryExpanded">
+            <div class="summary-header-left">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"
+                class="summary-chevron" :class="{ open: summaryExpanded }">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+              <span class="summary-toggle-label">Ringkasan Pesanan</span>
+            </div>
+            <span class="summary-header-total">{{ formatPrice(grandTotal) }}</span>
+          </div>
+
+          <!-- COLLAPSIBLE BODY -->
+          <div class="summary-body" :class="{ expanded: summaryExpanded }">
+
+            <h2 class="summary-title">Ringkasan Pesanan</h2>
+
+            <div class="summary-items">
+              <div v-for="item in cart.state.items" :key="item.id" class="sum-item">
+                <div class="sum-img">
+                  <img v-if="item.photo_1" :src="item.photo_1" :alt="item.name"/>
+                  <div v-else class="sum-no-img">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="18" height="18">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5"/>
+                      <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                  </div>
+                  <span class="sum-qty-corner">{{ item.qty }}</span>
+                </div>
+                <div class="sum-info">
+                  <p class="sum-name">{{ item.name }}</p>
+                  <p v-if="item.variant_label && item.variant_names" class="sum-subtitle">
+                    {{ item.variant_label }}: {{ item.variant_names }}
+                  </p>
+                  <div v-if="item.variant_names" class="sum-variant-pills">
+                    <span
+                      v-for="v in item.variant_names.split(',')"
+                      :key="v"
+                      class="sum-pill"
+                    >{{ v.trim() }} ↓</span>
+                  </div>
+                  <div class="sum-qty-row">
+                    <span class="sum-qty-label">Qty {{ item.qty }}</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </div>
+                </div>
+                <span class="sum-price">{{ formatPrice(item.sell_price * item.qty) }}</span>
+              </div>
+            </div>
+
+            <!-- Promo -->
+            <div class="summary-promo">
+              <div v-if="!appliedPromo" class="promo-input-row">
+                <div class="promo-field-wrap" :class="{ 'has-error': promoError }">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" class="promo-icon">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                    <line x1="7" y1="7" x2="7.01" y2="7"/>
+                  </svg>
+                  <input
+                    v-model="promoCode"
+                    type="text"
+                    class="promo-field"
+                    placeholder="Kode promo"
+                    :disabled="isCheckingPromo"
+                    @keyup.enter="applyPromo"
+                    style="text-transform: uppercase"
+                  />
+                </div>
+                <button class="btn-apply-promo" @click="applyPromo" :disabled="!promoCode.trim() || isCheckingPromo">
+                  <span v-if="isCheckingPromo" class="spinner"/>
+                  <span v-else>Pakai</span>
+                </button>
+              </div>
+              <p v-if="promoError" class="promo-error">{{ promoError }}</p>
+              <div v-if="appliedPromo" class="promo-applied">
+                <div class="promo-applied-left">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                    <line x1="7" y1="7" x2="7.01" y2="7"/>
+                  </svg>
+                  <span class="promo-applied-code">{{ appliedPromo.code }}</span>
+                  <span class="promo-applied-save">hemat {{ formatPrice(discountAmount) }}</span>
+                </div>
+                <button class="promo-remove-btn" @click="removePromo">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="summary-divider"/>
+
+            <div class="price-rows">
+              <div class="price-row">
+                <span>Subtotal</span>
+                <span>{{ formatPrice(cart.totalPrice) }}</span>
+              </div>
+              <div class="price-row">
+                <span>{{ fulfillmentType === 'pickup' ? 'Ambil di toko' : 'Ongkos Kirim' }}</span>
+                <template v-if="fulfillmentType === 'pickup'">
+                  <span class="pickup-free-badge">GRATIS</span>
+                </template>
+                <template v-else-if="isCustomShipping">
+                  <span class="ongkir-note">Dikonfirmasi via WA</span>
+                </template>
+                <template v-else>
+                  <span v-if="selectedShipping" class="shipping-cost-val">{{ formatPrice(selectedShipping.cost) }}</span>
+                  <span v-else class="ongkir-note">Belum dipilih</span>
+                </template>
+              </div>
+              <div v-if="appliedPromo" class="price-row discount-row">
+                <span>Diskon ({{ appliedPromo.code }})</span>
+                <span class="discount-val">− {{ formatPrice(discountAmount) }}</span>
+              </div>
+              <div v-if="fulfillmentType === 'delivery' && selectedShipping && !isCustomShipping" class="price-row courier-detail-row">
+                <span class="courier-detail-label">{{ selectedShipping.code.toUpperCase() }} {{ selectedShipping.service }}</span>
+                <span class="courier-detail-etd">est. {{ selectedShipping.etd }}</span>
+              </div>
+              <div v-if="fulfillmentType === 'delivery' && isCustomShipping" class="price-row courier-detail-row">
+                <span class="courier-detail-label">Atur Sendiri</span>
+                <span class="courier-detail-etd">via WhatsApp</span>
+              </div>
+              <div v-if="fulfillmentType === 'pickup' && selectedBranch" class="price-row courier-detail-row">
+                <span class="courier-detail-label">{{ selectedBranch.name }}</span>
+                <span class="courier-detail-etd">Ambil langsung</span>
+              </div>
+            </div>
+
+            <div class="summary-divider"/>
+
+            <div class="total-row">
+              <span class="total-label">Total</span>
+              <span class="total-val">{{ formatPrice(grandTotal) }}</span>
+            </div>
+            <p v-if="fulfillmentType === 'delivery' && !selectedShipping && !isCustomShipping" class="total-note">
+              *Belum termasuk ongkos kirim
+            </p>
+            <p v-if="fulfillmentType === 'delivery' && isCustomShipping" class="total-note">
+              *Belum termasuk ongkos kirim (dikonfirmasi via WhatsApp)
+            </p>
+
+          </div>
+          <!-- end summary-body -->
+
+          <!-- SELALU TAMPIL: tombol order -->
+          <div class="desktop-order-btn-wrap">
+            <button class="btn-order" @click="submitOrder" :disabled="isSubmitting">
+              <transition name="btn-fade" mode="out-in">
+                <span v-if="isSubmitting" key="loading" class="btn-submitting">
+                  <span class="submit-spinner"/>
+                  <span class="submit-steps">
+                    <span :class="{ active: submitStep >= 1 }">Menyimpan pesanan...</span>
+                    <span v-if="submitStep >= 2" class="step-fade">Membuka WhatsApp...</span>
+                  </span>
+                </span>
+                <span v-else key="idle" class="btn-idle">
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.851L.057 23.547a.75.75 0 0 0 .916.919l5.808-1.517A11.943 11.943 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.708 9.708 0 0 1-4.953-1.354l-.355-.21-3.678.961.98-3.589-.23-.37A9.718 9.718 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/>
+                  </svg>
+                  Pesan via WhatsApp
+                </span>
+              </transition>
+            </button>
+            <p class="wa-note">Pesananmu akan tersimpan & dikirim ke WhatsApp kami untuk konfirmasi.</p>
+          </div>
+
+        </div>
+        <!-- end summary-card -->
       </div>
     </div>
 
@@ -729,6 +656,7 @@ export default {
       loyaltyError:   '',
       loyaltyChecked: false,
       loyaltyData:    null,
+      summaryExpanded: false,
     }
   },
 

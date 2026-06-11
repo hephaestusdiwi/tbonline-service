@@ -418,6 +418,7 @@ export default {
   flex-direction: column;
   gap: 6px;
   flex: 1;
+  min-height: 161px;
 }
 
 .card-footer {

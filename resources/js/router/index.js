@@ -27,7 +27,7 @@ import AdminFaqIndex from '../pages/admin/AdminFaqIndex.vue'
 import AdminFaqForm  from '../pages/admin/AdminFaqForm.vue'
 
 const routes = [
-    { path: '/', component: Home },
+    { path: '/', name: 'Home', component: Home },
     { path: '/products', name: 'Products', component: ProductsPage },
     { path: '/products/:slug', name: 'ProductDetail', component: ProductDetail },
     { path: '/login', component: Login },

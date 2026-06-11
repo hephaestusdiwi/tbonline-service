@@ -83,7 +83,7 @@
             <nav class="pd-breadcrumb">
               <span @click="$router.push('/')" class="pd-breadcrumb__link">Beranda</span>
               <span class="pd-breadcrumb__sep">/</span>
-              <span v-if="product.category" @click="$router.push(`/?category=${product.category}`)" class="pd-breadcrumb__link">{{ product.category }}</span>
+              <span v-if="product.category" @click="$router.push({ name: 'Products', query: { category: product.category } })" class="pd-breadcrumb__link">{{ product.category }}</span>
               <span v-if="product.category" class="pd-breadcrumb__sep">/</span>
               <span class="pd-breadcrumb__current">{{ product.name }}</span>
             </nav>

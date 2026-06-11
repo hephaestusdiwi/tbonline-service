@@ -134,7 +134,7 @@
 
             <!-- Breadcrumb -->
             <div class="breadcrumb-row">
-                <span class="breadcrumb-item">Home</span>
+                <span class="breadcrumb-item" @click="$router.push({ name: 'Home' })" style="cursor:pointer">Home</span>
                 <span class="breadcrumb-sep">›</span>
                 <span class="breadcrumb-item active">All Products</span>
             </div>
@@ -374,7 +374,6 @@ export default {
 
     data() {
         return {
-            // Price slider constants (exposed so template can access via this.*)
             PRICE_ABSOLUTE_MIN,
             PRICE_ABSOLUTE_MAX,
             priceStep: PRICE_STEP,
@@ -382,10 +381,8 @@ export default {
             products: [],
             allCategories: [],
             searchKeyword: '',
-            activeCategory: 'Semua',
             priceMin: null,
             priceMax: null,
-            // slider internal state (synced to priceMin/Max on apply)
             sliderMin: PRICE_ABSOLUTE_MIN,
             sliderMax: PRICE_ABSOLUTE_MAX,
             sortBy: '',
@@ -457,27 +454,22 @@ export default {
     },
 
     mounted() {
-        const q = this.$route?.query
-        if (q) {
-            if (q.category) this.activeCategory = q.category
-            if (q.search)   this.searchKeyword = q.search
-            if (q.page)     this.currentPage = parseInt(q.page) || 1
-        }
-        this.fetchProducts()
         this.fetchFilterOptions()
     },
 
     watch: {
-        '$route.query'(newQuery) {
-            this.searchKeyword  = newQuery.search   || ''
-            this.activeCategory = newQuery.category || 'Semua'
-            this.currentPage    = parseInt(newQuery.page) || 1
-            this.fetchProducts()
+        '$route.query': {
+            immediate: true,
+            handler(newQuery) {
+                this.searchKeyword  = newQuery.search   || ''
+                this.activeCategory = newQuery.category || 'Semua'
+                this.currentPage    = parseInt(newQuery.page) || 1
+                this.fetchProducts()
+            }
         }
     },
 
     methods: {
-        // ── Slider handlers ──────────────────────────────────────────────────
         onSliderMinInput() {
             if (this.sliderMin >= this.sliderMax - PRICE_STEP) {
                 this.sliderMin = this.sliderMax - PRICE_STEP
@@ -512,7 +504,6 @@ export default {
             return `${base}-${product.id}`
         },
 
-        // ── Data fetching ─────────────────────────────────────────────────────
         async fetchProducts() {
             this.loading = true
             this.error = null

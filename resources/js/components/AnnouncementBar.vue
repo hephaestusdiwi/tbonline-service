@@ -1,182 +1,187 @@
 <template>
-  <!-- Tidak dirender kalau tidak ada pengumuman -->
-  <div v-if="items.length" class="ab-bar" :style="barStyle">
-
-    <!-- Tombol prev (hanya muncul kalau > 1 item) -->
-    <button v-if="items.length > 1" class="ab-arrow" @click="prev" aria-label="Sebelumnya">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <polyline points="15 18 9 12 15 6"/>
-      </svg>
-    </button>
-
-    <!-- Teks berputar -->
+  <div v-show="enabled && items.length" class="ab-bar" :style="barStyle">
     <div class="ab-track">
+      <!--
+        Strategi: kedua slot ada di normal flow (bukan absolute),
+        yang hidden pakai visibility:hidden + position:absolute
+        supaya tidak makan space tapi wrapper tetap setinggi slot visible.
+        Ini mencegah bar melayang karena tinggi wrapper selalu mengikuti
+        konten yang sedang ditampilkan.
+      -->
       <div class="ab-transition-wrap">
-        <Transition :name="transitionName" mode="out-in">
-          <div :key="current" class="ab-item">
-            <span class="ab-text">{{ items[current].text }}</span>
-            <a
-              v-if="items[current].link_url"
-              :href="items[current].link_url"
-              target="_blank"
-              rel="noopener"
-              class="ab-link"
-            >
-              {{ items[current].link_label || 'Selengkapnya' }}
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
-            </a>
-          </div>
-        </Transition>
+
+        <div class="ab-item" :class="activeSlot === 'a' ? 'slot--on' : 'slot--off'">
+          <span class="ab-text">{{ slotA.text }}</span>
+          <a v-if="slotA.link_url" :href="slotA.link_url" target="_blank" rel="noopener" class="ab-link">
+            {{ slotA.link_label || 'Selengkapnya' }}
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </a>
+        </div>
+
+        <div class="ab-item" :class="activeSlot === 'b' ? 'slot--on' : 'slot--off'">
+          <span class="ab-text">{{ slotB.text }}</span>
+          <a v-if="slotB.link_url" :href="slotB.link_url" target="_blank" rel="noopener" class="ab-link">
+            {{ slotB.link_label || 'Selengkapnya' }}
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </a>
+        </div>
+
       </div>
     </div>
-
-    <!-- Tombol next -->
-    <button v-if="items.length > 1" class="ab-arrow" @click="next" aria-label="Selanjutnya">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-        <polyline points="9 18 15 12 9 6"/>
-      </svg>
-    </button>
-
   </div>
 </template>
 
 <script>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import axios from '../axios.js'
+
+const EMPTY = { text: '', link_url: null, link_label: null }
 
 export default {
   name: 'AnnouncementBar',
 
   props: {
-    bgColor:   { type: String, default: '#000000' },
-    textColor: { type: String, default: '#ffffff' },
-    interval:  { type: Number, default: 4000 },
+    enabled:   { type: Boolean, default: true },
+    bgColor:   { type: String,  default: '#000000' },
+    textColor: { type: String,  default: '#ffffff' },
+    interval:  { type: Number,  default: 4000 },
   },
 
   setup(props) {
-    const items          = ref([])
-    const current        = ref(0)
-    const transitionName = ref('ab-slide-left')
-    let timer            = null
+    const items      = ref([])
+    const current    = ref(0)
+    const activeSlot = ref('a')
+    const slotA      = ref({ ...EMPTY })
+    const slotB      = ref({ ...EMPTY })
+    let timer        = null
 
-    const barStyle = computed(() => ({
+    const barStyle = {
       '--ab-bg':   props.bgColor,
       '--ab-text': props.textColor,
-    }))
+    }
 
     async function fetchAnnouncements() {
       try {
         const res = await axios.get('/announcements')
         items.value = res.data ?? []
+        if (items.value.length) {
+          slotA.value      = { ...items.value[0] }
+          slotB.value      = { ...EMPTY }
+          activeSlot.value = 'a'
+        }
       } catch (e) {
         console.warn('Announcement fetch failed:', e)
       }
     }
 
-    function startTimer() {
-      stopTimer() // pastikan tidak double timer
-      if (items.value.length <= 1) return
-      timer = setInterval(() => {
-        // Guard: jangan update kalau items kosong
-        if (!items.value.length) return
-        transitionName.value = 'ab-slide-left'
-        current.value = (current.value + 1) % items.value.length
-      }, props.interval)
-    }
-
-    function stopTimer() {
-      if (timer) {
-        clearInterval(timer)
-        timer = null
+    function advance() {
+      if (!items.value.length) return
+      current.value = (current.value + 1) % items.value.length
+      const next = items.value[current.value]
+      if (activeSlot.value === 'a') {
+        slotB.value      = { ...next }
+        activeSlot.value = 'b'
+      } else {
+        slotA.value      = { ...next }
+        activeSlot.value = 'a'
       }
     }
 
-    function next() {
+    function startTimer() {
       stopTimer()
-      transitionName.value = 'ab-slide-left'
-      current.value = (current.value + 1) % items.value.length
-      startTimer()
+      if (items.value.length <= 1) return
+      timer = setInterval(advance, props.interval)
     }
 
-    function prev() {
-      stopTimer()
-      transitionName.value = 'ab-slide-right'
-      current.value = (current.value - 1 + items.value.length) % items.value.length
-      startTimer()
+    function stopTimer() {
+      if (timer) { clearInterval(timer); timer = null }
     }
+
+    watch(() => props.enabled, (val) => {
+      if (val) startTimer()
+      else stopTimer()
+    })
 
     onMounted(async () => {
       await fetchAnnouncements()
-      startTimer()
+      if (props.enabled) startTimer()
     })
 
-    // onBeforeUnmount lebih reliable di Composition API
-    onBeforeUnmount(() => {
-      stopTimer()
-    })
+    onBeforeUnmount(stopTimer)
 
-    return {
-      items, current, transitionName, barStyle,
-      next, prev,
-    }
+    return { items, activeSlot, slotA, slotB, barStyle }
   },
 }
 </script>
 
 <style scoped>
-/* ─── Container ─────────────────────────────────────────── */
 .ab-bar {
   font-family: "Poppins", sans-serif;
   background: var(--ab-bg, #000);
   color: var(--ab-text, #fff);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 7px 16px;
-  position: relative;
-  min-height: 36px;
-  overflow: hidden;
+  width: 100%;
+  /* Tidak ada overflow:hidden — biar tinggi ikut konten */
 }
 
-/* ─── Track & Wrapper ────────────────────────────────────── */
 .ab-track {
-  flex: 1;
+  width: 100%;
+  padding: 8px 20px;
+  box-sizing: border-box;
   text-align: center;
-  overflow: hidden;
 }
 
+/*
+  Wrapper pakai position:relative.
+  Tingginya otomatis = tinggi slot yang sedang 'on' (in normal flow).
+  Slot 'off' di-absolute supaya tidak nambahin tinggi wrapper.
+*/
 .ab-transition-wrap {
   position: relative;
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-/* ─── Item ───────────────────────────────────────────────── */
+/* Slot visible: normal flow, mendorong tinggi wrapper */
+.slot--on {
+  position: relative;
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Slot hidden: absolute supaya tidak makan space, tapi tetap di DOM */
+.slot--off {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  opacity: 0;
+  transform: translateX(40%);
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .ab-item {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  width: 100%;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .ab-text {
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  white-space: normal;      /* ← ubah dari nowrap ke normal */
-  overflow: visible;        /* ← ubah dari hidden ke visible */
-  text-overflow: unset;     /* ← hapus ellipsis */
-  text-align: center;       /* ← pastikan center */
-  word-break: break-word;   /* ← tambahkan ini */
+  white-space: normal;
+  text-align: center;
+  word-break: break-word;
+  line-height: 1.5;
 }
 
 .ab-link {
@@ -194,42 +199,8 @@ export default {
 }
 .ab-link:hover { opacity: 1; }
 
-/* ─── Panah ──────────────────────────────────────────────── */
-.ab-arrow {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--ab-text, #fff);
-  opacity: 0.6;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  transition: opacity .15s;
-  flex-shrink: 0;
-}
-.ab-arrow:hover { opacity: 1; }
-
-/* ─── Transisi slide — SATU definisi saja ────────────────── */
-.ab-slide-left-enter-active,
-.ab-slide-left-leave-active,
-.ab-slide-right-enter-active,
-.ab-slide-right-leave-active {
-  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  /* TIDAK pakai position: absolute */
-}
-
-.ab-slide-left-enter-from  { transform: translateX(60%);  opacity: 0; }
-.ab-slide-left-leave-to    { transform: translateX(-60%); opacity: 0; }
-.ab-slide-right-enter-from { transform: translateX(-60%); opacity: 0; }
-.ab-slide-right-leave-to   { transform: translateX(60%);  opacity: 0; }
-
-/* ─── Mobile ─────────────────────────────────────────────── */
 @media (max-width: 480px) {
-  .ab-bar {
-    height: auto;          /* hapus fixed height */
-    padding: 10px 12px;     /* beri ruang atas bawah */
-  }
-  .ab-text  { font-size: 13px; } /* ← turunkan sedikit dari 14px */
-  .ab-arrow { display: none; }
+  .ab-track { padding: 10px 24px; }
+  .ab-text  { font-size: 12px; }
 }
 </style>
