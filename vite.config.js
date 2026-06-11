@@ -13,25 +13,9 @@ export default defineConfig({
         vue(),
         tailwindcss(),
     ],
-    resolve: {
+    resolve: {                          
         alias: {
             '@': path.resolve(__dirname, 'resources/js'),
-        },
-    },
-    build: {
-        cssCodeSplit: true,
-        chunkSizeWarningLimit: 1000,
-        rollupOptions: {
-            output: {
-                manualChunks(id) {
-                    if (id.includes('node_modules')) {
-                        if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) {
-                            return 'vue-vendor'
-                        }
-                        return 'vendor'
-                    }
-                },
-            },
         },
     },
     server: {
@@ -40,7 +24,7 @@ export default defineConfig({
                 target: 'http://localhost:8000',
                 changeOrigin: true,
             },
-            '/img': {
+            '/img': {                         
                 target: 'http://localhost:8000',
                 changeOrigin: true,
             }
@@ -49,4 +33,4 @@ export default defineConfig({
             ignored: ['**/storage/framework/views/**'],
         },
     },
-})
+});
