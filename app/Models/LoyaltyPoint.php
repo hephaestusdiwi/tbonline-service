@@ -24,7 +24,7 @@ class LoyaltyPoint extends Model
 
     const EARN_THRESHOLD            = 100000;
     const EARN_POINTS_PER_THRESHOLD = 3000;
-    const EXPIRY_MONTHS             = 3;      // fix: MOTHS → MONTHS
+    const EXPIRY_MONTHS             = 12;      // fix: MOTHS → MONTHS
 
     public function order(): BelongsTo
     {
