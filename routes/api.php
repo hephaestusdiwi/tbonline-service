@@ -131,6 +131,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/products/bulk-delete', [ProductController::class, 'bulkDelete'])->middleware('can:products_delete');
     Route::post('/products/import',      [ProductController::class, 'import'])->middleware('can:products_create');
     Route::post('/products/import-olsera', [ProductController::class, 'importOlsera'])->middleware('can:products_create');
+    Route::get('/products/import-olsera/status/{importId}', [ProductController::class, 'importOlseraStatus'])->middleware('can:products_create');
     Route::post('/products',             [ProductController::class, 'store'])->middleware('can:products_create');
     Route::put('/products/{id}',         [ProductController::class, 'update'])->middleware('can:products_edit');
     Route::delete('/products/{id}',      [ProductController::class, 'destroy'])->middleware('can:products_delete');

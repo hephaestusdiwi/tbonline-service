@@ -543,117 +543,43 @@ class ProductController extends Controller
      */
     public function importOlsera(Request $request): JsonResponse
     {
-        set_time_limit(600);
-
         $request->validate([
             'mode'     => 'required|in:skip,update,replace',
             'products' => 'required|array|min:1',
         ]);
 
-        $mode         = $request->mode;
-        $rows         = $request->products;
-        $imageService = app(ProductImageService::class);
+        $importId = (string) \Illuminate\Support\Str::uuid();
 
-        $groups = [];
-        foreach ($rows as $row) {
-            $name = trim($row['name'] ?? '');
-            if ($name === '') continue;
-            $key = strtolower($name);
-            if (! isset($groups[$key])) {
-                $groups[$key] = ['meta' => $row, 'variants' => []];
-            }
-            $variantName = trim($row['variant_names'] ?? '');
-            if ($variantName !== '') {
-                $groups[$key]['variants'][] = [
-                    'label'           => $variantName,
-                    'variant_label'   => trim($row['variant_label'] ?? ''),
-                    'sku'             => $row['sku'] ?? null,
-                    'barcode'         => $row['barcode'] ?? null,
-                    'sell_price'      => is_numeric($row['sell_price'] ?? null) ? (float) $row['sell_price'] : null,
-                    'buy_price'       => is_numeric($row['buy_price'] ?? null) ? (float) $row['buy_price'] : null,
-                    'market_price'    => is_numeric($row['market_price'] ?? null) ? (float) $row['market_price'] : null,
-                    'pos_sell_price'  => is_numeric($row['pos_sell_price'] ?? null) ? (float) $row['pos_sell_price'] : null,
-                    'stock_qty'       => (int) ($row['stock_qty'] ?? 0),
-                    'hold_qty'        => (int) ($row['hold_qty'] ?? 0),
-                    'low_stock_alert' => (int) ($row['low_stock_alert'] ?? 2),
-                    'qty_fast_moving' => (int) ($row['qty_fast_moving'] ?? 0),
-                    'weight_kg'       => is_numeric($row['weight_kg'] ?? null) ? (float) $row['weight_kg'] : null,
-                ];
-            }
-        }
+        \Illuminate\Support\Facades\Cache::put("olsera_import_{$importId}", [
+            'status'    => 'queued',
+            'processed' => 0,
+            'total'     => count($request->products),
+            'imported'  => 0,
+            'updated'   => 0,
+            'skipped'   => 0,
+            'failed'    => 0,
+            'errors'    => [],
+            'percent'   => 0,
+        ], now()->addHours(2));
 
-        $imported = 0; $updated = 0; $skipped = 0; $failed = 0; $errors = [];
-
-        if ($mode === 'replace') {
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-            Product::truncate();
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-        }
-
-        DB::beginTransaction();
-        try {
-            foreach ($groups as $key => $group) {
-                $meta     = $group['meta'];
-                $variants = $group['variants'];
-                $name     = trim($meta['name']);
-
-                try {
-                    $productData = $this->mapOlseraRow($meta);
-
-                    $subfolder   = 'olsera/' . \Illuminate\Support\Str::slug($name);
-                    $productData = array_merge(
-                        $productData,
-                        $imageService->downloadProductPhotos(
-                            $this->extractPhotoFields($productData),
-                            $subfolder,
-                        ),
-                    );
-
-                    if ($mode === 'skip') {
-                        $exists = Product::whereRaw('LOWER(name) = ?', [$key])->exists();
-                        if ($exists) { $skipped++; continue; }
-                        $product = Product::create($productData);
-                        $this->createVariantsFromOlsera($product, $variants);
-                        $imported++;
-
-                    } elseif ($mode === 'replace') {
-                        $product = Product::create($productData);
-                        $this->createVariantsFromOlsera($product, $variants);
-                        $imported++;
-
-                    } elseif ($mode === 'update') {
-                        $product = Product::whereRaw('LOWER(name) = ?', [$key])->first();
-                        if ($product) {
-                            $product->update($productData);
-                            $product->optionTypes()->delete();
-                            $product->variants()->delete();
-                            $this->createVariantsFromOlsera($product, $variants);
-                            $updated++;
-                        } else {
-                            $product = Product::create($productData);
-                            $this->createVariantsFromOlsera($product, $variants);
-                            $imported++;
-                        }
-                    }
-
-                } catch (\Throwable $e) {
-                    $errors[] = "Produk '$name': " . $e->getMessage();
-                    $failed++;
-                }
-            }
-            DB::commit();
-
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            return response()->json(['message' => 'Import gagal: ' . $e->getMessage()], 500);
-        }
+        \App\Jobs\ImportOlseraJob::dispatch($importId, $request->mode, $request->products)
+            ->onQueue('imports');
 
         return response()->json([
-            'imported' => $imported, 'updated'  => $updated,
-            'skipped'  => $skipped,  'failed'   => $failed,
-            'errors'   => $errors,
-            'message'  => "Import Olsera selesai: $imported ditambah, $updated diperbarui, $skipped dilewati, $failed gagal.",
-        ]);
+            'import_id' => $importId,
+            'message'   => 'Import sedang diproses di background.',
+        ], 202);
+    }
+
+    public function importOlseraStatus(string $importId): JsonResponse
+    {
+        $progress = \Illuminate\Support\Facades\Cache::get("olsera_import_{$importId}");
+
+        if (! $progress) {
+            return response()->json(['message' => 'Import tidak ditemukan atau sudah expired'], 404);
+        }
+
+        return response()->json($progress);
     }
 
     private function createVariantsFromOlsera(Product $product, array $variants): void

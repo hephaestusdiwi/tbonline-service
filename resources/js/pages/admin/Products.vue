@@ -497,6 +497,39 @@
                                 <p class="text-sm text-gray-500 mt-1">{{ importResult.message }}</p>
                             </div>
                         </div>
+
+                        <!-- Step 4: Progress (Background Job - khusus Olsera) -->
+                        <div v-if="importStep === 4" class="py-8 flex flex-col items-center gap-4 text-center">
+                            <div class="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto">
+                                <svg class="w-7 h-7 text-blue-500 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-6.219-8.56"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-base font-bold text-gray-800">Mengimport Data...</p>
+                                <p class="text-sm text-gray-500 mt-1">Proses berjalan di background, jangan tutup halaman ini.</p>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="w-full max-w-sm">
+                                <div class="flex justify-between text-xs font-semibold text-gray-500 mb-1.5">
+                                    <span>{{ importProgress?.processed ?? 0 }} / {{ importProgress?.total ?? 0 }} produk</span>
+                                    <span>{{ importProgress?.percent ?? 0 }}%</span>
+                                </div>
+                                <div class="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-[#ED1F24] transition-all duration-300 rounded-full"
+                                        :style="{ width: (importProgress?.percent ?? 0) + '%' }"></div>
+                                </div>
+                            </div>
+
+                            <!-- Live stats -->
+                            <div class="flex gap-4 mt-2 justify-center flex-wrap text-xs text-gray-600">
+                                <span class="text-emerald-600 font-semibold">✓ {{ importProgress?.imported ?? 0 }} ditambah</span>
+                                <span v-if="importProgress?.updated">↻ {{ importProgress.updated }} diperbarui</span>
+                                <span v-if="importProgress?.skipped">⊘ {{ importProgress.skipped }} dilewati</span>
+                                <span v-if="importProgress?.failed" class="text-red-500">✗ {{ importProgress.failed }} gagal</span>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Footer -->
@@ -509,7 +542,8 @@
                                 {{ importLoading ? 'Memproses...' : 'Pratinjau Data' }}
                             </button>
                         </template>
-                        <template v-else-if="importStep === 2">
+
+                        <template v-if="importStep === 2">
                             <button @click="importStep = 1" class="text-xs font-semibold text-gray-500 border border-gray-200 px-4 py-2 rounded-lg hover:bg-white transition-all">← Kembali</button>
                             <button @click="executeImport" :disabled="importLoading || importPreview.valid === 0"
                                 class="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg bg-[#ED1F24] hover:bg-[#C81A1E] text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed">
@@ -517,9 +551,17 @@
                                 {{ importLoading ? 'Mengimport...' : `Import ${importPreview.valid} Produk` }}
                             </button>
                         </template>
-                        <template v-else>
+
+                        <template v-if="importStep === 3">
                             <button @click="closeImportModal" class="text-xs font-semibold text-gray-500 border border-gray-200 px-4 py-2 rounded-lg hover:bg-white transition-all">Tutup</button>
                             <button v-if="importResult.success" @click="closeImportModal" class="text-xs font-semibold px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-all">Selesai</button>
+                        </template>
+
+                        <template v-if="importStep === 4">
+                            <span class="text-xs text-gray-400">Proses bisa memakan waktu beberapa menit untuk data besar</span>
+                            <button @click="closeImportModal" class="text-xs font-semibold text-gray-500 border border-gray-200 px-4 py-2 rounded-lg hover:bg-white transition-all">
+                                Tutup (proses tetap berjalan)
+                            </button>
                         </template>
                     </div>
                 </div>
@@ -839,6 +881,8 @@ export default {
             importStep: 1,
             importPreview: { total: 0, valid: 0, errors: 0, duplicates: 0, rows: [], errorMessages: [] },
             importResult:  { success: false, imported: 0, skipped: 0, updated: 0, failed: 0, message: '' },
+            importProgress: null,
+            importPollInterval: null,
 
             supportedColumns: [
                 'name','alternative_name','category','brand','sku','barcode',
@@ -1060,8 +1104,21 @@ export default {
             }
         },
 
-        openImportModal() { this.importStep=1; this.importFile=null; this.importMode='skip'; this.importFormat='olsera'; this.importPreview={total:0,valid:0,errors:0,duplicates:0,rows:[],errorMessages:[]}; this.importResult={success:false,imported:0,skipped:0,updated:0,failed:0,message:''}; this.showImportModal=true },
-        closeImportModal() { this.showImportModal=false; if(this.importResult.success) this.fetchProducts() },
+        openImportModal() {
+            this.importStep = 1
+            this.importFile = null
+            this.importMode = 'skip'
+            this.importFormat = 'olsera'
+            this.importPreview = { total: 0, valid: 0, errors: 0, duplicates: 0, rows: [], errorMessages: [] }
+            this.importResult = { success: false, imported: 0, skipped: 0, updated: 0, failed: 0, message: '' }
+            this.importProgress = null   
+            this.showImportModal = true
+        },
+        closeImportModal() {
+            this.showImportModal = false
+            if (this.importResult.success) this.fetchProducts()
+            this.stopImportPolling() 
+        },
         clearImportFile()  { this.importFile=null; if(this.$refs.importFileInput) this.$refs.importFileInput.value='' },
         handleImportFile(e) { const f=e.target.files[0]; if(f) this.importFile=f },
         handleImportDrop(e) { this.importDragging=false; const f=e.dataTransfer.files[0]; if(f) this.importFile=f },
@@ -1087,13 +1144,78 @@ export default {
         },
 
         async executeImport() {
-            this.importLoading=true
+            this.importLoading = true
             try {
-                const validRows=this.importPreview.rows.filter(r=>r._status!=='error').map(({_status,...row})=>row)
-                const endpoint=this.importFormat==='olsera'?'/products/import-olsera':'/products/import'
-                const res=await axios.post(endpoint,{products:validRows,mode:this.importMode}); const result=res.data
-                this.importResult={success:true,imported:result.imported??0,skipped:result.skipped??0,updated:result.updated??0,failed:result.failed??0,message:result.message??''}; this.importStep=3
-            } catch(e) { this.importResult={success:false,message:e.response?.data?.message||'Terjadi kesalahan saat import.'}; this.importStep=3 } finally { this.importLoading=false }
+                const validRows = this.importPreview.rows.filter(r => r._status !== 'error').map(({_status, ...row}) => row)
+
+                if (this.importFormat === 'olsera') {
+                    // ── Olsera: background job + polling ──
+                    const res = await axios.post('/products/import-olsera', { products: validRows, mode: this.importMode })
+                    const { import_id } = res.data
+
+                    this.importStep = 4
+                    this.importProgress = { status: 'queued', processed: 0, total: validRows.length, percent: 0, imported: 0, updated: 0, skipped: 0, failed: 0, errors: [] }
+                    this.startImportPolling(import_id)
+
+                } else {
+                    // ── Format baru: synchronous seperti sebelumnya ──
+                    const res = await axios.post('/products/import', { products: validRows, mode: this.importMode })
+                    const result = res.data
+                    this.importResult = {
+                        success: true,
+                        imported: result.imported ?? 0,
+                        skipped: result.skipped ?? 0,
+                        updated: result.updated ?? 0,
+                        failed: result.failed ?? 0,
+                        message: result.message ?? '',
+                    }
+                    this.importStep = 3
+                }
+            } catch (e) {
+                this.importResult = { success: false, message: e.response?.data?.message || 'Terjadi kesalahan saat import.' }
+                this.importStep = 3
+            } finally {
+                this.importLoading = false
+            }
+        },
+
+        startImportPolling(importId) {
+            if (this.importPollInterval) clearInterval(this.importPollInterval)
+
+            this.importPollInterval = setInterval(async () => {
+                try {
+                    const res = await axios.get(`/products/import-olsera/status/${importId}`)
+                    this.importProgress = res.data
+
+                    if (res.data.status === 'completed') {
+                        clearInterval(this.importPollInterval)
+                        this.importPollInterval = null
+
+                        this.importResult = {
+                            success: true,
+                            imported: res.data.imported ?? 0,
+                            skipped: res.data.skipped ?? 0,
+                            updated: res.data.updated ?? 0,
+                            failed: res.data.failed ?? 0,
+                            message: `Import selesai: ${res.data.imported} ditambah, ${res.data.updated} diperbarui, ${res.data.skipped} dilewati, ${res.data.failed} gagal.`,
+                        }
+                        this.importStep = 3
+                        this.fetchProducts() // refresh list
+                    }
+                } catch (e) {
+                    // kalau status hilang/expired, hentikan polling
+                    clearInterval(this.importPollInterval)
+                    this.importPollInterval = null
+                    console.error('Polling error:', e)
+                }
+            }, 2000)
+        },
+
+        stopImportPolling() {
+            if (this.importPollInterval) {
+                clearInterval(this.importPollInterval)
+                this.importPollInterval = null
+            }
         },
 
         formatCurrency(val) { if(!val && val!==0) return '—'; return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(val) },
