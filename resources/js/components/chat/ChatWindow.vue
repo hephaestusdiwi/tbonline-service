@@ -240,6 +240,56 @@
 
     </div>
 
+    <!-- Rating Form -->
+    <div v-if="showRating" class="rating-section">
+        <div v-if="!ratingSubmitted" class="rating-card">
+            <div class="rating-icon">⭐</div>
+            <p class="rating-title">Bagaimana pengalaman Anda?</p>
+            <p class="rating-subtitle">Berikan penilaian untuk layanan kami</p>
+
+            <div class="rating-stars">
+                <button
+                    v-for="star in 5"
+                    :key="star"
+                    class="star-btn"
+                    @click="submitRating(star)"
+                    @mouseenter="ratingHover = star"
+                    @mouseleave="ratingHover = 0"
+                    :disabled="ratingLoading"
+                >
+                    <svg
+                        width="32" height="32" viewBox="0 0 24 24"
+                        :fill="star <= (ratingHover || ratingValue) ? '#f59e0b' : 'none'"
+                        :stroke="star <= (ratingHover || ratingValue) ? '#f59e0b' : '#d1d5db'"
+                        stroke-width="1.5"
+                    >
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="rating-labels">
+                <span>Sangat Buruk</span>
+                <span>Sangat Bagus</span>
+            </div>
+
+            <button class="skip-btn" @click="showRating = false">
+                Lewati
+            </button>
+        </div>
+
+        <!-- Terima kasih -->
+        <div v-else class="rating-thanks">
+            <div class="thanks-icon">🎉</div>
+            <p class="thanks-title">Terima kasih</p>
+            <p class="thanks-subtitle">Penilaian Anda sangat berarti untuk meningkatkan mutu pelayanan kami kedepannya.</p>
+            <div class="thanks-stars">
+                <span v-for="star in ratingValue" :key="star">⭐</span>
+            </div>
+        </div>
+    </div>
+
     <!-- Input area -->
     <div class="chat-input-area">
       <div class="input-wrap" :class="{ focused: inputFocused }">
@@ -306,7 +356,6 @@ const props = defineProps({
 
 const emit = defineEmits(['new-message', 'close'])
 
-// ── State ────────────────────────────────────────────────────────────────
 const messages         = ref([])
 const inputText        = ref('')
 const isLoading        = ref(false)
@@ -324,6 +373,11 @@ const sessionStatus    = ref(null)
 const showSessionInfo  = ref(false)
 const lightboxUrl      = ref(null)
 const agentOnline      = ref(true)
+const showRating       = ref(false)
+const ratingValue      = ref(0)
+const ratingHover      = ref(0)
+const ratingSubmitted  = ref(false)
+const ratingLoading    = ref(false)
 
 let channel             = null
 let agentStatusChannel  = null
@@ -485,7 +539,8 @@ function subscribeChannel() {
     })
 
     .listen('.session.closed', () => {
-      sessionStatus.value = 'closed'
+        sessionStatus.value = 'closed'
+        showRating.value = true  
     })
 }
 
@@ -500,6 +555,19 @@ async function sendPing() {
   try {
     await axios.post('/chat/sessions/' + props.sessionUuid + '/ping')
   } catch { /* silent */ }
+}
+
+async function submitRating(star) {
+    ratingValue.value = star
+    ratingLoading.value = true
+    try {
+        await axios.patch(`/chat/sessions/${props.sessionUuid}/rate`, { rating: star })
+        ratingSubmitted.value = true
+    } catch {
+        console.error('Gagal submit rating')
+    } finally {
+        ratingLoading.value = false
+    }
 }
 
 function startHeartbeat() {
@@ -551,6 +619,14 @@ async function loadMessages() {
       assignedAgent.value = session.assigned_agent
       queuePosition.value = null
       estimatedWait.value  = null
+    }
+
+    // ← TAMBAHAN: cek sesi sudah closed/resolved saat pertama load
+    if (session.status === 'closed' || session.status === 'resolved') {
+      sessionStatus.value = session.status
+      if (!session.rating) {
+        showRating.value = true
+      }
     }
 
     scrollToBottom()
@@ -1165,6 +1241,116 @@ onUnmounted(() => {
 .upload-btn:hover { color: #6b7280; background: #f0f0f0; }
 
 .hidden { display: none; }
+
+.rating-section {
+    flex-shrink: 0;
+    border-top: 1px solid #e5e7eb;
+    background: white;
+}
+
+.rating-card {
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+
+.rating-icon {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.rating-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.rating-subtitle {
+    margin: 0;
+    font-size: 11.5px;
+    color: #9ca3af;
+}
+
+.rating-stars {
+    display: flex;
+    gap: 6px;
+    margin: 8px 0 4px;
+}
+
+.star-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    transition: transform 0.15s ease;
+    line-height: 1;
+}
+
+.star-btn:hover:not(:disabled) {
+    transform: scale(1.2);
+}
+
+.star-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.rating-labels {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 200px;
+    font-size: 10px;
+    color: #9ca3af;
+}
+
+.skip-btn {
+    margin-top: 4px;
+    background: none;
+    border: none;
+    font-size: 11.5px;
+    color: #9ca3af;
+    cursor: pointer;
+    text-decoration: underline;
+    font-family: inherit;
+}
+
+.skip-btn:hover { color: #6b7280; }
+
+.rating-thanks {
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+}
+
+.thanks-icon { font-size: 28px; }
+
+.thanks-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.thanks-subtitle {
+    margin: 0;
+    padding: 0 30px;
+    font-size: 11.5px;
+    color: #9ca3af;
+}
+
+.thanks-stars {
+    font-size: 18px;
+    letter-spacing: 2px;
+    margin-top: 4px;
+}
 
 .mt-2 { margin-top: 8px; }
 .rounded-lg { border-radius: 8px; }

@@ -507,7 +507,7 @@
                             </div>
                             <div>
                                 <p class="text-base font-bold text-gray-800">Mengimport Data...</p>
-                                <p class="text-sm text-gray-500 mt-1">Proses berjalan di background, jangan tutup halaman ini.</p>
+                                <p class="text-sm text-gray-500 mt-1">Proses berjalan di background. Aman jika halaman ditutup atau di-refresh — buka kembali halaman ini untuk melihat progress.</p>
                             </div>
 
                             <!-- Progress Bar -->
@@ -919,6 +919,7 @@ export default {
     mounted() {
         document.title = 'Products - Two Brothers Vape System'
         this.fetchProducts()
+        this.checkOngoingImport()
     },
 
     methods: {
@@ -1117,7 +1118,11 @@ export default {
         closeImportModal() {
             this.showImportModal = false
             if (this.importResult.success) this.fetchProducts()
-            this.stopImportPolling() 
+
+            // jangan stop polling/clear state kalau masih processing (biar tetap lanjut di background)
+            if (this.importProgress?.status !== 'queued' && this.importProgress?.status !== 'processing') {
+                this.stopImportPolling()
+            }
         },
         clearImportFile()  { this.importFile=null; if(this.$refs.importFileInput) this.$refs.importFileInput.value='' },
         handleImportFile(e) { const f=e.target.files[0]; if(f) this.importFile=f },
@@ -1126,6 +1131,56 @@ export default {
         downloadTemplate() {
             const sample = [{ name:'Contoh Produk A', alternative_name:'', category:'LIQUID 30ML', brand:'', sku:'', barcode:'', buy_price:50000, market_price:0, sell_price:70000, pos_sell_price:70000, uom:'', weight_kg:0.1, published:1, description:'', photo_1:'', variant_options:'[{"type":"Nicotine","values":["3mg","6mg","12mg"]}]', variant_skus:'3mg:LQ-3MG,6mg:LQ-6MG', variant_prices:'3mg:65000,6mg:65000', variant_stocks:'3mg:50,6mg:30' }]
             const ws=XLSX.utils.json_to_sheet(sample); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Products'); XLSX.writeFile(wb,'template_produk.xlsx')
+        },
+
+        saveImportState(importId, total) {
+            localStorage.setItem('tbstore_olsera_import', JSON.stringify({
+                importId,
+                total,
+                startedAt: Date.now(),
+            }))
+        },
+
+        clearImportState() {
+            localStorage.removeItem('tbstore_olsera_import')
+        },
+
+        getImportState() {
+            try {
+                const raw = localStorage.getItem('tbstore_olsera_import')
+                if (!raw) return null
+                const state = JSON.parse(raw)
+                // expire setelah 2 jam (sesuai TTL cache di backend)
+                if (Date.now() - state.startedAt > 2 * 60 * 60 * 1000) {
+                    this.clearImportState()
+                    return null
+                }
+                return state
+            } catch (e) {
+                return null
+            }
+        },
+
+        async checkOngoingImport() {
+            const state = this.getImportState()
+            if (!state) return
+
+            try {
+                const res = await axios.get(`/products/import-olsera/status/${state.importId}`)
+                if (res.data.status === 'completed') {
+                    this.clearImportState()
+                    return
+                }
+                // masih processing/queued → tampilkan modal + lanjut polling
+                this.showImportModal = true
+                this.importFormat = 'olsera'
+                this.importStep = 4
+                this.importProgress = res.data
+                this.startImportPolling(state.importId)
+            } catch (e) {
+                // import_id sudah expired/hilang di backend
+                this.clearImportState()
+            }
         },
 
         async previewImport() {
@@ -1149,16 +1204,15 @@ export default {
                 const validRows = this.importPreview.rows.filter(r => r._status !== 'error').map(({_status, ...row}) => row)
 
                 if (this.importFormat === 'olsera') {
-                    // ── Olsera: background job + polling ──
                     const res = await axios.post('/products/import-olsera', { products: validRows, mode: this.importMode })
                     const { import_id } = res.data
 
                     this.importStep = 4
                     this.importProgress = { status: 'queued', processed: 0, total: validRows.length, percent: 0, imported: 0, updated: 0, skipped: 0, failed: 0, errors: [] }
+                    this.saveImportState(import_id, validRows.length)   // ← tambahan
                     this.startImportPolling(import_id)
 
                 } else {
-                    // ── Format baru: synchronous seperti sebelumnya ──
                     const res = await axios.post('/products/import', { products: validRows, mode: this.importMode })
                     const result = res.data
                     this.importResult = {
@@ -1190,6 +1244,7 @@ export default {
                     if (res.data.status === 'completed') {
                         clearInterval(this.importPollInterval)
                         this.importPollInterval = null
+                        this.clearImportState()   // ← tambahan
 
                         this.importResult = {
                             success: true,
@@ -1200,12 +1255,12 @@ export default {
                             message: `Import selesai: ${res.data.imported} ditambah, ${res.data.updated} diperbarui, ${res.data.skipped} dilewati, ${res.data.failed} gagal.`,
                         }
                         this.importStep = 3
-                        this.fetchProducts() // refresh list
+                        this.fetchProducts()
                     }
                 } catch (e) {
-                    // kalau status hilang/expired, hentikan polling
                     clearInterval(this.importPollInterval)
                     this.importPollInterval = null
+                    this.clearImportState()   // ← tambahan
                     console.error('Polling error:', e)
                 }
             }, 2000)

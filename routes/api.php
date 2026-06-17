@@ -92,6 +92,7 @@ Route::prefix('chat')->group(function () {
     Route::post('sessions/{session:uuid}/attachments',       [Chat\AttachmentController::class, 'store']);
     Route::post('sessions/{session:uuid}/ping',              [Chat\PresenceController::class, 'ping']);
     Route::post('sessions/{session:uuid}/leave',             [Chat\PresenceController::class, 'leave']);
+    Route::patch('sessions/{session:uuid}/rate',             [Chat\SessionController::class, 'rate']); 
 });
 
 Route::post('/orders', [OrderController::class, 'store']);
@@ -235,7 +236,6 @@ Route::middleware('auth:sanctum')->prefix('chat')->group(function () {
     Route::delete('sessions/{session:uuid}',           [Chat\SessionController::class, 'destroy'])->middleware('can:chat_admin');
     Route::patch('sessions/{session:uuid}/close',      [Chat\SessionController::class, 'close'])->middleware('can:chat_close');
     Route::patch('sessions/{session:uuid}/reopen',     [Chat\SessionController::class, 'reopen'])->middleware('can:chat_reopen');
-    Route::patch('sessions/{session:uuid}/rate',       [Chat\SessionController::class, 'rate'])->middleware('can:chat_view');
     Route::patch('sessions/{session:uuid}/assign',     [Chat\SessionController::class, 'assign'])->middleware('can:chat_manage');
     Route::patch('sessions/{session:uuid}/transfer',   [Chat\SessionController::class, 'transfer'])->middleware('can:chat_manage');
     Route::get('agents-list',                          [Admin\QueueController::class, 'agents'])->middleware('can:chat_manage');

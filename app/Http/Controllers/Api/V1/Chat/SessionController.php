@@ -180,4 +180,25 @@ class SessionController extends Controller
 
         return response()->json(['message' => 'Sesi berhasil dihapus']);
     }
+
+    public function rate(Request $request, ChatSession $session): JsonResponse
+    {
+        $data = $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+        ]);
+
+        if (!$session->isClosed()) {
+            return response()->json(['message' => 'Sesi belum ditutup'], 422);
+        }
+
+        if ($session->rating) {
+            return response()->json(['message' => 'Sesi sudah dirating'], 422);
+        }
+
+        $session->update(['rating' => $data['rating']]);
+
+        broadcast(new \App\Events\SessionRated($session, $data['rating']))->toOthers();
+
+        return response()->json(['message' => 'Rating berhasil disimpan']);
+    }
 }

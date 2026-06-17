@@ -32,6 +32,7 @@ class SessionResource extends JsonResource
             'closed_at'         => $this->closed_at,
             'created_at'        => $this->created_at,
             'visitor_left'      => (bool) $this->visitor_left,
+            'rating' => $this->rating,
 
             'assigned_agent_name' => $primaryAgent?->name ?? null,
 
