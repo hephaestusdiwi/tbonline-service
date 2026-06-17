@@ -423,9 +423,12 @@
                             <span class="text-gray-400">Terakhir Online</span>
                             <span class="font-semibold text-gray-700">{{ fmtTime(activeSession.last_seen_at) }}</span>
                         </div>
-                        <div v-if="activeSession.rating" class="flex justify-between text-xs">
+                        <div class="flex justify-between text-xs">
                             <span class="text-gray-400">Rating</span>
-                            <span class="font-semibold text-amber-500">{{ '⭐'.repeat(activeSession.rating) }}</span>
+                            <span v-if="activeSession.rating" class="font-semibold text-amber-500">
+                                {{ '⭐'.repeat(activeSession.rating) }} ({{ activeSession.rating }}/5)
+                            </span>
+                            <span v-else class="text-gray-400 italic">Belum ada rating</span>
                         </div>
                     </div>
 

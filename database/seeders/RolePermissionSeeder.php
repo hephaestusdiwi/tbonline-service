@@ -76,6 +76,8 @@ class RolePermissionSeeder extends Seeder
             'products_view',
             'orders_view',
             'chat_view',
+            'chat_close',
+            'chat_reopen',
         ]);
 
         $this->createDemoUser('Admin Demo',   'admin@demo.test',   'admin');
