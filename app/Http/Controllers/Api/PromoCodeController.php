@@ -29,6 +29,8 @@ class PromoCodeController extends Controller
             'max_usage'      => 'nullable|integer|min:1',
             'is_active'      => 'boolean',
             'expired_at'     => 'nullable|date|after:now',
+            'show_popup'     => 'boolean',
+            'popup_label'    => 'nullable|string|max:100',
         ]);
 
         $data['code'] = strtoupper(trim($data['code']));
@@ -51,6 +53,8 @@ class PromoCodeController extends Controller
             'max_usage'      => 'nullable|integer|min:1',
             'is_active'      => 'boolean',
             'expired_at'     => 'nullable|date',
+            'show_popup'     => 'boolean',
+            'popup_label'    => 'nullable|string|max:100',
         ]);
 
         if (isset($data['code'])) {
@@ -116,5 +120,24 @@ class PromoCodeController extends Controller
             'discount_amount'   => $discount,
             'description'       => $promo->description,
         ]);
+    }
+
+    public function popupCodes()
+    {
+        $promos = PromoCode::where('show_popup', true)
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereNull('expired_at')
+                ->orWhere('expired_at', '>', now());
+            })
+            ->where(function ($q) {
+                $q->whereNull('max_usage')
+                ->orWhereColumn('used_count', '<', 'max_usage');
+            })
+            ->orderByRaw('popup_label IS NOT NULL DESC') // yang punya label khusus duluan
+            ->get(['id', 'code', 'description', 'discount_type', 'discount_value',
+                'min_purchase', 'popup_label']);
+
+        return response()->json(['data' => $promos]);
     }
 }

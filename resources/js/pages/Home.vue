@@ -1,6 +1,7 @@
 <template>
     <div class="min-h-screen bg-white">
         <AgeGateModal />
+        <PromoPopup />
         <Navbar />
         <CartDrawer />
         <HeroSlider />
@@ -26,6 +27,7 @@ import { useSeoMeta } from '../composables/useSeoMeta.js'
 import { useVisitorTracker } from '../composables/useVisitorTracker'
  
 import AgeGateModal from '../components/AgeGateModal.vue'
+import PromoPopup      from '../components/PromoPopup.vue'
 import Navbar          from '../components/Navbar.vue'
 import HeroSlider      from '../components/HeroSlider.vue'
 import ProductList     from '../components/ProductList.vue'
@@ -40,7 +42,7 @@ import FaqSection      from '../components/FaqSection.vue'
 export default {
     name: 'Home',
     components: {
-        Navbar, AgeGateModal, HeroSlider, TopProducts, ProductList, PromotionSlider,
+        Navbar, AgeGateModal, PromoPopup, HeroSlider, TopProducts, ProductList, PromotionSlider,
         CartDrawer, CustomerChat, FooterSection, NewsletterBar, FaqSection,
     },
  

@@ -19,7 +19,7 @@
   z-index: 999;
   display: flex;
   flex-direction: column;
-  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: "Poppins", sans-serif;
   box-shadow: -8px 0 40px rgba(0,0,0,0.15);
 }
 

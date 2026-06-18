@@ -10,10 +10,12 @@ class PromoCode extends Model
     protected $fillable = [
         'code', 'description', 'discount_type', 'discount_value',
         'min_purchase', 'max_usage', 'used_count', 'is_active', 'expired_at',
+        'show_popup', 'popup_label',
     ];
 
     protected $casts = [
         'expired_at' => 'datetime',
+        'show_popup'  => 'boolean',
         'is_active'  => 'boolean',
     ];
 

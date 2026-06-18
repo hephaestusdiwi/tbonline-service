@@ -257,6 +257,16 @@ const PERMISSION_MODULES = [
             { key: 'settings_view', label: 'Lihat' }, { key: 'settings_edit', label: 'Edit' },
         ],
     },
+    {
+        key: 'chat', label: 'Live Chat', icon: '💬', description: 'Manajemen sesi live chat',
+        permissions: [
+            { key: 'chat_view',   label: 'Lihat' },
+            { key: 'chat_close',  label: 'Tutup Sesi' },
+            { key: 'chat_reopen', label: 'Buka Kembali' },
+            { key: 'chat_manage', label: 'Kelola & Assign' },
+            { key: 'chat_admin',  label: 'Admin (Hapus)' },
+        ],
+    },
 ]
 
 export default {

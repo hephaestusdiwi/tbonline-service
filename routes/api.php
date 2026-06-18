@@ -56,7 +56,6 @@ Route::get('/blog/{slug}',  [App\Http\Controllers\Api\BlogController::class, 'sh
 Route::get('/static-pages/{type}', [ContentController::class, 'showStatic']);
 Route::get('/announcements', [AnnouncementController::class, 'index']);
 Route::get('/faqs', [FaqController::class, 'public']);
-// Taruh di LUAR group middleware auth
 Route::get('/orders/public/{invoice_number}', [OrderController::class, 'showPublic']);
 
 Route::prefix('visitor')->group(function () {
@@ -96,6 +95,7 @@ Route::prefix('chat')->group(function () {
 });
 
 Route::post('/orders', [OrderController::class, 'store']);
+Route::get('/promo-codes/popup', [PromoCodeController::class, 'popupCodes']);
 Route::post('/promo-codes/validate', [PromoCodeController::class, 'validateCode']);
 Route::post('/webhook/olsera', [OlseraWebhookController::class, 'handle']);
 Route::get('settings', [SiteSettingController::class, 'index']);
@@ -184,7 +184,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/promo-codes',               [PromoCodeController::class, 'store'])->middleware('can:settings_edit');
     Route::put('/promo-codes/{promoCode}',    [PromoCodeController::class, 'update'])->middleware('can:settings_edit');
     Route::delete('/promo-codes/{promoCode}', [PromoCodeController::class, 'destroy'])->middleware('can:settings_edit');
-
     // Reports
     Route::get('/sales-report',              [SalesReportController::class, 'index']);
     Route::get('/sales-report/export-excel', [SalesReportController::class, 'exportExcel']);

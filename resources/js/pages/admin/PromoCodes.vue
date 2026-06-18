@@ -334,6 +334,53 @@
                                     <input v-model="form.description" type="text" placeholder="cth: Diskon 10% untuk semua produk" :disabled="modalMode === 'view'"
                                         class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 disabled:bg-gray-50 disabled:text-gray-400 transition-all"/>
                                 </div>
+                                <!-- Toggle Show Popup -->
+                                <div class="col-span-2">
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                                        Tampilkan di Popup Homepage
+                                    </label>
+                                    <div class="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                                                :class="form.show_popup ? 'bg-[#ED1F24]/10 border border-[#ED1F24]/20' : 'bg-gray-100 border border-gray-200'">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                                                    :class="form.show_popup ? 'text-[#ED1F24]' : 'text-gray-400'">
+                                                    <rect x="3" y="3" width="18" height="14" rx="2"/>
+                                                    <path d="M8 21h8M12 17v4"/>
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs font-semibold text-gray-700">Popup di Homepage</p>
+                                                <p class="text-[10px] text-gray-400">Promo ini muncul sebagai popup saat visitor pertama kali buka toko</p>
+                                            </div>
+                                        </div>
+                                        <!-- Toggle switch -->
+                                        <button @click="modalMode !== 'view' && (form.show_popup = !form.show_popup)"
+                                            :disabled="modalMode === 'view'"
+                                            class="relative shrink-0 w-11 h-6 rounded-full transition-all duration-300 focus:outline-none disabled:cursor-not-allowed"
+                                            :class="form.show_popup ? 'bg-[#ED1F24]' : 'bg-gray-300'">
+                                            <span class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-sm transition-transform duration-300"
+                                                :class="form.show_popup ? 'translate-x-5' : 'translate-x-0'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Popup Label (muncul hanya jika show_popup aktif) -->
+                                <Transition name="slide-down">
+                                    <div v-if="form.show_popup" class="col-span-2">
+                                        <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                                            Label Grup Popup
+                                            <span class="text-gray-300 normal-case font-normal ml-1">(opsional)</span>
+                                        </label>
+                                        <input v-model="form.popup_label" type="text"
+                                            placeholder='cth: "KHUSUS PENGGUNA BARU" atau "PROMO RAMADAN"'
+                                            :disabled="modalMode === 'view'"
+                                            class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 disabled:bg-gray-50 disabled:text-gray-400 transition-all"/>
+                                        <p class="text-[10px] text-gray-400 mt-1">
+                                            Promo dengan label sama akan dikelompokkan dalam satu grup di popup. Kosongkan untuk tampil tanpa grup.
+                                        </p>
+                                    </div>
+                                </Transition>
                             </div>
                         </div>
 
@@ -545,7 +592,7 @@ export default {
 
     methods: {
         emptyForm() {
-            return { code: '', description: '', discount_type: 'percentage', discount_value: null, min_purchase: 0, max_usage: null, is_active: true, expired_at: '' }
+            return { code: '', description: '', discount_type: 'percentage', discount_value: null, min_purchase: 0, max_usage: null, is_active: true, expired_at: '', show_popup: false, popup_label: '', }
         },
 
         async fetchPromoCodes() {
@@ -615,4 +662,6 @@ export default {
 <style scoped>
 .pc-modal-enter-active, .pc-modal-leave-active { transition: all .2s; }
 .pc-modal-enter-from, .pc-modal-leave-to { opacity: 0; transform: scale(.97); }
+.slide-down-enter-active, .slide-down-leave-active { transition: all 0.2s ease; }
+.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-6px); }
 </style>
