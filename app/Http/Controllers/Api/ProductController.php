@@ -182,16 +182,15 @@ class ProductController extends Controller
 
     /**
      * GET /api/products/categories
+     * Semua kategori (tanpa filter published) untuk admin.
      */
     public function categories(): JsonResponse
     {
-        $categories = Product::where('published', 1)
-            ->whereNotNull('category')
+        $categories = Product::whereNotNull('category')
             ->where('category', '!=', '')
             ->distinct()
             ->orderBy('category')
-            ->pluck('category')
-            ->map(fn($c) => ['name' => $c]);
+            ->pluck('category');
 
         return response()->json(['data' => $categories]);
     }

@@ -614,31 +614,63 @@
 
                         <!-- Basic -->
                         <div v-show="activeTab === 'basic'" class="grid grid-cols-2 gap-4">
-                            <div class="col-span-2">
-                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Nama Produk <span class="text-[#ED1F24]">*</span></label>
-                                <input v-model="form.name" type="text" placeholder="Nama produk..." :disabled="modalMode === 'view'"
-                                    class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 disabled:bg-gray-50 disabled:text-gray-400 transition-all"/>
+                        <!-- Nama Produk -->
+                        <div class="col-span-2">
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                                Nama Produk <span class="text-[#ED1F24]">*</span>
+                            </label>
+                            <input v-model="form.name" type="text" placeholder="Nama produk..." :disabled="modalMode === 'view'"
+                                class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 disabled:bg-gray-50 disabled:text-gray-400 transition-all"/>
+                        </div>
+
+                        <!-- Field basic lain (skip 'category', dirender terpisah) -->
+                        <template v-for="f in basicFields" :key="f.key">
+
+                            <!-- Category — combobox khusus -->
+                            <div v-if="f.key === 'category'">
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Kategori</label>
+                                <div class="relative">
+                                    <input
+                                        v-model="form.category"
+                                        type="text"
+                                        placeholder="Pilih atau ketik kategori baru..."
+                                        :disabled="modalMode === 'view'"
+                                        :list="modalMode !== 'view' ? 'category-options' : undefined"
+                                        class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 pr-8 text-gray-700 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 disabled:bg-gray-50 disabled:text-gray-400 transition-all"
+                                    />
+                                    <svg v-if="modalMode !== 'view'" class="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                    <datalist id="category-options">
+                                        <option v-for="cat in allCategories" :key="cat" :value="cat"/>
+                                    </datalist>
+                                </div>
                             </div>
-                            <div v-for="f in basicFields" :key="f.key" :class="f.full ? 'col-span-2' : ''">
+
+                            <!-- Field lain normal -->
+                            <div v-else :class="f.full ? 'col-span-2' : ''">
                                 <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">{{ f.label }}</label>
                                 <textarea v-if="f.type === 'textarea'" v-model="form[f.key]" rows="3" :placeholder="f.placeholder" :disabled="modalMode === 'view'"
                                     class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 disabled:bg-gray-50 disabled:text-gray-400 transition-all resize-none"></textarea>
                                 <input v-else v-model="form[f.key]" :type="f.type || 'text'" :placeholder="f.placeholder" :disabled="modalMode === 'view'"
                                     class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 disabled:bg-gray-50 disabled:text-gray-400 transition-all"/>
                             </div>
-                            <!-- Status Toggle -->
-                            <div>
-                                <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Status</label>
-                                <div class="flex rounded-lg border border-gray-200 overflow-hidden">
-                                    <button @click="modalMode !== 'view' && (form.published = 1)"
-                                        class="flex-1 py-2 text-xs font-bold transition-all" :disabled="modalMode === 'view'"
-                                        :class="form.published ? 'bg-emerald-500 text-white' : 'bg-white text-gray-400'">Published</button>
-                                    <button @click="modalMode !== 'view' && (form.published = 0)"
-                                        class="flex-1 py-2 text-xs font-bold transition-all border-l border-gray-200" :disabled="modalMode === 'view'"
-                                        :class="!form.published ? 'bg-gray-500 text-white' : 'bg-white text-gray-400'">Draft</button>
-                                </div>
+
+                        </template>
+
+                        <!-- Status Toggle -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Status</label>
+                            <div class="flex rounded-lg border border-gray-200 overflow-hidden">
+                                <button @click="modalMode !== 'view' && (form.published = 1)"
+                                    class="flex-1 py-2 text-xs font-bold transition-all" :disabled="modalMode === 'view'"
+                                    :class="form.published ? 'bg-emerald-500 text-white' : 'bg-white text-gray-400'">Published</button>
+                                <button @click="modalMode !== 'view' && (form.published = 0)"
+                                    class="flex-1 py-2 text-xs font-bold transition-all border-l border-gray-200" :disabled="modalMode === 'view'"
+                                    :class="!form.published ? 'bg-gray-500 text-white' : 'bg-white text-gray-400'">Draft</button>
                             </div>
                         </div>
+                    </div>
 
                         <!-- Pricing -->
                         <div v-show="activeTab === 'pricing'">
@@ -843,6 +875,7 @@ export default {
             modalMode: 'create',
             selectedProduct: null,
             activeTab: 'basic',
+            allCategories: [],
 
             formTabs: [
                 { key: 'basic',    label: 'Info Dasar' },
@@ -919,6 +952,7 @@ export default {
     mounted() {
         document.title = 'Products - Two Brothers Vape System'
         this.fetchProducts()
+        this.filterCategories()
         this.checkOngoingImport()
     },
 
@@ -1042,6 +1076,15 @@ export default {
                 else { this.products = paginated; this.totalItems = paginated.length }
                 if (res.data.meta) { this.stats.total = res.data.meta.total??0; this.stats.publishedCount = res.data.meta.published_count??0; this.stats.lowStockCount = res.data.meta.low_stock_count??0; this.stats.categoryCount = res.data.meta.category_count??0 }
             } catch(e) { console.error(e) }
+        },
+
+        async fetchCategories() {
+            try {
+                const res = await axios.get('/products/categories')
+                this.allCategories = res.data.data ?? []
+            } catch (e) {
+                console.error('Gagal fetch categories:', e)
+            }
         },
 
         async exportExcel() {

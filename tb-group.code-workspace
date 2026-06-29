@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../omroni"
+		},
+		{
+			"path": "../mindwayPOS"
+		}
+	],
+	"settings": {}
+}
