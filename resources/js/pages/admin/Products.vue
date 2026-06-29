@@ -681,21 +681,48 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div v-for="f in pricingFields" :key="f.key">
                                     <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">{{ f.label }}</label>
-                                    <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:border-[#ED1F24] focus-within:ring-2 focus-within:ring-[#ED1F24]/10 transition-all">
-                                        <span class="px-3 py-2 bg-gray-50 text-xs text-gray-400 border-r border-gray-200 shrink-0">Rp</span>
-                                        <input v-model.number="form[f.key]" type="number" :disabled="modalMode === 'view'"
-                                            class="flex-1 text-sm px-3 py-2 text-gray-700 outline-none bg-white disabled:bg-gray-50 disabled:text-gray-400"/>
+                                    <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:border-[#ED1F24] focus-within:ring-2 focus-within:ring-[#ED1F24]/10 transition-all"
+                                        :class="modalMode === 'view' ? 'bg-gray-50' : 'bg-white'">
+                                        <span class="px-3 py-2 bg-gray-50 text-xs font-semibold text-gray-400 border-r border-gray-200 shrink-0">Rp</span>
+                                        <input
+                                            type="text"
+                                            inputmode="numeric"
+                                            :value="rawPricing[f.key]"
+                                            :disabled="modalMode === 'view'"
+                                            placeholder="0"
+                                            @input="onPricingInput(f.key, $event)"
+                                            @focus="$event.target.select()"
+                                            class="flex-1 text-sm px-3 py-2 text-gray-700 outline-none bg-transparent disabled:text-gray-400 tabular-nums"
+                                        />
                                     </div>
+                                    <!-- Preview nominal -->
+                                    <p v-if="form[f.key]" class="text-[10px] text-gray-400 mt-1 pl-1">
+                                        {{ new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(form[f.key]) }}
+                                    </p>
                                 </div>
+
                                 <div>
                                     <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Komisi</label>
-                                    <input v-model.number="form.comission" type="number" :disabled="modalMode === 'view'" placeholder="0"
-                                        class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 disabled:bg-gray-50 transition-all"/>
+                                    <input
+                                        type="text"
+                                        inputmode="numeric"
+                                        :value="form.comission ? formatRupiah(form.comission) : ''"
+                                        :disabled="modalMode === 'view'"
+                                        placeholder="0"
+                                        @input="e => { const raw = e.target.value.replace(/\D/g,''); form.comission = raw ? parseFloat(raw) : 0; e.target.value = raw ? formatRupiah(raw) : '' }"
+                                        class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 disabled:bg-gray-50 transition-all tabular-nums"
+                                    />
                                 </div>
+
                                 <div>
                                     <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Loyalty Points</label>
-                                    <input v-model.number="form.loyalty_points" type="number" :disabled="modalMode === 'view'" placeholder="0"
-                                        class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 disabled:bg-gray-50 transition-all"/>
+                                    <input
+                                        v-model.number="form.loyalty_points"
+                                        type="number"
+                                        :disabled="modalMode === 'view'"
+                                        placeholder="0"
+                                        class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 disabled:bg-gray-50 transition-all"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -933,6 +960,12 @@ export default {
             activeTab: 'basic',
             allCategories: [],
             photoUploading: { 1: false, 2: false, 3: false, 4: false, 5: false },
+            rawPricing: {
+                buy_price: '',
+                market_price: '',
+                sell_price: '',
+                pos_sell_price: '',
+            },
 
             formTabs: [
                 { key: 'basic',    label: 'Info Dasar' },
@@ -1054,6 +1087,28 @@ export default {
             }
         },
 
+        formatRupiah(val) {
+            if (!val && val !== 0) return ''
+            return new Intl.NumberFormat('id-ID').format(val)
+        },
+
+        parseRupiah(val) {
+            if (!val) return null
+            return parseFloat(String(val).replace(/\./g, '').replace(',', '.')) || null
+        },
+
+        onPricingInput(key, event) {
+            const raw = event.target.value.replace(/\D/g, '')
+            this.form[key] = raw ? parseFloat(raw) : null
+            event.target.value = raw ? new Intl.NumberFormat('id-ID').format(raw) : ''
+        },
+
+        initRawPricing() {
+            ['buy_price', 'market_price', 'sell_price', 'pos_sell_price'].forEach(key => {
+                this.rawPricing[key] = this.form[key] ? this.formatRupiah(this.form[key]) : ''
+            })
+        },
+
         triggerPhotoUpload(n) {
             document.getElementById(`photoInput_${n}`).click()
         },
@@ -1127,18 +1182,37 @@ export default {
         },
 
         async openModal(mode, product = null) {
-            this.modalMode = mode; this.errorMessage = ''; this.activeTab = 'basic'; this.photoUploading = { 1: false, 2: false, 3: false, 4: false, 5: false }
+            this.modalMode = mode
+            this.errorMessage = ''
+            this.activeTab = 'basic'
+            this.photoUploading = { 1: false, 2: false, 3: false, 4: false, 5: false }
+
             if (product) {
                 this.selectedProduct = product
                 let detail = product
                 if (mode !== 'create' && product.id) {
-                    try { const res = await axios.get(`/products/${product.id}`); detail = res.data.data ?? res.data } catch(e) { detail = product }
+                    try {
+                        const res = await axios.get(`/products/${product.id}`)
+                        detail = res.data.data ?? res.data
+                    } catch(e) { detail = product }
                 }
-                this.form = { ...this.emptyForm(), ...detail,
-                    option_types: (detail.option_types||[]).map(ot => ({ name: ot.name, values: (ot.values||[]).map(v=>v.value) })),
-                    variants: (detail.variants||detail.active_variants||[]).map((v,i) => ({ ...v, _key: v.label+'_'+i, option_value_indexes: v.option_value_indexes ?? (v.option_values??[]).map(()=>0) })),
+                this.form = {
+                    ...this.emptyForm(), ...detail,
+                    option_types: (detail.option_types||[]).map(ot => ({
+                        name: ot.name,
+                        values: (ot.values||[]).map(v => v.value)
+                    })),
+                    variants: (detail.variants||detail.active_variants||[]).map((v,i) => ({
+                        ...v, _key: v.label+'_'+i,
+                        option_value_indexes: v.option_value_indexes ?? (v.option_values??[]).map(()=>0)
+                    })),
                 }
-            } else { this.selectedProduct = null; this.form = this.emptyForm() }
+            } else {
+                this.selectedProduct = null
+                this.form = this.emptyForm()
+            }
+
+            this.initRawPricing() 
             this.showModal = true
         },
         closeModal() { this.showModal = false; this.errorMessage = '' },
