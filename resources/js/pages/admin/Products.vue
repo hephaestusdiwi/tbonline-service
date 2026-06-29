@@ -803,15 +803,70 @@
                         <!-- Photos -->
                         <div v-show="activeTab === 'photos'" class="grid grid-cols-3 gap-3">
                             <div v-for="n in 5" :key="n">
-                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Foto {{ n }}</label>
-                                <div class="aspect-square rounded-xl overflow-hidden border border-gray-200 bg-gray-50 mb-2">
-                                    <img v-if="form[`photo_${n}`]" :src="photoUrl(form[`photo_${n}`])" class="w-full h-full object-cover" @error="handleImgError"/>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                                    Foto {{ n }}
+                                </label>
+
+                                <!-- Preview -->
+                                <div class="aspect-square rounded-xl overflow-hidden border border-gray-200 bg-gray-50 mb-2 relative group">
+                                    <img v-if="form[`photo_${n}`]"
+                                        :src="photoUrl(form[`photo_${n}`])"
+                                        class="w-full h-full object-cover"
+                                        @error="handleImgError"/>
                                     <div v-else class="w-full h-full flex items-center justify-center text-gray-300">
-                                        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                                            <polyline points="21 15 16 10 5 21"/>
+                                        </svg>
+                                    </div>
+
+                                    <!-- Overlay hapus foto (muncul saat hover, hanya edit/create) -->
+                                    <div v-if="modalMode !== 'view' && form[`photo_${n}`]"
+                                        class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <button @click="removePhoto(n)"
+                                            class="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-white transition-all">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    <!-- Loading overlay saat upload -->
+                                    <div v-if="photoUploading[n]"
+                                        class="absolute inset-0 bg-white/80 flex flex-col items-center justify-center gap-1.5">
+                                        <svg class="w-5 h-5 text-[#ED1F24] animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                                        </svg>
+                                        <span class="text-[10px] font-semibold text-gray-500">Mengupload...</span>
                                     </div>
                                 </div>
-                                <input v-if="modalMode !== 'view'" v-model="form[`photo_${n}`]" type="text" placeholder="URL foto..."
-                                    class="w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 transition-all"/>
+
+                                <!-- Tombol upload / input URL -->
+                                <template v-if="modalMode !== 'view'">
+                                    <!-- Tombol upload file -->
+                                    <button @click="triggerPhotoUpload(n)"
+                                        :disabled="photoUploading[n]"
+                                        class="w-full flex items-center justify-center gap-1.5 text-[10px] font-semibold px-2 py-1.5 rounded-lg border border-dashed border-gray-300 hover:border-[#ED1F24]/40 hover:bg-[#ED1F24]/3 hover:text-[#ED1F24] text-gray-400 transition-all mb-1.5 disabled:opacity-50">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                            <polyline points="16 16 12 12 8 16"/>
+                                            <line x1="12" y1="12" x2="12" y2="21"/>
+                                            <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
+                                        </svg>
+                                        Upload Foto
+                                    </button>
+                                    <input
+                                        :ref="`photoInput_${n}`"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        class="hidden"
+                                        @change="handlePhotoUpload(n, $event)"
+                                    />
+
+                                    <!-- Input URL manual (opsional, collapsible) -->
+                                    <input v-model="form[`photo_${n}`]" type="text" placeholder="atau tempel URL..."
+                                        class="w-full text-[10px] border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 transition-all text-gray-500 placeholder-gray-300"/>
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -876,6 +931,7 @@ export default {
             selectedProduct: null,
             activeTab: 'basic',
             allCategories: [],
+            photoUploading: { 1: false, 2: false, 3: false, 4: false, 5: false },
 
             formTabs: [
                 { key: 'basic',    label: 'Info Dasar' },
@@ -952,7 +1008,7 @@ export default {
     mounted() {
         document.title = 'Products - Two Brothers Vape System'
         this.fetchProducts()
-        this.filterCategories()
+        this.fetchCategories() 
         this.checkOngoingImport()
     },
 
@@ -997,6 +1053,53 @@ export default {
             }
         },
 
+        triggerPhotoUpload(n) {
+            const ref = this.$refs[`photoInput_${n}`]
+            if (ref) ref.click()
+        },
+
+        async handlePhotoUpload(n, event) {
+            const file = event.target.files[0]
+            if (!file) return
+
+            this.photoUploading[n] = true
+
+            try {
+                const formData = new FormData()
+                formData.append('image', file)
+
+                const res = await axios.post('/products/upload-image', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                })
+
+                // Simpan path ke form (bukan URL, supaya konsisten dengan field lain)
+                this.form[`photo_${n}`] = res.data.path
+
+            } catch (e) {
+                alert('Gagal upload foto: ' + (e.response?.data?.message || 'Coba lagi'))
+            } finally {
+                this.photoUploading[n] = false
+                // Reset input supaya bisa upload file yang sama lagi
+                const ref = this.$refs[`photoInput_${n}`]
+                if (ref) ref.value = ''
+            }
+        },
+
+        async removePhoto(n) {
+            const path = this.form[`photo_${n}`]
+
+            // Kalau path lokal (bukan URL eksternal), hapus dari storage
+            if (path && !path.startsWith('http://') && !path.startsWith('https://')) {
+                try {
+                    await axios.delete('/products/delete-image', { data: { path } })
+                } catch (e) {
+                    console.warn('Gagal hapus file dari storage:', e)
+                }
+            }
+
+            this.form[`photo_${n}`] = ''
+        },
+
         addOptionType()                    { this.form.option_types.push({ name:'', values:[''] }); this.regenerateVariants() },
         removeOptionType(idx)              { this.form.option_types.splice(idx, 1); this.regenerateVariants() },
         addOptionValue(otIdx)              { this.form.option_types[otIdx].values.push(''); this.regenerateVariants() },
@@ -1027,7 +1130,7 @@ export default {
         },
 
         async openModal(mode, product = null) {
-            this.modalMode = mode; this.errorMessage = ''; this.activeTab = 'basic'
+            this.modalMode = mode; this.errorMessage = ''; this.activeTab = 'basic'; this.photoUploading = { 1: false, 2: false, 3: false, 4: false, 5: false }
             if (product) {
                 this.selectedProduct = product
                 let detail = product

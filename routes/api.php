@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\FaqController;
 use App\Http\Controllers\Api\VisitorStatsController;
 use App\Http\Controllers\Api\ComplaintController;
+use App\Http\Controllers\Api\ProductImageController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/homepage', [HomepageSectionController::class, 'public']);
@@ -136,6 +137,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/products',             [ProductController::class, 'store'])->middleware('can:products_create');
     Route::put('/products/{id}',         [ProductController::class, 'update'])->middleware('can:products_edit');
     Route::delete('/products/{id}',      [ProductController::class, 'destroy'])->middleware('can:products_delete');
+    Route::post('/products/upload-image',  [ProductImageController::class, 'upload'])->middleware('can:products_create');
+    Route::delete('/products/delete-image', [ProductImageController::class, 'delete'])->middleware('can:products_delete');
 
     // Variants - tambah ini
     Route::get('/products/{id}/variants',  [ProductController::class, 'variants'])->middleware('can:products_view');
