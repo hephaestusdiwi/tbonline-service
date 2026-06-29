@@ -95,7 +95,6 @@ class ProductImageController extends Controller
 
         $path = $request->path;
 
-        // Keamanan: pastikan path dalam folder products/ saja
         if (!str_starts_with($path, 'products/')) {
             return response()->json(['message' => 'Path tidak valid.'], 422);
         }

@@ -856,6 +856,7 @@
                                         Upload Foto
                                     </button>
                                     <input
+                                        :id="`photoInput_${n}`"
                                         :ref="`photoInput_${n}`"
                                         type="file"
                                         accept="image/jpeg,image/png,image/webp"
@@ -1054,8 +1055,7 @@ export default {
         },
 
         triggerPhotoUpload(n) {
-            const ref = this.$refs[`photoInput_${n}`]
-            if (ref) ref.click()
+            document.getElementById(`photoInput_${n}`).click()
         },
 
         async handlePhotoUpload(n, event) {
@@ -1072,26 +1072,23 @@ export default {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 })
 
-                // Simpan path ke form (bukan URL, supaya konsisten dengan field lain)
                 this.form[`photo_${n}`] = res.data.path
 
             } catch (e) {
                 alert('Gagal upload foto: ' + (e.response?.data?.message || 'Coba lagi'))
             } finally {
                 this.photoUploading[n] = false
-                // Reset input supaya bisa upload file yang sama lagi
-                const ref = this.$refs[`photoInput_${n}`]
-                if (ref) ref.value = ''
+                const input = document.getElementById(`photoInput_${n}`)
+                if (input) input.value = ''
             }
         },
 
         async removePhoto(n) {
             const path = this.form[`photo_${n}`]
 
-            // Kalau path lokal (bukan URL eksternal), hapus dari storage
             if (path && !path.startsWith('http://') && !path.startsWith('https://')) {
                 try {
-                    await axios.delete('/products/delete-image', { data: { path } })
+                    await axios.post('/products/delete-image', { path })  
                 } catch (e) {
                     console.warn('Gagal hapus file dari storage:', e)
                 }
