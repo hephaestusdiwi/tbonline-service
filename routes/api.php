@@ -83,6 +83,7 @@ Route::prefix('rajaongkir')->group(function () {
 // Public chat routes (guest)
 Route::prefix('chat')->group(function () {
     Route::post('sessions',                                  [Chat\SessionController::class, 'store']);
+    Route::post('sessions/order',                             [Chat\SessionController::class, 'storeFromOrder']); // ← baru
     Route::get ('sessions/{uuid}/by-token',                  [Chat\SessionController::class, 'showByToken']);
     Route::get ('sessions/{session:uuid}/messages',          [Chat\MessageController::class, 'index']);
     Route::post('sessions/{session:uuid}/messages',          [Chat\MessageController::class, 'store']);

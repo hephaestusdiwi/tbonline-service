@@ -353,19 +353,18 @@
                 <span class="submit-spinner"/>
                 <span class="submit-steps">
                   <span :class="{ active: submitStep >= 1 }">Menyimpan pesanan...</span>
-                  <span v-if="submitStep >= 2" class="step-fade">Membuka WhatsApp...</span>
+                  <span v-if="submitStep >= 2" class="step-fade">Menghubungkan ke Live Chat...</span>
                 </span>
               </span>
               <span v-else key="idle" class="btn-idle">
-                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.851L.057 23.547a.75.75 0 0 0 .916.919l5.808-1.517A11.943 11.943 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.708 9.708 0 0 1-4.953-1.354l-.355-.21-3.678.961.98-3.589-.23-.37A9.718 9.718 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke-linejoin="round"/>
                 </svg>
-                Pesan via WhatsApp
+                Pesan &amp; Live Chat
               </span>
             </transition>
           </button>
-          <p class="wa-note">Pesananmu akan tersimpan & dikirim ke WhatsApp kami untuk konfirmasi.</p>
+          <p class="wa-note">Pesananmu akan tersimpan & langsung terhubung ke live chat kami untuk konfirmasi.</p>
         </div>
 
       </div>
@@ -530,19 +529,18 @@
                   <span class="submit-spinner"/>
                   <span class="submit-steps">
                     <span :class="{ active: submitStep >= 1 }">Menyimpan pesanan...</span>
-                    <span v-if="submitStep >= 2" class="step-fade">Membuka WhatsApp...</span>
+                    <span v-if="submitStep >= 2" class="step-fade">Menghubungkan ke Live Chat...</span>
                   </span>
                 </span>
                 <span v-else key="idle" class="btn-idle">
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-                    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.851L.057 23.547a.75.75 0 0 0 .916.919l5.808-1.517A11.943 11.943 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.708 9.708 0 0 1-4.953-1.354l-.355-.21-3.678.961.98-3.589-.23-.37A9.718 9.718 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke-linejoin="round"/>
                   </svg>
-                  Pesan via WhatsApp
+                  Pesan &amp; Live Chat
                 </span>
               </transition>
             </button>
-            <p class="wa-note">Pesananmu akan tersimpan & dikirim ke WhatsApp kami untuk konfirmasi.</p>
+            <p class="wa-note">Pesananmu akan tersimpan & langsung terhubung ke live chat kami untuk konfirmasi.</p>
           </div>
 
         </div>
@@ -567,17 +565,16 @@
             <div class="success-ripple r2"/>
           </div>
           <h2 class="modal-title">Pesanan Terkirim!</h2>
-          <p class="modal-sub">Pesananmu sudah tersimpan dan kami akan segera menghubungimu via WhatsApp untuk konfirmasi.</p>
+          <p class="modal-sub">Pesananmu sudah tersimpan dan kami akan segera membalas lewat live chat untuk konfirmasi.</p>
           <div class="modal-order-badge">
             <span class="order-badge-label">Nomor Invoice</span>
             <span class="order-badge-val">#{{ orderId }}</span>
           </div>
           <div class="modal-wa-hint">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
-              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.851L.057 23.547a.75.75 0 0 0 .916.919l5.808-1.517A11.943 11.943 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.708 9.708 0 0 1-4.953-1.354l-.355-.21-3.678.961.98-3.589-.23-.37A9.718 9.718 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke-linejoin="round"/>
             </svg>
-            WhatsApp terbuka otomatis di tab baru
+            Live chat customer service sudah terbuka otomatis
           </div>
           <button class="btn-primary modal-back-btn" @click="finishOrder">Kembali ke Home</button>
         </div>
@@ -614,10 +611,10 @@ export default {
   },
 
   setup() {
-      const { siteName, storeWhatsapp, fetchSettings } = useSiteSettings()
+      const { siteName, fetchSettings } = useSiteSettings()
       useHead({ title: `Checkout - ${siteName.value}` })
       fetchSettings() 
-      return { storeWhatsapp } 
+      return {} 
   },
 
 
@@ -893,16 +890,42 @@ export default {
       return Object.keys(e).length === 0
     },
 
-    buildWhatsAppMessage(orderId) {
+    buildOrderChatMessage(orderId) {
       const invoiceUrl = `${window.location.origin}/i/${orderId}`
+      const itemsList = cartStore.state.items
+        .map(item => `- ${item.name}${item.variant_names ? ` (${item.variant_names})` : ''} x${item.qty}`)
+        .join('\n')
 
-      const message =
-        `Halo admin, saya sudah melakukan pemesanan.\n` +
+      return (
+        `Halo, saya baru saja melakukan pemesanan.\n` +
         `Invoice: #${orderId}\n\n` +
-        ` ${invoiceUrl}\n` +
-        `Mohon diproses ya `
+        `${itemsList}\n\n` +
+        `Total: ${this.formatPrice(this.grandTotal)}\n` +
+        `Link invoice: ${invoiceUrl}\n\n` +
+        `Mohon diproses ya 🙏`
+      )
+    },
 
-      return encodeURIComponent(message)
+    async sendOrderToChat(orderId) {
+      try {
+        const { data } = await axiosInstance.post(`/chat/sessions/order`, {
+          guest_name:    this.form.name,
+          guest_phone:   `0${this.form.phone}`,
+          order_message: this.buildOrderChatMessage(orderId),
+          subject:       `Pesanan #${orderId}`,
+        })
+
+        localStorage.setItem('chat_guest_token', data.guest_token)
+        localStorage.setItem('chat_session_uuid', data.data.uuid)
+
+        window.dispatchEvent(new CustomEvent('open-chat', {
+          detail: { sessionUuid: data.data.uuid, guestToken: data.guest_token }
+        }))
+      } catch (err) {
+        console.error('Gagal mengirim pesanan ke live chat:', err)
+        // Order tetap sukses meski koneksi chat gagal — buka widget biar customer tetap bisa chat manual
+        window.dispatchEvent(new CustomEvent('open-chat'))
+      }
     },
 
     async submitOrder() {
@@ -998,8 +1021,7 @@ export default {
         this.orderId = orderId
 
         this.submitStep = 2
-        const waNumber = this.storeWhatsapp || '6281293139223'
-        window.open(`https://wa.me/${waNumber}?text=${this.buildWhatsAppMessage(orderId)}`, '_blank')
+        await this.sendOrderToChat(orderId)
 
         cartStore.clearCart()
         this.showSuccess = true

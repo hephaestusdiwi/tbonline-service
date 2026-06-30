@@ -26,16 +26,6 @@
                 </div>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
-                <!-- Export CSV -->
-                <button
-                    @click="exportCsv"
-                    class="group flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg border border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700 transition-all duration-150"
-                >
-                    <svg class="w-3.5 h-3.5 group-hover:translate-y-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    CSV
-                </button>
                 <!-- Export Excel -->
                 <button
                     @click="exportExcel"

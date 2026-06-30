@@ -47,6 +47,23 @@ class SessionController extends Controller
         ], 201);
     }
 
+    public function storeFromOrder(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'guest_name'    => 'required|string|max:100',
+            'guest_phone'   => 'required|string|max:20',
+            'order_message' => 'required|string|max:3000',
+            'subject'       => 'nullable|string|max:255',
+        ]);
+
+        $session = $this->chatService->initiateOrderChat($data);
+
+        return response()->json([
+            'data'          => new SessionResource($session->load(['agents', 'queueEntry'])),
+            'guest_token'   => $session->guest_token,
+        ], 201);
+    }
+
     // Guest ambil sesi by token
     public function showByToken(Request $request): JsonResponse
     {

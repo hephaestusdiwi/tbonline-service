@@ -35,6 +35,46 @@ class ChatService
         return $session->load('chatbotSession');
     }
 
+    public function initiateOrderChat(array $data): ChatSession
+    {
+        $session = ChatSession::where('guest_name', $data['guest_name'])
+            ->where('guest_phone', $data['guest_phone'])
+            ->whereIn('status', ['bot', 'queued', 'active'])
+            ->latest()
+            ->first();
+
+        if ($session) {
+            if ($session->isBot()) {
+                $this->handoffToQueue($session);
+            }
+        } else {
+            $session = ChatSession::create([
+                'customer_id' => null,
+                'guest_name'  => $data['guest_name'],
+                'guest_phone' => $data['guest_phone'],
+                'guest_token' => \Str::uuid(),
+                'subject'     => $data['subject'] ?? 'Pesanan Baru',
+                'channel'     => $data['channel'] ?? 'web',
+                'status'      => 'queued',
+                'priority'    => $data['priority'] ?? 'normal',
+            ]);
+
+            $this->queueService->enqueue($session);
+
+            $this->messageService->createSystemMessage(
+                $session,
+                'Pesanan Anda telah diterima. Tim kami akan segera menghubungi Anda di sini untuk konfirmasi.'
+            );
+        }
+
+        $this->sendMessage($session, null, [
+            'content' => $data['order_message'],
+            'type'    => 'text',
+        ]);
+
+        return $session;
+    }
+
     public function sendMessage(ChatSession $session, ?User $sender, array $data): Message
     {
         abort_if($session->isClosed(), 422, 'Session is closed');
@@ -46,13 +86,10 @@ class ChatService
             return $message;
         }
 
-        // Record first response time (agent)
         if ($sender && $sender->hasAnyRole(['admin', 'manager', 'staff']) && !$session->first_response_at) {
             $session->update(['first_response_at' => now()]);
         }
 
-        // PENTING: load relasi session & sender sebelum broadcast
-        // supaya broadcastOn() bisa akses $message->session->uuid
         $message->load('session', 'sender');
 
         broadcast(new MessageSent($message))->toOthers();
@@ -66,11 +103,9 @@ class ChatService
 
         $this->queueService->enqueue($session);
 
-        // Buat system message — tapi TIDAK broadcast ke channel user
-        // karena ini akan tampil via loadMessages() saat pertama kali dibuka
         $this->messageService->createSystemMessage(
             $session,
-            'Anda sedang dihubungkan ke customer service kami, Mohon tunggu sebentar ^^'
+            'Anda sedang dihubungkan ke customer service kami, mohon tunggu sebentar'
         );
     }
 
@@ -78,7 +113,7 @@ class ChatService
     {
         $session->update([
             'status'        => 'closed',
-            'close_reason' => $reason,
+            'close_reason'  => $reason,
             'closed_at'     => now(),
         ]);
 

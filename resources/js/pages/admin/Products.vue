@@ -458,10 +458,22 @@
                                             <td class="px-3 py-2 text-gray-500">{{ row.category }}</td>
                                             <td class="px-3 py-2 text-gray-700 tabular-nums">{{ formatCurrency(row.sell_price) }}</td>
                                             <td class="px-3 py-2">
-                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold border"
-                                                    :class="row._status === 'error' ? 'bg-red-50 text-red-500 border-red-100' : row._status === 'duplicate' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'">
-                                                    {{ row._status === 'error' ? 'Error' : row._status === 'duplicate' ? 'Duplikat' : 'OK' }}
-                                                </span>
+                                                <div class="flex items-center border border-gray-200 rounded-md overflow-hidden focus-within:border-[#ED1F24] transition-all">
+                                                    <span class="px-1.5 py-1 bg-gray-50 text-[10px] text-gray-400 border-r border-gray-200 shrink-0">Rp</span>
+                                                    <input
+                                                        type="text"
+                                                        inputmode="numeric"
+                                                        :ref="`variantPrice_${vi}`"
+                                                        placeholder="Default"
+                                                        @focus="$event.target.select()"
+                                                        @input="e => {
+                                                            const raw = e.target.value.replace(/\D/g, '')
+                                                            form.variants[vi].sell_price = raw ? parseFloat(raw) : null
+                                                            e.target.value = raw ? formatRupiah(raw) : ''
+                                                        }"
+                                                        class="w-24 text-xs px-2 py-1 outline-none bg-white tabular-nums"
+                                                    />
+                                                </div>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -685,30 +697,30 @@
                                         :class="modalMode === 'view' ? 'bg-gray-50' : 'bg-white'">
                                         <span class="px-3 py-2 bg-gray-50 text-xs font-semibold text-gray-400 border-r border-gray-200 shrink-0">Rp</span>
                                         <input
+                                            :ref="`pricing_${f.key}`"
                                             type="text"
                                             inputmode="numeric"
-                                            :value="rawPricing[f.key]"
                                             :disabled="modalMode === 'view'"
                                             placeholder="0"
-                                            @input="onPricingInput(f.key, $event)"
                                             @focus="$event.target.select()"
+                                            @input="onPricingInput(f.key, $event)"
                                             class="flex-1 text-sm px-3 py-2 text-gray-700 outline-none bg-transparent disabled:text-gray-400 tabular-nums"
                                         />
                                     </div>
-                                    <!-- Preview nominal -->
                                     <p v-if="form[f.key]" class="text-[10px] text-gray-400 mt-1 pl-1">
-                                        {{ new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(form[f.key]) }}
+                                        {{ formatCurrency(form[f.key]) }}
                                     </p>
                                 </div>
 
                                 <div>
                                     <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Komisi</label>
                                     <input
+                                        :ref="'pricing_comission'"
                                         type="text"
                                         inputmode="numeric"
-                                        :value="form.comission ? formatRupiah(form.comission) : ''"
                                         :disabled="modalMode === 'view'"
                                         placeholder="0"
+                                        @focus="$event.target.select()"
                                         @input="e => { const raw = e.target.value.replace(/\D/g,''); form.comission = raw ? parseFloat(raw) : 0; e.target.value = raw ? formatRupiah(raw) : '' }"
                                         class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 disabled:bg-gray-50 transition-all tabular-nums"
                                     />
@@ -809,7 +821,19 @@
                                                     <td class="px-3 py-2">
                                                         <div class="flex items-center border border-gray-200 rounded-md overflow-hidden focus-within:border-[#ED1F24] transition-all">
                                                             <span class="px-1.5 py-1 bg-gray-50 text-[10px] text-gray-400 border-r border-gray-200 shrink-0">Rp</span>
-                                                            <input v-model.number="form.variants[vi].sell_price" type="number" placeholder="Default" class="w-20 text-xs px-2 py-1 outline-none bg-white"/>
+                                                            <input
+                                                                :ref="`variantPrice_${vi}`"
+                                                                type="text"
+                                                                inputmode="numeric"
+                                                                placeholder="Default"
+                                                                @focus="$event.target.select()"
+                                                                @input="e => {
+                                                                    const raw = e.target.value.replace(/\D/g, '')
+                                                                    form.variants[vi].sell_price = raw ? parseFloat(raw) : null
+                                                                    e.target.value = raw ? formatRupiah(raw) : ''
+                                                                }"
+                                                                class="w-24 text-xs px-2 py-1 outline-none bg-white tabular-nums"
+                                                            />
                                                         </div>
                                                     </td>
                                                     <td class="px-3 py-2"><input v-model.number="form.variants[vi].stock_qty" type="number" placeholder="0" class="w-16 text-xs border border-gray-200 rounded-md px-2 py-1 focus:outline-none focus:border-[#ED1F24] transition-all text-center"/></td>
@@ -920,6 +944,76 @@
                 </div>
             </div>
         </Transition>
+        <!-- DELETE CONFIRM MODAL -->
+        <Transition name="pm-modal">
+            <div v-if="showDeleteModal"
+                class="fixed inset-0 z-[60] flex items-center justify-center p-4"
+                style="background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);"
+                @click.self="cancelDelete">
+
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-gray-200/80 overflow-hidden">
+
+                    <!-- Red top bar -->
+                    <div class="h-1 w-full bg-gradient-to-r from-[#ED1F24] to-[#8B0F13]"></div>
+
+                    <!-- Body -->
+                    <div class="px-6 pt-6 pb-5">
+                        <!-- Icon -->
+                        <div class="flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5 text-[#ED1F24]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                    <polyline points="3 6 5 6 21 6"/>
+                                    <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                                    <path d="M10 11v6M14 11v6"/>
+                                    <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-900 leading-snug">
+                                    {{ deleteTarget?.type === 'bulk'
+                                        ? `Hapus ${selectedIds.length} Produk`
+                                        : 'Hapus Produk' }}
+                                </h3>
+                                <p class="text-xs text-gray-500 mt-1 leading-relaxed">
+                                    {{ deleteTarget?.type === 'bulk'
+                                        ? `${selectedIds.length} produk yang dipilih akan dihapus permanen. Stok dan data varian ikut terhapus.`
+                                        : 'Produk ini akan dihapus permanen beserta seluruh varian dan datanya.' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Warning box -->
+                        <div class="mt-4 flex items-start gap-2 bg-amber-50 border border-amber-100 rounded-xl px-3.5 py-3">
+                            <svg class="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                            </svg>
+                            <p class="text-[11px] text-amber-700 leading-relaxed">
+                                Tindakan ini <strong>tidak dapat diurungkan</strong>. Pastikan Anda sudah yakin sebelum melanjutkan.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="px-6 py-4 bg-gray-50/70 border-t border-gray-100 flex items-center justify-end gap-2.5">
+                        <button @click="cancelDelete" :disabled="deleteLoading"
+                            class="text-xs font-semibold px-4 py-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-white hover:border-gray-300 transition-all disabled:opacity-50">
+                            Batal
+                        </button>
+                        <button @click="confirmDelete" :disabled="deleteLoading"
+                            class="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-lg bg-[#ED1F24] hover:bg-[#C81A1E] text-white transition-all shadow-sm shadow-red-200 hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed active:scale-95">
+                            <svg v-if="deleteLoading" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                            </svg>
+                            <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                            </svg>
+                            {{ deleteLoading ? 'Menghapus...' : 'Ya, Hapus' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Transition>
 
     </AdminLayout>
 </template>
@@ -960,12 +1054,9 @@ export default {
             activeTab: 'basic',
             allCategories: [],
             photoUploading: { 1: false, 2: false, 3: false, 4: false, 5: false },
-            rawPricing: {
-                buy_price: '',
-                market_price: '',
-                sell_price: '',
-                pos_sell_price: '',
-            },
+            showDeleteModal: false,
+            deleteTarget: null,     
+            deleteLoading: false,
 
             formTabs: [
                 { key: 'basic',    label: 'Info Dasar' },
@@ -1037,6 +1128,17 @@ export default {
         filterStatus()   { this.currentPage = 1; this.fetchProducts() },
         perPage()        { this.currentPage = 1; this.fetchProducts() },
         currentPage()    { this.fetchProducts() },
+            activeTab(newTab) {
+            if (newTab === 'variants') {
+                this.$nextTick(() => {
+                    this.form.variants.forEach((v, vi) => {
+                        const el = this.$refs[`variantPrice_${vi}`]
+                        const ref = Array.isArray(el) ? el[0] : el
+                        if (ref) ref.value = v.sell_price ? this.formatRupiah(v.sell_price) : ''
+                    })
+                })
+            }
+        }
     },
 
     mounted() {
@@ -1104,8 +1206,17 @@ export default {
         },
 
         initRawPricing() {
-            ['buy_price', 'market_price', 'sell_price', 'pos_sell_price'].forEach(key => {
-                this.rawPricing[key] = this.form[key] ? this.formatRupiah(this.form[key]) : ''
+            this.$nextTick(() => {
+                ['buy_price', 'market_price', 'sell_price', 'pos_sell_price'].forEach(key => {
+                    const el = this.$refs[`pricing_${key}`]
+                    const ref = Array.isArray(el) ? el[0] : el
+                    if (ref) ref.value = this.form[key] ? this.formatRupiah(this.form[key]) : ''
+                })
+
+                // komisi
+                const comEl = this.$refs['pricing_comission']
+                const comRef = Array.isArray(comEl) ? comEl[0] : comEl
+                if (comRef) comRef.value = this.form.comission ? this.formatRupiah(this.form.comission) : ''
             })
         },
 
@@ -1213,6 +1324,13 @@ export default {
             }
 
             this.initRawPricing() 
+            this.$nextTick(() => {
+                this.form.variants.forEach((v, vi) => {
+                    const el = this.$refs[`variantPrice_${vi}`]
+                    const ref = Array.isArray(el) ? el[0] : el
+                    if (ref) ref.value = v.sell_price ? this.formatRupiah(v.sell_price) : ''
+                })
+            })
             this.showModal = true
         },
         closeModal() { this.showModal = false; this.errorMessage = '' },
@@ -1232,14 +1350,38 @@ export default {
             finally { this.loading = false }
         },
 
-        async deleteProduct(id) {
-            if (!confirm('Yakin ingin menghapus produk ini?')) return
-            try { await axios.delete(`/products/${id}`); await this.fetchProducts() } catch(e) { alert('Gagal menghapus produk.') }
+        deleteProduct(id) {
+            this.deleteTarget = { type: 'single', id }
+            this.showDeleteModal = true
         },
 
         async bulkDelete() {
-            if (!confirm(`Yakin ingin menghapus ${this.selectedIds.length} produk?`)) return
-            try { await axios.post('/products/bulk-delete', { ids: this.selectedIds }); this.selectedIds = []; await this.fetchProducts() } catch(e) { alert('Gagal menghapus produk.') }
+            this.deleteTarget = { type: 'bulk', id: null }
+            this.showDeleteModal = true
+        },
+
+        async confirmDelete() {
+            this.deleteLoading = true
+            try {
+                if (this.deleteTarget.type === 'single') {
+                    await axios.delete(`/products/${this.deleteTarget.id}`)
+                } else {
+                    await axios.post('/products/bulk-delete', { ids: this.selectedIds })
+                    this.selectedIds = []
+                }
+                await this.fetchProducts()
+            } catch (e) {
+                alert('Gagal menghapus produk')
+            } finally {
+                this.deleteLoading = false
+                this.showDeleteModal = false
+                this.deleteTarget = null
+            }
+        },
+
+        cancelDelete() {
+            this.showDeleteModal = false
+            this.deleteTarget = null
         },
 
         async fetchProducts() {

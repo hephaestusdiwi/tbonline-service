@@ -173,6 +173,14 @@ onMounted(async () => {
   window.addEventListener('open-chat', () => {
     isOpen.value = true
     unreadCount.value = 0
+
+    if (e?.detail?.sessionUuid) {
+      sessionUuid.value = e.detail.sessionUuid
+      if (e.detail.guestToken) {
+        localStorage.setItem('chat_guest_token', e.detail.guestToken)
+        localStorage.setItem('chat_session_uuid', e.detail.sessionUuid)
+      }
+    }
   })
 
   
