@@ -220,6 +220,16 @@
                           Aktifkan User
                         </button>
 
+                        <div class="border-t border-gray-100 my-1"></div>
+
+                        <button @click="handleDelete(user)"
+                                class="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-red-600 hover:bg-red-50 transition-colors font-semibold">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9.5 4h5a1 1 0 011 1v2H8.5V5a1 1 0 011-1z"/>
+                          </svg>
+                          Hapus User
+                        </button>
+
                       </div>
                     </Transition>
                   </div>
@@ -685,6 +695,16 @@ export default {
         await this.store.activateUser(user.id)
       } catch (e) {
         alert(e.response?.data?.message ?? 'Gagal mengaktifkan user.')
+      }
+    },
+
+    async handleDelete(user) {
+      this.openMenuId = null
+      if (!confirm(`Yakin ingin menghapus ${user.name} secara permanen? Tindakan ini tidak dapat dibatalkan.`)) return
+      try {
+        await this.store.deleteUser(user.id)
+      } catch (e) {
+        alert(e.response?.data?.message ?? 'Gagal menghapus user.')
       }
     },
 

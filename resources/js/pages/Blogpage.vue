@@ -226,7 +226,7 @@ import { useDebounceFn } from '@vueuse/core'
 import { useHead } from '@vueuse/head'
 import Navbar from '../components/Navbar.vue'
 import FooterSection from '../components/FooterSection.vue'
-import axios from '../axios'
+import axios from '../axios.js'
 
 const router       = useRouter()
 const articles     = ref([])

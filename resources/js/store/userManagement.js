@@ -66,5 +66,10 @@ export const useUserManagementStore = defineStore('userManagement', {
       const { data } = await axios.get(`/users/${id}`)
       return data
     },
+
+    async deleteUser(id) {
+      await axios.delete(`/users/${id}`)
+      this.users = this.users.filter(u => u.id !== id)
+    },
   },
 })
