@@ -15,7 +15,7 @@ class ChatSession extends Model
         'priority', 'rating', 'close_reason', 'tags', 'metadata',
         'first_response_at', 'resolved_at', 'closed_at',
         'guest_name', 'guest_phone', 'guest_token',
-        'last_seen_at', 'visitor_left', 
+        'last_seen_at', 'visitor_left', 'inquiry_type',
     ];
 
     protected $casts = [

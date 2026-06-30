@@ -9,7 +9,6 @@ class SessionResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        // ✅ Gunakan relationLoaded() agar $primaryAgent benar-benar null jika tidak di-load
         $primaryAgent = $this->relationLoaded('agents')
             ? $this->agents->first(fn($a) => $a->pivot->role === 'primary' && $a->pivot->is_active)
             : null;
@@ -18,6 +17,7 @@ class SessionResource extends JsonResource
             'id'                => $this->id,
             'uuid'              => $this->uuid,
             'status'            => $this->status,
+            'inquiry_type'      => $this->inquiry_type,
             'priority'          => $this->priority,
             'subject'           => $this->subject,
             'channel'           => $this->channel,

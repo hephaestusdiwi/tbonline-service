@@ -45,18 +45,20 @@ class ChatService
 
         if ($session) {
             if ($session->isBot()) {
+                $session->update(['inquiry_type' => 'purchase']);
                 $this->handoffToQueue($session);
             }
         } else {
             $session = ChatSession::create([
-                'customer_id' => null,
-                'guest_name'  => $data['guest_name'],
-                'guest_phone' => $data['guest_phone'],
-                'guest_token' => \Str::uuid(),
-                'subject'     => $data['subject'] ?? 'Pesanan Baru',
-                'channel'     => $data['channel'] ?? 'web',
-                'status'      => 'queued',
-                'priority'    => $data['priority'] ?? 'normal',
+                'customer_id'  => null,
+                'guest_name'   => $data['guest_name'],
+                'guest_phone'  => $data['guest_phone'],
+                'guest_token'  => \Str::uuid(),
+                'subject'      => $data['subject'] ?? 'Pesanan Baru',
+                'channel'      => $data['channel'] ?? 'web',
+                'status'       => 'queued',
+                'priority'     => $data['priority'] ?? 'normal',
+                'inquiry_type' => 'purchase',
             ]);
 
             $this->queueService->enqueue($session);

@@ -15,6 +15,7 @@ class ChatbotService
                 '2' => ['label' => 'Status pesanan',        'next' => 'order_status'],
                 '3' => ['label' => 'Komplain',              'next' => 'collect_complaint'],
                 '4' => ['label' => 'Chat dengan CS',        'next' => 'handoff'],
+                '5' => ['label' => 'Pembelian / Pesan produk', 'next' => 'collect_purchase'],
             ],
         ],
         'product_inquiry' => [
@@ -30,6 +31,11 @@ class ChatbotService
             'message' => 'Ceritakan masalah kamu :',
             'collect' => 'complaint_text',
             'next'    => 'save_complaint',
+        ],
+        'collect_purchase' => [
+            'message' => 'Boleh sebutkan produk yang ingin Kamu beli? (nama produk, varian/rasa, dan jumlahnya ya)',
+            'collect' => 'purchase_text',
+            'next'    => 'save_purchase',
         ],
         'resolve_or_escalate' => [
             'message' => 'Apakah masalah kamu sudah terselesaikan?',
@@ -49,6 +55,7 @@ class ChatbotService
         ],
 
         'save_complaint' => ['action' => 'save_complaint'],
+        'save_purchase'  => ['action' => 'save_purchase'],
 
         'handoff'  => ['action' => 'handoff_to_agent'],
         'resolved' => ['action' => 'mark_resolved'],
@@ -87,7 +94,7 @@ class ChatbotService
 
         if (!$node) {
             $this->sendBotMessage($session, 'Maaf, terjadi kesalahan. Menghubungkan ke CS...');
-            app(ChatService::class)->handoffToQueue($session);
+            $this->handoffWithCategory($session, 'cs');
             return;
         }
 
@@ -132,14 +139,15 @@ class ChatbotService
     private function handleAction(string $action, ChatSession $session, ChatbotSession $botSession): void
     {
         match ($action) {
-            'handoff_to_agent'  => app(ChatService::class)->handoffToQueue($session),
+            'handoff_to_agent'  => $this->handoffWithCategory($session, 'cs'),
             'mark_resolved'     => $session->update(['status' => 'resolved', 'resolved_at' => now()]),
             'show_order_status' => $this->handleShowOrderStatus($session, $botSession),
             'save_complaint'    => $this->handleSaveComplaint($session, $botSession),
+            'save_purchase'     => $this->handleSavePurchase($session, $botSession),
             default             => null,
         };
 
-        if (!in_array($action, ['show_order_status', 'save_complaint'])) {
+        if (!in_array($action, ['show_order_status', 'save_complaint', 'save_purchase'])) {
             $botSession->update(['is_completed' => true, 'handed_off_at' => now()]);
         }
     }
@@ -250,7 +258,42 @@ class ChatbotService
             "Tim CS kami akan segera menghubungi kamu. Mohon tunggu sebentar."
         );
 
-        app(ChatService::class)->handoffToQueue($session);
+        $this->handoffWithCategory($session, 'complaint');
         $botSession->update(['is_completed' => true, 'handed_off_at' => now()]);
+    }
+
+    private function handleSavePurchase(ChatSession $session, ChatbotSession $botSession): void
+    {
+        $purchaseText = trim($botSession->context['purchase_text'] ?? '');
+
+        if (empty($purchaseText)) {
+            $this->sendBotMessage($session, 'Maaf, detail pesanan kamu tidak berhasil disimpan. Silahkan coba lagi.');
+            $botSession->update(['current_node' => 'collect_purchase']);
+            return;
+        }
+
+        // Ringkasan ini dikirim ke thread chat supaya saat di-handoff,
+        // agent CS langsung lihat detail pembelian tanpa harus scroll history.
+        $this->sendBotMessage(
+            $session,
+            "📦 *Permintaan Pembelian Baru*\n" .
+            "━━━━━━━━━━━━━━━━━━\n" .
+            "{$purchaseText}\n" .
+            "━━━━━━━━━━━━━━━━━━\n" .
+            "Mohon tunggu sebentar, tim CS kami akan segera memproses pesanan kamu."
+        );
+
+        $this->handoffWithCategory($session, 'purchase');
+        $botSession->update(['is_completed' => true, 'handed_off_at' => now()]);
+    }
+
+    /**
+     * Tandai kategori sesi (cs / purchase / complaint) sebelum masuk antrian agent,
+     * supaya admin bisa filter tab berdasarkan jenis handoff di AdminChat.vue.
+     */
+    private function handoffWithCategory(ChatSession $session, string $category): void
+    {
+        $session->update(['inquiry_type' => $category]);
+        app(ChatService::class)->handoffToQueue($session);
     }
 }

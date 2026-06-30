@@ -149,7 +149,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                             </svg>
                         </div>
-                        <p class="text-xs font-medium">Tidak ada sesi {{ activeTab !== 'all' ? activeTab : '' }}</p>
+                        <p class="text-xs font-medium">Tidak ada sesi {{ activeTab !== 'all' ? activeTabLabel : '' }}</p>
                     </div>
                 </div>
             </div>
@@ -487,11 +487,13 @@ export default {
             titleInterval:   null,
             unreadTabCount:  0,
 
+            // Tab sekarang berdasarkan KATEGORI handoff (bukan status lagi).
+            // Status sesi (Antrian/Active/Closed/dll) tetap tampil sebagai badge di tiap baris sesi.
             tabs: [
-                { label: 'Semua',   value: 'all'    },
-                { label: 'Antrian', value: 'queued' },
-                { label: 'Active',  value: 'active' },
-                { label: 'Closed',  value: 'closed' },
+                { label: 'Semua',     value: 'all'       },
+                { label: 'Pembelian', value: 'purchase'  },
+                { label: 'Komplain',  value: 'complaint' },
+                { label: 'Chat CS',   value: 'cs'        },
             ],
 
             activeSession:   null,
@@ -536,7 +538,7 @@ export default {
 
         filteredSessions() {
             let list = this.sessions
-            if (this.activeTab !== 'all') list = list.filter(s => s.status === this.activeTab)
+            if (this.activeTab !== 'all') list = list.filter(s => (s.inquiry_type || 'cs') === this.activeTab)
             if (this.search.trim()) {
                 const q = this.search.toLowerCase()
                 list = list.filter(s =>
@@ -545,6 +547,10 @@ export default {
                 )
             }
             return list
+        },
+
+        activeTabLabel() {
+            return this.tabs.find(t => t.value === this.activeTab)?.label || ''
         },
 
         heroStrips() {

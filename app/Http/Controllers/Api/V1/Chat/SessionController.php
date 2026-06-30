@@ -24,7 +24,6 @@ class SessionController extends Controller
             'channel'     => 'nullable|in:web,mobile',
         ]);
 
-        // ✅ Cari session aktif berdasarkan nama + nomor HP
         $existing = ChatSession::where('guest_name', $data['guest_name'])
             ->where('guest_phone', $data['guest_phone'])
             ->whereIn('status', ['bot', 'queued', 'active'])
