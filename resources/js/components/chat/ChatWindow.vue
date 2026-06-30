@@ -386,11 +386,14 @@ let heartbeatInterval   = null
 let leaveTimer          = null
 
 // ── Quick topics ─────────────────────────────────────────────────────────
+// Daftar ini harus sinkron sama $flow['greeting']['options'] di ChatbotService.php
+// (urutan & angka message harus sama persis, soalnya 'message' inilah yang dikirim sbg jawaban user)
 const quickTopics = [
-  { id: 1, icon: '🛍️', label: 'Pertanyaan Produk', message: '1', displayText: 'Pertanyaan Produk' },
-  { id: 2, icon: '📦', label: 'Status Pesanan',     message: '2', displayText: 'Status Pesanan'     },
-  { id: 3, icon: '⚠️', label: 'Komplain',           message: '3', displayText: 'Komplain'           },
-  { id: 4, icon: '💬', label: 'Chat dengan CS',     message: '4', displayText: 'Chat dengan CS'     },
+  { id: 1, icon: '🛍️', label: 'Pertanyaan Produk',       message: '1', displayText: 'Pertanyaan Produk'       },
+  { id: 2, icon: '📦', label: 'Status Pesanan',           message: '2', displayText: 'Status Pesanan'           },
+  { id: 3, icon: '⚠️', label: 'Komplain',                 message: '3', displayText: 'Komplain'                 },
+  { id: 4, icon: '💬', label: 'Chat dengan CS',           message: '4', displayText: 'Chat dengan CS'           },
+  { id: 5, icon: '🛒', label: 'Pembelian',                message: '5', displayText: 'Pembelian' },
 ]
 
 // ── Computed ──────────────────────────────────────────────────────────────

@@ -502,9 +502,14 @@
                             Invoice {{ invoiceData?.invoice_number }}
                         </div>
                         <div class="or-invoice-toolbar__right">
-                            <button @click="printInvoice" class="or-btn or-btn--primary">
+                            <button @click="printInvoice" class="or-btn or-btn--ghost">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                                Cetak / Download PDF
+                                Cetak
+                            </button>
+                            <button @click="downloadInvoicePDF" :disabled="downloadingPdf" class="or-btn or-btn--primary">
+                                <svg v-if="downloadingPdf" class="or-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                                <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                {{ downloadingPdf ? 'Mengunduh...' : 'Download PDF' }}
                             </button>
                             <button @click="showInvoice = false" class="or-btn or-btn--ghost">Tutup</button>
                         </div>
@@ -514,7 +519,7 @@
                         <div class="inv-header">
                             <div class="inv-header__brand">
                                 <div class="inv-logo">
-                                    <img v-if="storeLogo" :src="storeLogo" :alt="storeName" class="inv-logo__img"/>
+                                    <img v-if="storeLogo" :src="storeLogo" :alt="storeName" class="inv-logo__img" crossorigin="anonymous"/>
                                     <span v-else>{{ storeName }}</span>
                                 </div>
                             </div>
@@ -719,6 +724,8 @@
 </template>
 
 <script>
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 import AdminLayout from '../../components/admin/AdminLayout.vue'
 import OrderReviseModal from './OrderReviseModal.vue'
 import OrderActionMenu from './OrderActionMenu.vue'
@@ -769,6 +776,7 @@ export default {
             showInvoice: false,
             invoiceData: null,
             invoiceLoading: false,
+            downloadingPdf: false,
             printedBy: '',
             storeName: '',
             storePhone: '',
@@ -1043,13 +1051,55 @@ export default {
         openInvoiceFromDetail() { this.showDetail = false; this.$nextTick(() => this.openInvoice(this.selectedOrder)) },
 
         printInvoice() {
-            const invoiceNumber = this.invoiceData?.invoice_number || 'INVOICE'
-            const storeName = (this.storeName || 'TB').replace(/\s+/g, '').toUpperCase()
-            const filename = `${storeName}INV${invoiceNumber.replace('INV', '')}`
-            const originalTitle = document.title
-            document.title = filename
-            window.print()
-            document.title = originalTitle
+                    const invoiceNumber = this.invoiceData?.invoice_number || 'INVOICE'
+                    const storeName = (this.storeName || 'TB').replace(/\s+/g, '').toUpperCase()
+                    const filename = `${storeName}INV${invoiceNumber.replace('INV', '')}`
+                    const originalTitle = document.title
+                    document.title = filename
+                    window.print()
+                    document.title = originalTitle
+                },
+                async downloadInvoicePDF() {
+            if (this.downloadingPdf) return
+            this.downloadingPdf = true
+            try {
+                const element = document.getElementById('invoice-print-area')
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    windowWidth: 800, 
+                })
+                const imgData = canvas.toDataURL('image/jpeg', 0.95)
+
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+                const pageWidth = pdf.internal.pageSize.getWidth()
+                const pageHeight = pdf.internal.pageSize.getHeight()
+                const imgWidth = pageWidth
+                const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+                let heightLeft = imgHeight
+                let position = 0
+
+                pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
+                heightLeft -= pageHeight
+
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight
+                    pdf.addPage()
+                    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
+                    heightLeft -= pageHeight
+                }
+
+                const invoiceNumber = this.invoiceData?.invoice_number || 'INVOICE'
+                const storeName = (this.storeName || 'TB').replace(/\s+/g, '').toUpperCase()
+                pdf.save(`${storeName}-INV-${invoiceNumber.replace('INV', '')}.pdf`)
+            } catch (e) {
+                console.error('Gagal membuat PDF:', e)
+                alert('Gagal membuat PDF, coba lagi.')
+            } finally {
+                this.downloadingPdf = false
+            }
         },
     }
 }

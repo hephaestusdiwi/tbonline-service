@@ -32,14 +32,27 @@
           </svg>
           Invoice {{ invoiceData.invoice_number }}
         </div>
-        <button class="inv-print-btn" @click="printInvoice">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6 9 6 2 18 2 18 9"/>
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-            <rect x="6" y="14" width="12" height="8"/>
-          </svg>
-          Cetak / Download PDF
-        </button>
+        <div class="inv-toolbar__actions">
+          <button class="inv-print-btn inv-print-btn--ghost" @click="printInvoice">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 6 2 18 2 18 9"/>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            Cetak
+          </button>
+          <button class="inv-print-btn" :disabled="downloadingPdf" @click="downloadInvoicePDF">
+            <svg v-if="downloadingPdf" class="inv-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+            <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            {{ downloadingPdf ? 'Mengunduh...' : 'Download PDF' }}
+          </button>
+        </div>
       </div>
 
       <!-- Invoice Doc -->
@@ -48,7 +61,7 @@
         <div class="inv-header">
           <div class="inv-header__brand">
             <div class="inv-logo">
-              <img v-if="storeLogo" :src="storeLogo" :alt="storeName" class="inv-logo__img"/>
+              <img v-if="storeLogo" :src="storeLogo" :alt="storeName" class="inv-logo__img" crossorigin="anonymous"/>
               <span v-else>{{ storeName }}</span>
             </div>
           </div>
@@ -202,6 +215,8 @@
 
 <script>
 import axiosInstance from '../axios'
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
 
 export default {
   name: 'PublicInvoicePage',
@@ -213,6 +228,7 @@ export default {
       storeLogo:   '',
       storePhone:  '',
       loading:     true,
+      downloadingPdf: false,
     }
   },
 
@@ -249,13 +265,47 @@ export default {
     statusLabel(status) {
       return { pending: 'Pending', success: 'Lunas', cancelled: 'Dibatalkan' }[status] || status
     },
-    printInvoice() {
-      const inv   = this.invoiceData?.invoice_number || 'INVOICE'
-      const store = (this.storeName || 'TB').replace(/\s+/g, '').toUpperCase()
-      const orig  = document.title
-      document.title = `${store}INV${inv.replace('INV', '')}`
-      window.print()
-      document.title = orig
+    async downloadInvoicePDF() {
+      if (this.downloadingPdf) return
+      this.downloadingPdf = true
+      try {
+        const element = document.getElementById('invoice-print-area')
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          windowWidth: 800,
+        })
+        const imgData = canvas.toDataURL('image/jpeg', 0.95)
+
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+        const pageWidth  = pdf.internal.pageSize.getWidth()
+        const pageHeight = pdf.internal.pageSize.getHeight()
+        const imgWidth   = pageWidth
+        const imgHeight  = (canvas.height * imgWidth) / canvas.width
+
+        let heightLeft = imgHeight
+        let position = 0
+
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight
+          pdf.addPage()
+          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight)
+          heightLeft -= pageHeight
+        }
+
+        const inv   = this.invoiceData?.invoice_number || 'INVOICE'
+        const store = (this.storeName || 'TB').replace(/\s+/g, '').toUpperCase()
+        pdf.save(`${store}-INV-${inv.replace('INV', '')}.pdf`)
+      } catch (e) {
+        console.error('Gagal membuat PDF:', e)
+        alert('Gagal membuat PDF, coba lagi.')
+      } finally {
+        this.downloadingPdf = false
+      }
     },
   },
 }
@@ -324,6 +374,14 @@ export default {
   transition: background .15s;
 }
 .inv-print-btn:hover { background: #C81A1E; }
+.inv-toolbar__actions { display: flex; gap: 8px; }
+.inv-print-btn--ghost {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,.2);
+  color: #e2e8f0;
+}
+.inv-print-btn--ghost:hover { background: rgba(255,255,255,.08); }
+.inv-print-btn:disabled { opacity: .6; cursor: not-allowed; }
 
 /* ─── Invoice Doc ─── */
 .or-invoice-doc {
