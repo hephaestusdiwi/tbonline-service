@@ -35,7 +35,7 @@ class SiteSettingController extends Controller
     public function update(Request $request, string $key): JsonResponse
     {
         $request->validate([
-            'value' => ['nullable', 'string', 'max:5000'],
+            'value' => ['nullable'],
         ]);
 
         $allowedKeys = [
@@ -47,6 +47,8 @@ class SiteSettingController extends Controller
             'contact_phone',
             'contact_email',
             'contact_whatsapp',
+            'contact_phone_visible',
+            'contact_whatsapp_visible',
             'social_facebook',
             'social_instagram',
             'social_tiktok',
@@ -62,15 +64,20 @@ class SiteSettingController extends Controller
             return response()->json(['message' => 'Setting key tidak diizinkan'], 403);
         }
 
+        $value = $request->input('value');
+        if (is_bool($value)) {
+            $value = $value ? '1' : '0';
+        }
+
         SiteSetting::updateOrCreate(
             ['key' => $key],
-            ['value' => $request->input('value')]
+            ['value' => $value]
         );
 
         return response()->json([
             'message' => 'Setting berhasil disimpan',
             'key'     => $key,
-            'value'   => $request->input('value'),
+            'value'   => $value,
         ]);
     }
 

@@ -721,7 +721,19 @@
 
                             <!-- Nomor HP -->
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Nomor HP / Telepon</label>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Nomor HP / Telepon</label>
+                                    <button @click="toggleContactVisibility('phone')" :disabled="contact.phone.visibleSaving"
+                                        class="flex items-center gap-1.5 text-[10px] font-semibold"
+                                        :class="contact.phone.visible ? 'text-emerald-600' : 'text-gray-400'">
+                                        <span class="relative w-8 h-4.5 rounded-full transition-colors duration-200"
+                                            :class="contact.phone.visible ? 'bg-[#ED1F24]' : 'bg-gray-200'">
+                                            <span class="absolute top-0.5 left-0.5 w-3.5 h-3.5 bg-white rounded-full shadow transition-transform duration-200"
+                                                :class="contact.phone.visible ? 'translate-x-3.5' : 'translate-x-0'"></span>
+                                        </span>
+                                        {{ contact.phone.visible ? 'Tampil di footer' : 'Disembunyikan' }}
+                                    </button>
+                                </div>
                                 <input v-model="contact.phone.input" type="text" placeholder="Contoh: +62 21 1234 5678"
                                     class="w-full bg-gray-50/50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:border-[#ED1F24] transition-colors"
                                     @input="contact.phone.error = ''; contact.phone.success = ''" />
@@ -757,7 +769,19 @@
 
                             <!-- WhatsApp -->
                             <div>
-                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">WhatsApp</label>
+                                <div class="flex items-center justify-between mb-2">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">WhatsApp</label>
+                                    <button @click="toggleContactVisibility('whatsapp')" :disabled="contact.whatsapp.visibleSaving"
+                                        class="flex items-center gap-1.5 text-[10px] font-semibold"
+                                        :class="contact.whatsapp.visible ? 'text-emerald-600' : 'text-gray-400'">
+                                        <span class="relative w-8 h-4.5 rounded-full transition-colors duration-200"
+                                            :class="contact.whatsapp.visible ? 'bg-[#ED1F24]' : 'bg-gray-200'">
+                                            <span class="absolute top-0.5 left-0.5 w-3.5 h-3.5 bg-white rounded-full shadow transition-transform duration-200"
+                                                :class="contact.whatsapp.visible ? 'translate-x-3.5' : 'translate-x-0'"></span>
+                                        </span>
+                                        {{ contact.whatsapp.visible ? 'Tampil di footer' : 'Disembunyikan' }}
+                                    </button>
+                                </div>
                                 <input v-model="contact.whatsapp.input" type="text" placeholder="Contoh: +6281234567890 (format internasional)"
                                     class="w-full bg-gray-50/50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:border-[#ED1F24] transition-colors"
                                     @input="contact.whatsapp.error = ''; contact.whatsapp.success = ''" />
@@ -1186,9 +1210,9 @@ export default {
 
             contact: {
                 address:  { value: '', input: '', saving: false, error: '', success: '' },
-                phone:    { value: '', input: '', saving: false, error: '', success: '' },
+                phone:    { value: '', input: '', saving: false, error: '', success: '', visible: true, visibleSaving: false },
                 email:    { value: '', input: '', saving: false, error: '', success: '' },
-                whatsapp: { value: '', input: '', saving: false, error: '', success: '' },
+                whatsapp: { value: '', input: '', saving: false, error: '', success: '', visible: true, visibleSaving: false },
                 admin_whatsapp: { value: '', input: '', saving: false, error: '', success: '' },
                 store_whatsapp: { value: '', input: '', saving: false, error: '', success: '' },
             },
@@ -1262,6 +1286,12 @@ export default {
                     this.contact.store_whatsapp.value = data.store_whatsapp.value
                     this.contact.store_whatsapp.input = data.store_whatsapp.value 
                 }
+                if (data.contact_phone_visible?.value !== undefined) {
+                    this.contact.phone.visible = data.contact_phone_visible.value !== '0'
+                }
+                if (data.contact_whatsapp_visible?.value !== undefined) {
+                    this.contact.whatsapp.visible = data.contact_whatsapp_visible.value !== '0'
+                }
                 const socialKeys = ['facebook', 'instagram', 'tiktok', 'twitter', 'youtube', 'linkedin']
                 socialKeys.forEach(key => { if (data[`social_${key}`]?.value) this.social.links[key] = data[`social_${key}`].value })
             } catch (e) { console.error('Failed to fetch settings:', e) }
@@ -1320,6 +1350,19 @@ export default {
                 this.shipping.couriers = data.couriers; this.shipping.success = 'Data pengiriman berhasil disimpan.'
             } catch (e) { this.shipping.error = e.response?.data?.message ?? 'Gagal menyimpan.' }
             finally { this.shipping.saving = false }
+        },
+        async toggleContactVisibility(field) {
+            const state = this.contact[field]
+            const newVisible = !state.visible
+            state.visibleSaving = true
+            try {
+                await axios.put(`/settings/contact_${field}_visible`, { value: newVisible })
+                state.visible = newVisible
+            } catch (e) {
+                console.error(`Gagal update visibility ${field}:`, e)
+            } finally {
+                state.visibleSaving = false
+            }
         },
 
         onFileSelected(e) { const f = e.target.files[0]; if (f) this.processFile(f) },
