@@ -747,7 +747,7 @@ export default {
     formatOperatingHours(hours) {
       if (!hours) return ''
       if (typeof hours === 'string') return hours
-      if (Array.isArray(hours)) return hours.map(h => `${h.day}: ${h.open}–${h.close}`).join(', ')
+      if (Array.isArray(hours)) return hours.map(h => `${h.days}: ${h.open}–${h.close}`).join(', ')
       return Object.entries(hours).map(([k, v]) => `${k}: ${v}`).join(', ')
     },
 

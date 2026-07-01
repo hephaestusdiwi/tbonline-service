@@ -8,15 +8,11 @@ use Illuminate\Http\Request;
 
 class BranchController extends Controller
 {
-    /**
-     * GET /api/branches
-     * Public: hanya tampilkan cabang yang aktif.
-     */
     public function index()
     {
         $branches = Branch::where('is_active', true)
             ->orderBy('name')
-            ->get(['id', 'name', 'address', 'city', 'province', 'phone', 'google_maps_url', 'operating_hours', 'latitude', 'longitude', 'is_active'])
+            ->get(['id', 'name', 'address', 'city', 'province', 'instagram', 'google_maps_url', 'operating_hours', 'latitude', 'longitude', 'is_active'])
             ->map(function ($b) {
                 $b->directions_url = "https://www.google.com/maps/dir/?api=1&destination={$b->latitude},{$b->longitude}";
                 return $b;
@@ -30,11 +26,11 @@ class BranchController extends Controller
         $validated = $request->validate([
             'name'             => 'required|string|max:255',
             'address'          => 'nullable|string',
-            'city'             => 'nullable|string|max:255',    
-            'province'         => 'nullable|string|max:255',    
-            'latitude'         => 'nullable|numeric',           
-            'longitude'        => 'nullable|numeric',          
-            'phone'            => 'nullable|string|max:50',
+            'city'             => 'nullable|string|max:255',
+            'province'         => 'nullable|string|max:255',
+            'latitude'         => 'nullable|numeric',
+            'longitude'        => 'nullable|numeric',
+            'instagram'        => 'nullable|string|max:30|regex:/^@?[a-zA-Z0-9_.]+$/',
             'google_maps_url'  => 'nullable|url',
             'operating_hours'  => 'nullable|array',
             'is_active'        => 'boolean',
@@ -58,11 +54,11 @@ class BranchController extends Controller
         $validated = $request->validate([
             'name'             => 'sometimes|required|string|max:255',
             'address'          => 'nullable|string',
-            'city'             => 'nullable|string|max:255',   
-            'province'         => 'nullable|string|max:255',   
-            'latitude'         => 'nullable|numeric',           
-            'longitude'        => 'nullable|numeric',         
-            'phone'            => 'nullable|string|max:50',
+            'city'             => 'nullable|string|max:255',
+            'province'         => 'nullable|string|max:255',
+            'latitude'         => 'nullable|numeric',
+            'longitude'        => 'nullable|numeric',
+            'instagram'        => 'nullable|string|max:30|regex:/^@?[a-zA-Z0-9_.]+$/',
             'google_maps_url'  => 'nullable|url',
             'operating_hours'  => 'nullable|array',
             'is_active'        => 'boolean',
@@ -115,7 +111,7 @@ class BranchController extends Controller
 
         $branches = Branch::where('is_active', true)
             ->selectRaw("
-                id, name, address, city, province, phone,
+                id, name, address, city, province, instagram,
                 operating_hours, latitude, longitude,
                 ( 6371 * ACOS(
                     COS(RADIANS(?)) * COS(RADIANS(latitude))

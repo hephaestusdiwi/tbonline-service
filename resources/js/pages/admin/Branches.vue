@@ -109,7 +109,7 @@
                                 <svg class="inline w-3 h-3 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
                             </th>
                             <th class="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400">Alamat</th>
-                            <th class="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400">Telepon</th>
+                            <th class="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400">Instagram</th>
                             <th class="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400">Jam Operasional</th>
                             <th class="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400">Maps</th>
                             <th class="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400">Status</th>
@@ -155,12 +155,12 @@
                                 <span class="text-xs text-gray-500 line-clamp-2 max-w-[200px] block leading-relaxed">{{ branch.address || '—' }}</span>
                             </td>
 
-                            <!-- Telepon -->
+                            <!-- Instagram -->
                             <td class="px-5 py-4">
-                                <a v-if="branch.phone" :href="`tel:${branch.phone}`"
+                                <a v-if="branch.instagram" :href="instagramUrl(branch.instagram)" target="_blank"
                                     class="flex items-center gap-1.5 text-xs text-[#ED1F24] font-medium hover:underline">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.69 13.1 19.79 19.79 0 011.61 4.53 2 2 0 013.6 2.36h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 9.91a16 16 0 006 6l.92-.92a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0121.73 17z"/></svg>
-                                    {{ branch.phone }}
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                                    @{{ branch.instagram.replace('@','') }}
                                 </a>
                                 <span v-else class="text-xs text-gray-300">—</span>
                             </td>
@@ -273,9 +273,9 @@
                         <svg class="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
                         <span class="text-xs text-gray-500 leading-relaxed">{{ branch.address }}</span>
                     </div>
-                    <div v-if="branch.phone" class="flex items-center gap-2">
-                        <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.69 13.1 19.79 19.79 0 011.61 4.53 2 2 0 013.6 2.36h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 9.91a16 16 0 006 6l.92-.92a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0121.73 17z"/></svg>
-                        <a :href="`tel:${branch.phone}`" class="text-xs text-[#ED1F24] font-medium hover:underline">{{ branch.phone }}</a>
+                    <div v-if="branch.instagram" class="flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                        <a :href="instagramUrl(branch.instagram)" target="_blank" class="text-xs text-[#ED1F24] font-medium hover:underline">@{{ branch.instagram.replace('@','') }}</a>
                     </div>
                     <div v-if="branch.operating_hours && branch.operating_hours.length" class="flex items-center gap-2">
                         <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -424,16 +424,16 @@
                                         class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 disabled:bg-gray-50 disabled:text-gray-400 transition-all"/>
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Nomor Telepon</label>
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Instagram</label>
                                     <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden focus-within:border-[#ED1F24] focus-within:ring-2 focus-within:ring-[#ED1F24]/10 transition-all"
                                         :class="modalMode === 'view' ? 'bg-gray-50' : ''">
-                                        <span class="px-3 py-2 bg-gray-50 border-r border-gray-200 shrink-0">
-                                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 014.69 13.1 19.79 19.79 0 011.61 4.53 2 2 0 013.6 2.36h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L7.91 9.91a16 16 0 006 6l.92-.92a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0121.73 17z"/></svg>
-                                        </span>
-                                        <input v-model="form.phone" type="text" placeholder="08xx-xxxx-xxxx"
+                                        <span class="px-3 py-2 bg-gray-50 border-r border-gray-200 shrink-0 text-sm text-gray-400 font-semibold">@</span>
+                                        <input v-model="form.instagram" type="text" placeholder="username_instagram"
                                             :disabled="modalMode === 'view'"
                                             class="flex-1 text-sm px-3 py-2 text-gray-700 outline-none bg-white disabled:bg-gray-50 disabled:text-gray-400"/>
                                     </div>
+                                    <a v-if="form.instagram && modalMode === 'view'" :href="instagramUrl(form.instagram)" target="_blank"
+                                        class="text-[10px] text-[#ED1F24] font-semibold underline mt-1 block">Buka Instagram ↗</a>
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Google Maps URL</label>
@@ -609,7 +609,7 @@ export default {
                     const matchSearch = !q ||
                         (b.name || '').toLowerCase().includes(q) ||
                         (b.address || '').toLowerCase().includes(q) ||
-                        (b.phone || '').toLowerCase().includes(q)
+                        (b.instagram || '').toLowerCase().includes(q)
                     const matchStatus =
                         !this.filterStatus ? true :
                         this.filterStatus === 'active' ? b.is_active :
@@ -649,7 +649,12 @@ export default {
 
     methods: {
         emptyForm() {
-            return { name: '', address: '', city: '', province: '', latitude: '', longitude: '', phone: '', google_maps_url: '', is_active: true, operating_hours: [] }
+            return { name: '', address: '', city: '', province: '', latitude: '', longitude: '', instagram: '', google_maps_url: '', is_active: true, operating_hours: [] }
+        },
+
+        instagramUrl(username) {
+            if (!username) return '#'
+            return `https://instagram.com/${username.replace('@', '').trim()}`
         },
 
         async fetchBranches() {

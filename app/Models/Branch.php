@@ -15,7 +15,7 @@ class Branch extends Model
         'address',
         'city',
         'province',
-        'phone',
+        'instagram',
         'google_maps_url',
         'operating_hours',
         'latitude',
