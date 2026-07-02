@@ -461,9 +461,14 @@ export default {
         '$route.query': {
             immediate: true,
             handler(newQuery) {
-                this.searchKeyword  = newQuery.search   || ''
-                this.activeCategory = newQuery.category || 'Semua'
+                this.searchKeyword  = newQuery.search    || ''
+                this.activeCategory = newQuery.category  || 'Semua'
                 this.currentPage    = parseInt(newQuery.page) || 1
+                this.sortBy         = newQuery.sort      || ''
+                this.priceMin       = newQuery.price_min ? Number(newQuery.price_min) : null
+                this.priceMax       = newQuery.price_max ? Number(newQuery.price_max) : null
+                this.sliderMin      = this.priceMin ?? PRICE_ABSOLUTE_MIN
+                this.sliderMax      = this.priceMax ?? PRICE_ABSOLUTE_MAX
                 this.fetchProducts()
             }
         }
@@ -490,9 +495,7 @@ export default {
             this.applyFilters()
         },
         clearSearch() {
-            this.searchKeyword = ''
-            this.$router.replace({ name: 'Products', query: {} })
-            this.applyFilters()
+            this.updateQuery({ search: undefined, page: undefined })
         },
 
         productSlug(product) {
@@ -556,31 +559,29 @@ export default {
         },
 
         selectCategory(cat) {
-            this.activeCategory = cat
-            this.currentPage = 1
-            this.fetchProducts()
+            this.updateQuery({ category: cat !== 'Semua' ? cat : undefined, page: undefined })
         },
 
         applyFilters() {
-            this.currentPage = 1
-            this.fetchProducts()
+            this.updateQuery({
+                sort:      this.sortBy || undefined,
+                price_min: this.priceMin || undefined,
+                price_max: (this.priceMax && this.priceMax < PRICE_ABSOLUTE_MAX) ? this.priceMax : undefined,
+                page:      undefined,
+            })
         },
 
         resetFilters() {
-            this.activeCategory = 'Semua'
-            this.priceMin       = null
-            this.priceMax       = null
-            this.sliderMin      = PRICE_ABSOLUTE_MIN
-            this.sliderMax      = PRICE_ABSOLUTE_MAX
-            this.sortBy         = ''
-            this.currentPage    = 1
-            this.fetchProducts()
+            this.sliderMin = PRICE_ABSOLUTE_MIN
+            this.sliderMax = PRICE_ABSOLUTE_MAX
+            this.updateQuery({
+                category: undefined, price_min: undefined, price_max: undefined, sort: undefined, page: undefined
+            })
         },
 
         goToPage(page) {
             if (page < 1 || page > this.totalPages) return
-            this.currentPage = page
-            this.fetchProducts()
+            this.updateQuery({ page: page > 1 ? page : undefined })
         },
 
         goToProduct(product) {
@@ -636,6 +637,14 @@ export default {
 
         onImgError(e) {
             e.target.style.display = 'none'
+        },
+
+        updateQuery(updates) {
+            const query = { ...this.$route.query, ...updates }
+            Object.keys(query).forEach(k => {
+                if (query[k] === null || query[k] === undefined || query[k] === '') delete query[k]
+            })
+            this.$router.push({ name: 'Products', query }).catch(() => {})
         },
     }
 }
