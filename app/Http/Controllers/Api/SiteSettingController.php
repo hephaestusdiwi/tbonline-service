@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class SiteSettingController extends Controller
 {
@@ -28,16 +29,16 @@ class SiteSettingController extends Controller
                 'description' => $s->description,
             ])
             ->keyBy('key');
-
+ 
         return response()->json($settings);
     }
 
     public function update(Request $request, string $key): JsonResponse
     {
         $request->validate([
-            'value' => ['nullable'],
+            'value' => ['nullable', 'string', 'max:5000'],
         ]);
-
+ 
         $allowedKeys = [
             'google_site_verification',
             'site_name',
@@ -47,8 +48,6 @@ class SiteSettingController extends Controller
             'contact_phone',
             'contact_email',
             'contact_whatsapp',
-            'contact_phone_visible',
-            'contact_whatsapp_visible',
             'social_facebook',
             'social_instagram',
             'social_tiktok',
@@ -59,25 +58,20 @@ class SiteSettingController extends Controller
             'admin_whatsapp',
             'store_whatsapp',
         ];
-
+ 
         if (!in_array($key, $allowedKeys)) {
             return response()->json(['message' => 'Setting key tidak diizinkan'], 403);
         }
-
-        $value = $request->input('value');
-        if (is_bool($value)) {
-            $value = $value ? '1' : '0';
-        }
-
+ 
         SiteSetting::updateOrCreate(
             ['key' => $key],
-            ['value' => $value]
+            ['value' => $request->input('value')]
         );
-
+ 
         return response()->json([
             'message' => 'Setting berhasil disimpan',
             'key'     => $key,
-            'value'   => $value,
+            'value'   => $request->input('value'),
         ]);
     }
 
@@ -93,33 +87,33 @@ class SiteSettingController extends Controller
             'logo.mimes'    => 'Format file harus jpeg, jpg, png, gif, webp atau svg',
             'logo.max'      => 'Ukuran file maksimal 2 MB',
         ]);
-
+ 
         $file        = $request->file('logo');
         $storagePath = $file->getClientOriginalExtension() === 'svg'
             ? $this->storeSvg($file)
             : $this->convertToWebp($file);
-
+ 
         $this->deleteOldLogo();
-
+ 
         SiteSetting::updateOrCreate(['key' => 'site_logo'], [
             'value'       => $storagePath,
             'type'        => 'image',
             'label'       => 'Logo Website',
             'description' => 'Logo utama yang tampil di header website',
         ]);
-
+ 
         return response()->json([
             'message' => 'Logo berhasil diperbarui',
             'url'     => Storage::url($storagePath),
             'path'    => $storagePath,
         ]);
     }
-
+ 
     public function deleteLogo(): JsonResponse
     {
         $this->deleteOldLogo();
         SiteSetting::set('site_logo', null);
-
+ 
         return response()->json(['message' => 'Logo berhasil dihapus']);
     }
 
@@ -135,33 +129,33 @@ class SiteSettingController extends Controller
             'logo_footer.mimes'    => 'Format file harus jpeg, jpg, png, gif, webp atau svg',
             'logo_footer.max'      => 'Ukuran file maksimal 2 MB',
         ]);
-
+ 
         $file        = $request->file('logo_footer');
         $storagePath = $file->getClientOriginalExtension() === 'svg'
             ? $this->storeSvg($file, 'footer')
             : $this->convertToWebp($file, 'footer');
-
+ 
         $this->deleteOldLogoFooter();
-
+ 
         SiteSetting::updateOrCreate(['key' => 'site_logo_footer'], [
             'value'       => $storagePath,
             'type'        => 'image',
             'label'       => 'Logo Footer',
             'description' => 'Logo yang tampil di bagian footer website',
         ]);
-
+ 
         return response()->json([
             'message' => 'Logo footer berhasil di update',
             'url'     => Storage::url($storagePath),
             'path'    => $storagePath,
         ]);
     }
-
+ 
     public function deleteLogoFooter(): JsonResponse
     {
         $this->deleteOldLogoFooter();
         SiteSetting::set('site_logo_footer', null);
-
+ 
         return response()->json(['message' => 'Logo footer berhasil dihapus']);
     }
 
@@ -177,23 +171,23 @@ class SiteSettingController extends Controller
             'favicon.mimes'    => 'Format file harus PNG atau JPG',
             'favicon.max'      => 'Ukuran file maksimal 512 KB',
         ]);
-
+ 
         $file = $request->file('favicon');
-
+ 
         // Simpan sebagai PNG langsung (tidak dikonversi ke webp)
         $dest = 'logos/favicon_' . time() . '.png';
-
+ 
         $this->deleteOldFavicon();
-
+ 
         Storage::disk('public')->put($dest, file_get_contents($file->getRealPath()));
-
+ 
         SiteSetting::updateOrCreate(['key' => 'site_favicon'], [
             'value'       => $dest,
             'type'        => 'image',
             'label'       => 'Favicon',
             'description' => 'Ikon kecil yang tampil di browser tab',
         ]);
-
+ 
         return response()->json([
             'message' => 'Favicon berhasil diperbarui',
             'url'     => Storage::url($dest),
@@ -208,7 +202,7 @@ class SiteSettingController extends Controller
     {
         $this->deleteOldFavicon();
         SiteSetting::where('key', 'site_favicon')->update(['value' => null]);
-
+ 
         return response()->json(['message' => 'Favicon berhasil dihapus']);
     }
 
@@ -218,7 +212,7 @@ class SiteSettingController extends Controller
     {
         $mime  = $file->getMimeType();
         $src   = $file->getRealPath();
-
+ 
         $image = match (true) {
             str_contains($mime, 'jpeg') => imagecreatefromjpeg($src),
             str_contains($mime, 'png')  => $this->pngWithAlpha($src),
@@ -226,18 +220,18 @@ class SiteSettingController extends Controller
             str_contains($mime, 'webp') => imagecreatefromwebp($src),
             default                     => imagecreatefromjpeg($src),
         };
-
+ 
         $tmp = sys_get_temp_dir() . '/' . (string) Str::uuid() . '.webp';
         imagewebp($image, $tmp, 90);
         imagedestroy($image);
-
+ 
         $dest = "logos/{$folder}_" . time() . '.webp';
         Storage::disk('public')->put($dest, file_get_contents($tmp));
         @unlink($tmp);
-
+ 
         return $dest;
     }
-
+ 
     private function pngWithAlpha(string $path): \GdImage
     {
         $image = imagecreatefrompng($path);
@@ -246,14 +240,14 @@ class SiteSettingController extends Controller
         imagesavealpha($image, true);
         return $image;
     }
-
+ 
     private function storeSvg(UploadedFile $file, string $folder = 'logo'): string
     {
         $dest = "logos/{$folder}_" . time() . '.svg';
         Storage::disk('public')->put($dest, file_get_contents($file->getRealPath()));
         return $dest;
     }
-
+ 
     public function deleteOldLogo(): void
     {
         $old = SiteSetting::get('site_logo');
@@ -261,7 +255,7 @@ class SiteSettingController extends Controller
             Storage::disk('public')->delete($old);
         }
     }
-
+ 
     public function deleteOldLogoFooter(): void
     {
         $old = SiteSetting::get('site_logo_footer');
@@ -269,7 +263,7 @@ class SiteSettingController extends Controller
             Storage::disk('public')->delete($old);
         }
     }
-
+ 
     private function deleteOldFavicon(): void
     {
         $old = SiteSetting::where('key', 'site_favicon')->value('value');
@@ -278,15 +272,17 @@ class SiteSettingController extends Controller
         }
     }
 
+    // ── Shipping couriers (FOOTER / DESAIN — logo yang tampil ke publik) ──────
+
     public function getShippingCouriers(): JsonResponse
     {
         $value = SiteSetting::get('shipping_couriers');
-
+ 
         $couriers = $value ? json_decode($value, true) : $this->defaultCouriers();
-
+ 
         return response()->json($couriers);
     }
-
+ 
     public function saveShippingCouriers(Request $request): JsonResponse
     {
         $request->validate([
@@ -295,13 +291,13 @@ class SiteSettingController extends Controller
             'couriers.*.logo'   => ['nullable', 'string', 'max:500'],
             'couriers.*.active' => ['required', 'boolean'],
         ]);
-
+ 
         $couriers = collect($request->couriers)->map(fn($c) => [
             'name'    => trim($c['name']),
             'logo'    => trim($c['logo'] ?? ''),
             'active'  => (bool) $c['active'],
         ])->values()->toArray();
-
+ 
         SiteSetting::updateOrCreate(
             ['key' => 'shipping_couriers'],
             [
@@ -311,13 +307,13 @@ class SiteSettingController extends Controller
                 'description' => 'Daftar kurir yang tampil di footer',
             ]
         );
-
+ 
         return response()->json([
             'message'  => 'Daftar pengiriman berhasil disimpan',
             'couriers' => $couriers,
         ]);
     }
-
+ 
     public function uploadCourierLogo(Request $request): JsonResponse
     {
         $request->validate([
@@ -327,21 +323,77 @@ class SiteSettingController extends Controller
             'logo.mimes'    => 'Format file harus jpeg, jpg, png, gif, webp atau svg',
             'logo.max'      => 'Ukuran file maksimal 2 MB',
         ]);
-
+ 
         $file        = $request->file('logo');
         $storagePath = $file->getClientOriginalExtension() === 'svg'
             ? $this->storeSvg($file, 'courier')
             : $this->convertToWebp($file, 'courier');
-
+ 
         return response()->json([
             'message' => 'Logo kurir berhasil diupload',
             'url'     => Storage::url($storagePath),
             'path'    => $storagePath,
         ]);
     }
-
+ 
     private function defaultCouriers(): array
     {
         return [];
+    }
+
+    // ── RajaOngkir active couriers (CHECKOUT / FUNGSIONAL — dipakai buat cek ongkir) ──
+ 
+    /**
+     * GET /api/settings/rajaongkir-couriers
+     * Return seluruh master list kurir RajaOngkir + status aktif masing-masing,
+     * supaya frontend tinggal render checkbox tanpa perlu hardcode nama kurir.
+     */
+    public function getActiveCouriers(): JsonResponse
+    {
+        $masterList = config('rajaongkir.couriers');
+
+        $raw    = SiteSetting::get('rajaongkir_active_couriers');
+        $active = $raw ? (json_decode($raw, true) ?? []) : config('rajaongkir.default_active');
+
+        $couriers = collect($masterList)
+            ->map(fn ($name, $code) => [
+                'code'   => $code,
+                'name'   => $name,
+                'active' => in_array($code, $active, true),
+            ])
+            ->values();
+
+        return response()->json($couriers);
+    }
+
+    /**
+     * PUT /api/settings/rajaongkir-couriers
+     * Body: { active_couriers: ['jne', 'jnt', ...] }
+     */
+    public function saveActiveCouriers(Request $request): JsonResponse
+    {
+        $validCodes = array_keys(config('rajaongkir.couriers'));
+
+        $request->validate([
+            'active_couriers'   => ['required', 'array', 'min:1'],
+            'active_couriers.*' => ['string', Rule::in($validCodes)],
+        ]);
+
+        $active = array_values(array_unique($request->input('active_couriers')));
+
+        SiteSetting::updateOrCreate(
+            ['key' => 'rajaongkir_active_couriers'],
+            [
+                'value'       => json_encode($active),
+                'type'        => 'json',
+                'label'       => 'Kurir Aktif (RajaOngkir)',
+                'description' => 'Daftar kode kurir yang dipakai untuk cek ongkos kirim di halaman checkout',
+            ]
+        );
+
+        return response()->json([
+            'message'       => 'Kurir aktif untuk checkout berhasil disimpan',
+            'active_couriers' => $active,
+        ]);
     }
 }

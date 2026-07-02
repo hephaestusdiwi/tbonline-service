@@ -198,6 +198,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/settings/shipping-couriers',  [SiteSettingController::class, 'getShippingCouriers']);
     Route::put('/settings/shipping-couriers',  [SiteSettingController::class, 'saveShippingCouriers']);
     Route::post('/settings/courier-logo', [SiteSettingController::class, 'uploadCourierLogo']);
+
+    // ── Kurir aktif RajaOngkir (checkout) — terpisah dari shipping-couriers (footer) ──
+    Route::get('/settings/rajaongkir-couriers', [SiteSettingController::class, 'getActiveCouriers']);
+    Route::put('/settings/rajaongkir-couriers', [SiteSettingController::class, 'saveActiveCouriers'])->middleware('can:settings_edit');
+
     Route::put('settings/{key}',      [SiteSettingController::class, 'update'])->middleware('can:settings_edit');
     Route::post('settings/logo',      [SiteSettingController::class, 'uploadLogo'])->middleware('can:settings_edit');
     Route::delete('settings/logo',    [SiteSettingController::class, 'deleteLogo'])->middleware('can:settings_edit');

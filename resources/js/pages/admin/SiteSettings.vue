@@ -926,6 +926,65 @@
                 <template v-else-if="activeSection === 'shipping'">
                     <div class="bg-white border border-gray-200/80 rounded-xl overflow-hidden shadow-sm">
                         <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+                            <div class="w-9 h-9 rounded-xl bg-cyan-50 border border-cyan-100 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-cyan-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-gray-800">Kurir Ongkos Kirim (Checkout)</p>
+                                <p class="text-xs text-gray-400">Kurir yang dipakai sistem untuk cek ongkir RajaOngkir di halaman checkout. Terpisah dari logo kurir di footer.</p>
+                            </div>
+                        </div>
+
+                        <!-- Loading skeleton -->
+                        <div v-if="rajaongkirCouriers.loading" class="p-6 space-y-2">
+                            <div v-for="i in 4" :key="i" class="h-11 rounded-xl bg-gray-100 border border-gray-200 animate-pulse"></div>
+                        </div>
+
+                        <div v-else class="p-6">
+                            <div class="grid grid-cols-2 gap-2">
+                                <label
+                                    v-for="courier in rajaongkirCouriers.list"
+                                    :key="courier.code"
+                                    class="flex items-center gap-3 rounded-xl border px-3 py-2.5 cursor-pointer transition-all"
+                                    :class="courier.active ? 'bg-[#ED1F24]/5 border-[#ED1F24]/20' : 'bg-gray-50 border-gray-200 hover:border-gray-300'"
+                                >
+                                    <input type="checkbox" v-model="courier.active" class="w-4 h-4 rounded accent-[#ED1F24] flex-shrink-0" />
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-semibold truncate" :class="courier.active ? 'text-[#ED1F24]' : 'text-gray-600'">{{ courier.name }}</p>
+                                        <p class="text-[10px] text-gray-400 uppercase tracking-wide">{{ courier.code }}</p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div v-if="rajaongkirCouriers.error" class="flex items-start gap-3 bg-red-50 border border-red-200 text-red-500 px-4 py-3 rounded-xl text-sm mt-4">
+                                <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12A9 9 0 1 1 3 12a9 9 0 0 1 18 0z"/></svg>
+                                {{ rajaongkirCouriers.error }}
+                            </div>
+                            <div v-if="rajaongkirCouriers.success" class="flex items-start gap-3 bg-emerald-50 border border-emerald-200 text-emerald-600 px-4 py-3 rounded-xl text-sm mt-4">
+                                <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                {{ rajaongkirCouriers.success }}
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+                            <p class="text-xs text-gray-400">
+                                <span class="text-gray-700 font-bold">{{ rajaongkirCouriers.list.filter(c => c.active).length }}</span>
+                                dari
+                                <span class="text-gray-700 font-bold">{{ rajaongkirCouriers.list.length }}</span>
+                                kurir aktif untuk checkout
+                            </p>
+                            <button @click="saveRajaOngkirCouriers" :disabled="rajaongkirCouriers.saving || rajaongkirCouriers.loading"
+                                    class="inline-flex items-center gap-2 bg-[#ED1F24] hover:bg-[#C81A1E] disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-2 rounded-xl transition shadow-sm">
+                                <svg v-if="rajaongkirCouriers.saving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v8H4z"/></svg>
+                                <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                {{ rajaongkirCouriers.saving ? 'Menyimpan...' : 'Simpan Kurir Checkout' }}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-white border border-gray-200/80 rounded-xl overflow-hidden shadow-sm">
+                        <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
                             <div class="w-9 h-9 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center">
                                 <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
@@ -1227,6 +1286,14 @@ export default {
                 newCourier: { name: '', logoFile: null, logoPreview: null, logoDragging: false, uploading: false },
             },
 
+            rajaongkirCouriers: {
+                loading: true,
+                saving: false,
+                error: '',
+                success: '',
+                list: [],
+            },
+
             social: {
                 saving: false, error: '', success: '',
                 links: { facebook: '', instagram: '', tiktok: '', twitter: '', youtube: '', linkedin: '' },
@@ -1261,7 +1328,7 @@ export default {
 
     async mounted() {
         document.title = 'Site Settings - Two Brothers Vape System'
-        await Promise.all([this.fetchSettings(), this.fetchShippingCouriers()])
+        await Promise.all([this.fetchSettings(), this.fetchShippingCouriers(), this.fetchRajaOngkirCouriers()])
     },
 
     methods: {
@@ -1304,6 +1371,30 @@ export default {
                 this.shipping.couriers = data
             } catch (e) { console.error('Gagal load kurir:', e) }
             finally { this.shipping.loading = false }
+        },
+
+        async fetchRajaOngkirCouriers() {
+            this.rajaongkirCouriers.loading = true
+            try {
+                const { data } = await axios.get('/settings/rajaongkir-couriers')
+                this.rajaongkirCouriers.list = data
+            } catch (e) { console.error('Gagal load kurir RajaOngkir:', e) }
+            finally { this.rajaongkirCouriers.loading = false }
+        },
+
+        async saveRajaOngkirCouriers() {
+            this.rajaongkirCouriers.saving = true
+            this.rajaongkirCouriers.error = ''
+            this.rajaongkirCouriers.success = ''
+            try {
+                const activeCodes = this.rajaongkirCouriers.list.filter(c => c.active).map(c => c.code)
+                const { data } = await axios.put('/settings/rajaongkir-couriers', { active_couriers: activeCodes })
+                this.rajaongkirCouriers.success = 'Kurir aktif untuk checkout berhasil disimpan.'
+            } catch (e) {
+                this.rajaongkirCouriers.error = e.response?.data?.message ?? 'Gagal menyimpan.'
+            } finally {
+                this.rajaongkirCouriers.saving = false
+            }
         },
 
         onCourierLogoSelected(e) { const f = e.target.files[0]; if (f) this.processCourierLogo(f) },

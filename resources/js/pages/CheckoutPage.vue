@@ -597,7 +597,6 @@ import { divide } from 'lodash'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 const ORIGIN_ID = import.meta.env.VITE_RAJAONGKIR_ORIGIN_ID || '25998'
-const COURIERS = 'jne:jnt:sicepat:tiki:pos:anteraja'
 const DEFAULT_WEIGHT = 1000
 
 export default {
@@ -818,7 +817,6 @@ export default {
           origin: ORIGIN_ID,
           destination: this.selectedDestination.id,
           weight: totalWeight,
-          courier: COURIERS,
           price: 'lowest',
         })
         const rates = res.data?.data || []
