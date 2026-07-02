@@ -121,6 +121,10 @@
                                 <div class="mo-field"><label class="mo-label">Layanan <span class="mo-req">*</span></label><input v-model="form.shipping_service" type="text" class="mo-input" placeholder="REG, YES, dll"/></div>
                                 <div class="mo-field"><label class="mo-label">Ongkir <span class="mo-req">*</span></label><input v-model.number="form.shipping_cost" type="number" min="0" class="mo-input"/></div>
                             </div>
+                            <div class="mo-field">
+                                <label class="mo-label">Nama Pengiriman <span class="mo-req">*</span></label>
+                                <input v-model="form.shipping_name" type="text" class="mo-input" placeholder="Contoh: JNE Reguler"/>
+                            </div>
                         </template>
                     </div>
 
@@ -209,7 +213,7 @@ export default {
             if (!this.items.length) return false
             if (this.form.status === 'cancelled' && !this.form.cancel_reason?.trim()) return false
             if (this.form.fulfillment_type === 'pickup' && !this.form.branch_id) return false
-            if (this.form.fulfillment_type === 'delivery' && (!this.form.address || !this.form.shipping_courier || !this.form.shipping_service)) return false
+            if (this.form.fulfillment_type === 'delivery' && (!this.form.address || !this.form.shipping_courier || !this.form.shipping_service || !this.form.shipping_name)) return false
             return true
         },
     },
@@ -225,7 +229,7 @@ export default {
                 fulfillment_type: 'delivery',
                 branch_id: '',
                 address: '', subdistrict: '', district: '', city: '', province: '', postal_code: '',
-                shipping_courier: '', shipping_service: '', shipping_cost: 0, shipping_etd: '',
+                shipping_courier: '', shipping_service: '', shipping_name: '', shipping_cost: 0, shipping_etd: '',
                 status: 'pending', cancel_reason: '',
                 discount_amount: 0, notes: '',
             }
