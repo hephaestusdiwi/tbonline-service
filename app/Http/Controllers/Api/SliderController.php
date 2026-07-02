@@ -7,7 +7,6 @@ use App\Models\Slider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use App\Jobs\CompressVideoSlider;
 
 class SliderController extends Controller
 {
@@ -60,6 +59,16 @@ class SliderController extends Controller
         return $storagePath;
     }
 
+    /**
+     * Simpan file video langsung tanpa compress di server.
+     * Staff wajib compress dulu di lokal (HandBrake/software lain)
+     * sebelum upload.
+     */
+    private function storeVideo($file, string $directory = 'sliders'): string
+    {
+        return $file->store($directory, 'public');
+    }
+
     // POST /api/sliders
     public function store(Request $request)
     {
@@ -83,29 +92,18 @@ class SliderController extends Controller
 
         if ($request->type === 'image') {
             $path = $this->convertAndStoreAsWebp($file);
-
-            $slider = Slider::create([
-                'title'         => $request->title,
-                'type'          => 'image',
-                'file_path'     => $path,
-                'order'         => $request->order ?? 0,
-                'is_active'     => true,
-                'is_processing' => false,
-            ]);
         } else {
-            $rawPath = $file->store('sliders/raw', 'public');
-
-            $slider = Slider::create([
-                'title'         => $request->title,
-                'type'          => 'video',
-                'file_path'     => $rawPath,
-                'order'         => $request->order ?? 0,
-                'is_active'     => true,
-                'is_processing' => true,
-            ]);
-
-            CompressVideoSlider::dispatch($slider, $rawPath);
+            $path = $this->storeVideo($file);
         }
+
+        $slider = Slider::create([
+            'title'         => $request->title,
+            'type'          => $request->type,
+            'file_path'     => $path,
+            'order'         => $request->order ?? 0,
+            'is_active'     => true,
+            'is_processing' => false,
+        ]);
 
         return response()->json($slider, 201);
     }
@@ -130,15 +128,13 @@ class SliderController extends Controller
             $isVideo   = in_array($extension, ['mp4', 'webm']);
 
             if ($isVideo) {
-                $rawPath = $file->store('sliders/raw', 'public');
+                $path = $this->storeVideo($file);
 
                 $slider->update([
                     'type'          => 'video',
-                    'file_path'     => $rawPath,
-                    'is_processing' => true,
+                    'file_path'     => $path,
+                    'is_processing' => false,
                 ]);
-
-                CompressVideoSlider::dispatch($slider, $rawPath);
             } else {
                 $path = $this->convertAndStoreAsWebp($file);
 
