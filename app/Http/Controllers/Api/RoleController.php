@@ -122,10 +122,31 @@ class RoleController extends Controller
 
     public function permissions()
     {
-        $permissions = Permission::all()->groupBy(function ($p) {
-            // group by prefix: products, orders, users, dll
-            $parts = explode('_', $p->name);
-            return $parts[0];
+        $compoundPrefixes = [
+            'store_locator',
+            'promo_codes',
+            'homepage_sections',
+            'footer_links',
+            'visitor_stats',
+            'settings_couriers',
+        ];
+
+        $permissions = Permission::all()->groupBy(function ($p) use ($compoundPrefixes) {
+            $name = $p->name;
+
+            if (str_contains($name, '.')) {
+                return explode('.', $name)[0];
+            }
+
+            // Cocokkan prefix yang lebih panjang terlebih dahulu
+            foreach ($compoundPrefixes as $prefix) {
+                if (str_starts_with($name, $prefix . '_')) {
+                    return $prefix;
+                }
+            }
+
+            // Default: prefix sebelum underscore pertama
+            return explode('_', $name)[0];
         })->map(fn($group) => $group->pluck('name'));
 
         return response()->json($permissions);

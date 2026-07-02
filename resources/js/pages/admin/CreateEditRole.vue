@@ -78,18 +78,24 @@
                             <span class="text-[10px] text-gray-400">— Pilih hak akses per modul</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button type="button" @click="selectAll"
-                                class="text-[10px] font-bold text-[#ED1F24] border border-[#ED1F24]/30 bg-[#ED1F24]/5 hover:bg-[#ED1F24]/10 px-2.5 py-1 rounded-lg transition-all">
+                            <button type="button" @click="selectAll" :disabled="loadingModules"
+                                class="text-[10px] font-bold text-[#ED1F24] border border-[#ED1F24]/30 bg-[#ED1F24]/5 hover:bg-[#ED1F24]/10 px-2.5 py-1 rounded-lg transition-all disabled:opacity-40">
                                 Pilih Semua
                             </button>
-                            <button type="button" @click="clearAll"
-                                class="text-[10px] font-bold text-gray-500 border border-gray-200 bg-white hover:bg-gray-50 px-2.5 py-1 rounded-lg transition-all">
+                            <button type="button" @click="clearAll" :disabled="loadingModules"
+                                class="text-[10px] font-bold text-gray-500 border border-gray-200 bg-white hover:bg-gray-50 px-2.5 py-1 rounded-lg transition-all disabled:opacity-40">
                                 Kosongkan
                             </button>
                         </div>
                     </div>
 
-                    <div class="divide-y divide-gray-50">
+                    <!-- Loading state -->
+                    <div v-if="loadingModules" class="px-5 py-10 text-center">
+                        <svg class="w-5 h-5 animate-spin mx-auto text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+                        <p class="text-xs text-gray-400 mt-2">Memuat daftar permission...</p>
+                    </div>
+
+                    <div v-else class="divide-y divide-gray-50">
                         <div v-for="module in permissionModules" :key="module.key" class="px-5 py-4">
 
                             <!-- Module header -->
@@ -211,63 +217,81 @@
 import AdminLayout from '../../components/admin/AdminLayout.vue'
 import axios from '../../axios.js'
 
-const PERMISSION_MODULES = [
-    {
-        key: 'users', label: 'Users', icon: '👥', description: 'Manajemen akun pengguna',
-        permissions: [
-            { key: 'users_view', label: 'Lihat' }, { key: 'users_create', label: 'Tambah' },
-            { key: 'users_edit', label: 'Edit' },   { key: 'users_delete', label: 'Hapus' },
-        ],
-    },
-    {
-        key: 'roles', label: 'Roles', icon: '🔐', description: 'Manajemen role & permission',
-        permissions: [
-            { key: 'roles_view', label: 'Lihat' }, { key: 'roles_create', label: 'Tambah' },
-            { key: 'roles_edit', label: 'Edit' },   { key: 'roles_delete', label: 'Hapus' },
-        ],
-    },
-    {
-        key: 'products', label: 'Produk', icon: '📦', description: 'Manajemen katalog produk',
-        permissions: [
-            { key: 'products_view', label: 'Lihat' }, { key: 'products_create', label: 'Tambah' },
-            { key: 'products_edit', label: 'Edit' },   { key: 'products_delete', label: 'Hapus' },
-        ],
-    },
-    {
-        key: 'orders', label: 'Pesanan', icon: '🛒', description: 'Kelola transaksi & pesanan',
-        permissions: [
-            { key: 'orders_view',           label: 'Lihat' },
-            { key: 'orders_update_status',  label: 'Update Status' },
-            { key: 'orders_export',         label: 'Export' },
-            { key: 'orders_delete',         label: 'Hapus' },
-            { key: 'orders_revise',         label: 'Revisi Item' },
-            { key: 'orders_revise_price',   label: 'Revisi Harga' },
-            { key: 'orders_revise_courier', label: 'Revisi Kurir' },
-        ],
-    },
-    {
-        key: 'reports', label: 'Laporan', icon: '📊', description: 'Akses data & analitik',
-        permissions: [
-            { key: 'reports_view', label: 'Lihat' }, { key: 'reports_export', label: 'Export' },
-        ],
-    },
-    {
-        key: 'settings', label: 'Pengaturan', icon: '⚙️', description: 'Konfigurasi sistem',
-        permissions: [
-            { key: 'settings_view', label: 'Lihat' }, { key: 'settings_edit', label: 'Edit' },
-        ],
-    },
-    {
-        key: 'chat', label: 'Live Chat', icon: '💬', description: 'Manajemen sesi live chat',
-        permissions: [
-            { key: 'chat_view',   label: 'Lihat' },
-            { key: 'chat_close',  label: 'Tutup Sesi' },
-            { key: 'chat_reopen', label: 'Buka Kembali' },
-            { key: 'chat_manage', label: 'Kelola & Assign' },
-            { key: 'chat_admin',  label: 'Admin (Hapus)' },
-        ],
-    },
-]
+// Metadata tampilan per modul (icon, label, deskripsi).
+// Modul yang TIDAK ada di sini akan otomatis pakai fallback (icon 📁 + label hasil humanize key).
+// Jadi kalau nambah modul baru di backend, cukup tambahkan permission-nya di seeder —
+// halaman ini otomatis nampilin modulnya. Entry di bawah ini murni kosmetik, opsional.
+const MODULE_META = {
+    users:               { label: 'Users',                icon: '👥', description: 'Manajemen akun pengguna' },
+    roles:               { label: 'Roles',                 icon: '🔐', description: 'Manajemen role & permission' },
+    products:            { label: 'Produk',                icon: '📦', description: 'Manajemen katalog produk' },
+    orders:               { label: 'Pesanan',               icon: '🛒', description: 'Kelola transaksi & pesanan' },
+    reports:              { label: 'Laporan',               icon: '📊', description: 'Akses data & analitik' },
+    settings:             { label: 'Pengaturan',            icon: '⚙️', description: 'Konfigurasi sistem' },
+    chat:                 { label: 'Live Chat',             icon: '💬', description: 'Manajemen sesi live chat' },
+    content:              { label: 'Content/CMS',           icon: '📝', description: 'Manajemen konten CMS' },
+    contents:             { label: 'Konten',                icon: '📄', description: 'Manajemen konten lainnya' },
+    sliders:              { label: 'Slider',                icon: '🖼️', description: 'Banner/slider homepage' },
+    faq:                  { label: 'FAQ',                   icon: '❓', description: 'Pertanyaan yang sering diajukan' },
+    announcement:         { label: 'Pengumuman',            icon: '📢', description: 'Pengumuman untuk pelanggan' },
+    store_locator:        { label: 'Lokasi Toko',           icon: '📍', description: 'Store locator / cabang' },
+    import:                { label: 'Import Data',           icon: '⬆️', description: 'Import data produk/lainnya' },
+    dashboard:            { label: 'Dashboard',             icon: '📈', description: 'Akses halaman dashboard' },
+    navigations:          { label: 'Navigasi',              icon: '🧭', description: 'Menu navigasi website' },
+    branches:              { label: 'Cabang',                icon: '🏬', description: 'Manajemen cabang toko' },
+    promo_codes:           { label: 'Kode Promo',            icon: '🏷️', description: 'Kode promo & diskon' },
+    homepage_sections:     { label: 'Section Homepage',      icon: '🏠', description: 'Pengaturan section homepage' },
+    footer_links:           { label: 'Footer Links',          icon: '🔗', description: 'Tautan footer website' },
+    loyalty:                { label: 'Loyalty',               icon: '🎁', description: 'Program loyalty pelanggan' },
+    promotions:             { label: 'Promosi',               icon: '🎉', description: 'Promosi & campaign' },
+    media:                  { label: 'Media',                 icon: '🖇️', description: 'Upload media/file' },
+    visitor_stats:          { label: 'Statistik Pengunjung',  icon: '📊', description: 'Statistik kunjungan visitor' },
+    complaints:             { label: 'Komplain',              icon: '📮', description: 'Keluhan pelanggan' },
+    settings_couriers:      { label: 'Kurir',                 icon: '🚚', description: 'Pengaturan kurir pengiriman' },
+}
+
+// Label aksi umum (dipakai lintas modul). Aksi yang tidak ada di sini
+// otomatis di-humanize (mis. "bulk_delete" -> "Bulk Delete").
+const ACTION_LABELS = {
+    view: 'Lihat',
+    viewAny: 'Lihat',
+    create: 'Tambah',
+    edit: 'Edit',
+    update: 'Edit',
+    delete: 'Hapus',
+    forceDelete: 'Hapus Permanen',
+    restore: 'Pulihkan',
+    publish: 'Publish',
+    export: 'Export',
+    run: 'Jalankan',
+    upload: 'Upload',
+    reorder: 'Urutkan Ulang',
+    manage: 'Kelola',
+    admin: 'Admin (Hapus)',
+    close: 'Tutup Sesi',
+    reopen: 'Buka Kembali',
+    update_status: 'Update Status',
+    revise: 'Revisi Item',
+    revise_price: 'Revisi Harga',
+    revise_courier: 'Revisi Kurir',
+    bulk_delete: 'Hapus Massal',
+}
+
+function humanize(str) {
+    return str
+        .replace(/[_.]/g, ' ')
+        .trim()
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function actionKeyFor(permName, moduleKey) {
+    if (permName.includes('.')) {
+        return permName.split('.')[1] ?? permName
+    }
+    return permName.startsWith(moduleKey + '_')
+        ? permName.slice(moduleKey.length + 1)
+        : permName
+}
 
 export default {
     name: 'CreateEditRole',
@@ -278,7 +302,8 @@ export default {
 
     data() {
         return {
-            permissionModules: PERMISSION_MODULES,
+            permissionModules: [],
+            loadingModules: false,
             loading: false,
             errorMessage: '',
             form: { name: '', description: '', permissions: [] },
@@ -292,11 +317,51 @@ export default {
         },
     },
 
-    mounted() {
-        if (this.isEdit) this.fetchRole()
+    async mounted() {
+        const tasks = [this.fetchPermissionModules()]
+        if (this.isEdit) tasks.push(this.fetchRole())
+        await Promise.all(tasks)
     },
 
     methods: {
+        async fetchPermissionModules() {
+            this.loadingModules = true
+            try {
+                const res = await axios.get('/roles-permissions')
+                this.permissionModules = this.buildPermissionModules(res.data)
+            } catch (e) {
+                this.errorMessage = 'Gagal memuat daftar permission dari server.'
+                console.error(e)
+            } finally {
+                this.loadingModules = false
+            }
+        },
+
+        buildPermissionModules(grouped) {
+            return Object.entries(grouped)
+                .map(([moduleKey, permNames]) => {
+                    const meta = MODULE_META[moduleKey] || {
+                        label: humanize(moduleKey),
+                        icon: '📁',
+                        description: '',
+                    }
+                    return {
+                        key: moduleKey,
+                        label: meta.label,
+                        icon: meta.icon,
+                        description: meta.description,
+                        permissions: permNames.map((name) => {
+                            const actionKey = actionKeyFor(name, moduleKey)
+                            return {
+                                key: name,
+                                label: ACTION_LABELS[actionKey] || humanize(actionKey),
+                            }
+                        }),
+                    }
+                })
+                .sort((a, b) => a.label.localeCompare(b.label))
+        },
+
         async fetchRole() {
             try {
                 const res = await axios.get(`/roles/${this.id}`)
@@ -319,6 +384,7 @@ export default {
             return module.permissions.every(p => this.form.permissions.includes(p.key))
         },
         moduleProgress(module) {
+            if (!module.permissions.length) return 0
             return Math.round((this.moduleSelectedCount(module) / module.permissions.length) * 100)
         },
         toggleModule(module) {
