@@ -538,7 +538,7 @@ export default {
 
         async fetchFilterOptions() {
             try {
-                const catRes = await fetch('/api/products/categories')
+                const catRes = await fetch('/api/products/categories/shop')
                 if (catRes.ok) { const j = await catRes.json(); this.allCategories = j.data ?? [] }
             } catch {}
         },

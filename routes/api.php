@@ -53,6 +53,7 @@ Route::get('/branches', [BranchController::class, 'index']);
 Route::get('/homepage/top-products',    [TopProductsController::class, 'index']);
 Route::get('/products/search', [ProductController::class, 'search']);
 Route::get('/products/categories',  [ProductController::class, 'categories']);
+Route::get('/products/categories/shop', [ProductController::class, 'shopCategories']); 
 Route::get('/products/brands',      [ProductController::class, 'brands']);
 Route::get('/products/collections', [ProductController::class, 'collections']);
 Route::get('/products/{id}',   [ProductController::class, 'show']);
@@ -205,7 +206,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/orders/{id}/revise',   [OrderRevisionController::class, 'revise'])        ->middleware('can:orders_revise');
     Route::get  ('/orders/{id}/revisions',[OrderRevisionController::class, 'history'])        ->middleware('can:orders_revise');
     Route::get  ('/orders/products/search', [OrderRevisionController::class, 'searchProducts']);
-    
+
     // ── Roles ──
     Route::get   ('/roles',      [RoleController::class, 'index'])  ->middleware('can:roles_view');
     Route::get   ('/roles/{id}', [RoleController::class, 'show'])   ->middleware('can:roles_view');

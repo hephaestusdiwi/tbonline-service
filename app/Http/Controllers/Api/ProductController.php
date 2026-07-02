@@ -196,6 +196,27 @@ class ProductController extends Controller
     }
 
     /**
+     * GET /api/products/categories/shop
+     * Kategori untuk storefront — hanya dari produk published, sekalian dengan count.
+     */
+    public function shopCategories(): JsonResponse
+    {
+        $categories = Product::selectRaw('category, COUNT(*) as count')
+            ->whereNotNull('category')
+            ->where('category', '!=', '')
+            ->where('published', 1)
+            ->groupBy('category')
+            ->orderBy('category')
+            ->get()
+            ->map(fn ($row) => [
+                'name'  => $row->category,
+                'count' => $row->count,
+            ]);
+
+        return response()->json(['data' => $categories]);
+    }
+
+    /**
      * GET /api/products/brands
      */
     public function brands(): JsonResponse
