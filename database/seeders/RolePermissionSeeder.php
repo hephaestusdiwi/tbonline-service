@@ -51,6 +51,28 @@ class RolePermissionSeeder extends Seeder
             'orders_revise_courier',
         ];
 
+        $permissions = array_merge($permissions, [
+            'sliders_view', 'sliders_create', 'sliders_edit', 'sliders_delete',
+            'faq_view', 'faq_create', 'faq_edit', 'faq_delete',
+            'announcement_view', 'announcement_create', 'announcement_edit', 'announcement_delete', 'announcement_reorder',
+            'store_locator_view', 'store_locator_create', 'store_locator_edit', 'store_locator_delete',
+            'import_view', 'import_run',
+            'dashboard_view',
+            'navigations_view', 'navigations_create', 'navigations_edit', 'navigations_delete',
+            'branches_create', 'branches_edit', 'branches_delete', 'branches_bulk_delete',
+            'promo_codes_view', 'promo_codes_create', 'promo_codes_edit', 'promo_codes_delete',
+            'homepage_sections_view', 'homepage_sections_create', 'homepage_sections_edit',
+            'homepage_sections_delete', 'homepage_sections_reorder',
+            'footer_links_manage',
+            'loyalty_manage',
+            'promotions_view', 'promotions_create', 'promotions_edit', 'promotions_delete',
+            'contents_view', 'contents_create', 'contents_edit', 'contents_delete', 'contents_publish',
+            'media_upload',
+            'visitor_stats_view',
+            'complaints_view', 'complaints_manage',
+            'settings_couriers_view', 'settings_couriers_edit',
+        ]);
+
         foreach ($permissions as $perm) {
             Permission::firstOrCreate(['name' => $perm, 'guard_name' => 'web']);
         }
