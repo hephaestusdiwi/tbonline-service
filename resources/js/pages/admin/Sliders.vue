@@ -361,7 +361,7 @@
                                         </div>
                                         <div class="text-center">
                                             <p class="text-sm text-gray-500"><span class="text-[#ED1F24] font-semibold">Pilih file</span> atau drag &amp; drop</p>
-                                            <p class="text-xs text-gray-400 mt-1">{{ form.type === 'image' ? 'JPG, PNG, WEBP' : 'MP4, WEBM' }} — maks 50MB</p>
+                                            <p class="text-xs text-gray-400 mt-1">{{ form.type === 'image' ? 'JPG, PNG, WEBP' : 'MP4, WEBM' }} — maks 200MB</p>
                                         </div>
                                     </div>
 
