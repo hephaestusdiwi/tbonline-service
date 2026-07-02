@@ -309,7 +309,7 @@
             </div>
         </div>
 
-        <!-- ───────────────────────── ROW 3: TOP PRODUCTS + PROVINCE ───────────────────────── -->
+        <!-- ───────────────────────── ROW 3: TOP PRODUCTS + LOCATION ───────────────────────── -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
 
             <div class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
@@ -324,13 +324,24 @@
             </div>
 
             <div class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
-                <div class="px-5 py-4 border-b border-gray-100">
-                    <h3 class="text-sm font-bold text-gray-800">Revenue per Provinsi</h3>
-                    <p class="text-xs text-gray-400 mt-0.5">Top 10 · berdasarkan revenue</p>
+                <div class="px-5 py-4 border-b border-gray-100 flex items-start justify-between gap-3">
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-800">Revenue per {{ locationLabel }}</h3>
+                        <p class="text-xs text-gray-400 mt-0.5">Top 10 · berdasarkan revenue</p>
+                    </div>
+                    <div class="flex gap-1 bg-gray-100/80 p-1 rounded-lg border border-gray-200/60 shrink-0">
+                        <button
+                            v-for="lvl in locationLevelOptions"
+                            :key="lvl.value"
+                            @click="selectLocationLevel(lvl.value)"
+                            :class="['text-xs px-2.5 py-1 rounded-md font-semibold transition-all duration-150',
+                                filters.location_level === lvl.value ? 'bg-white text-gray-800 shadow-sm border border-gray-200/80' : 'text-gray-400 hover:text-gray-600']"
+                        >{{ lvl.label }}</button>
+                    </div>
                 </div>
                 <div class="p-5">
                     <div v-if="loading" class="h-72 bg-gray-50 rounded-xl animate-pulse"></div>
-                    <apexchart v-else type="bar" height="300" :options="provinceOptions" :series="provinceSeries" />
+                    <apexchart v-else type="bar" height="300" :options="locationOptions" :series="locationSeries" />
                 </div>
             </div>
         </div>
@@ -483,6 +494,12 @@ const CHART_BASE = {
     tooltip: { theme: 'light' },
 }
 
+// Fallback label dipakai kalau backend ngirim null/'' buat kategori chart.
+// ApexCharts crash kalau ada null nyelip ke xaxis.categories, jadi ini
+// jaring pengaman kedua di sisi frontend (yang utama sudah di-COALESCE di backend).
+const FALLBACK_LABEL = 'Tidak Diketahui'
+const safeLabel = (v) => (v === null || v === undefined || v === '') ? FALLBACK_LABEL : String(v)
+
 export default {
     name: 'SalesReport',
 
@@ -496,12 +513,13 @@ export default {
             trendChartType: 'area',
 
             filters: {
-                period:    'this_month',
-                date_from: '',
-                date_to:   '',
-                status:    'all',
-                courier:   '',
-                group_by:  '',
+                period:         'this_month',
+                date_from:      '',
+                date_to:        '',
+                status:         'all',
+                courier:        '',
+                group_by:       '',
+                location_level: 'province',
             },
 
             periodPresets: [
@@ -516,6 +534,12 @@ export default {
                 { label: 'Custom',     value: 'custom' },
             ],
 
+            locationLevelOptions: [
+                { label: 'Provinsi',  value: 'province' },
+                { label: 'Kota',      value: 'city' },
+                { label: 'Kecamatan', value: 'district' },
+            ],
+
             report: {
                 period:        {},
                 summary:       {},
@@ -523,7 +547,7 @@ export default {
                 top_products:  [],
                 top_couriers:  [],
                 status_dist:   {},
-                by_province:   [],
+                by_location:   [],
                 heatmap:       [],
                 recent_orders: [],
             },
@@ -537,6 +561,11 @@ export default {
         groupByLabel() {
             const m = { hour: 'jam', day: 'hari', week: 'minggu', month: 'bulan' }
             return m[this.report.period?.group_by] ?? 'periode'
+        },
+
+        locationLabel() {
+            const found = this.locationLevelOptions.find(l => l.value === this.filters.location_level)
+            return found ? found.label : 'Provinsi'
         },
 
         kpiCards() {
@@ -635,7 +664,7 @@ export default {
                         gradient: { opacityFrom: 0.15, opacityTo: 0.01, stops: [0, 90, 100] },
                     },
                 xaxis: {
-                    categories: this.report.trend.map(t => t.period),
+                    categories: this.report.trend.map(t => safeLabel(t.period)),
                     labels: { style: { fontSize: '10px', colors: '#9ca3af' }, rotate: -30 },
                     axisBorder: { show: false },
                     axisTicks: { show: false },
@@ -736,7 +765,9 @@ export default {
                 colors: ['#ED1F24'],
                 plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '55%' } },
                 xaxis: {
-                    categories: this.report.top_products.map(p => p.product),
+                    // safeLabel() jaga-jaga kalau ada product_name null/kosong dari backend,
+                    // biar ApexCharts ga crash pas ngitung lebar label (bug getLargestStringFromArr).
+                    categories: this.report.top_products.map(p => safeLabel(p.product)),
                     labels: {
                         style: { fontSize: '10px', colors: '#9ca3af' },
                         formatter: v => 'Rp ' + this.fmtNum(v),
@@ -750,17 +781,18 @@ export default {
             }
         },
 
-        provinceSeries() {
-            return [{ name: 'Revenue', data: this.report.by_province.map(p => p.total_revenue) }]
+        locationSeries() {
+            return [{ name: 'Revenue', data: this.report.by_location.map(p => p.total_revenue) }]
         },
-        provinceOptions() {
+        locationOptions() {
             return {
                 ...CHART_BASE,
                 chart: { ...CHART_BASE.chart, type: 'bar' },
                 colors: ['#3B82F6'],
                 plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '55%' } },
                 xaxis: {
-                    categories: this.report.by_province.map(p => p.province),
+                    // sama seperti productOptions, safeLabel() jaga dari null/'' (mis. province/city/district kosong).
+                    categories: this.report.by_location.map(p => safeLabel(p.location)),
                     labels: {
                         style: { fontSize: '10px', colors: '#9ca3af' },
                         formatter: v => 'Rp ' + this.fmtNum(v),
@@ -792,10 +824,11 @@ export default {
             this.error   = null
             try {
                 const params = {
-                    period:   this.filters.period,
-                    status:   this.filters.status,
-                    courier:  this.filters.courier  || undefined,
-                    group_by: this.filters.group_by || undefined,
+                    period:         this.filters.period,
+                    status:         this.filters.status,
+                    courier:        this.filters.courier  || undefined,
+                    group_by:       this.filters.group_by || undefined,
+                    location_level: this.filters.location_level,
                 }
                 if (this.filters.period === 'custom') {
                     params.date_from = this.filters.date_from
@@ -815,6 +848,11 @@ export default {
         selectPeriod(val) {
             this.filters.period = val
             if (val !== 'custom') this.fetchReport()
+        },
+
+        selectLocationLevel(val) {
+            this.filters.location_level = val
+            this.fetchReport()
         },
 
         exportCsv() {

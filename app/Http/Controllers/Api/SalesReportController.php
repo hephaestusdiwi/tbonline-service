@@ -14,14 +14,25 @@ use Maatwebsite\Excel\Facades\Excel;
 class SalesReportController extends Controller
 {
     /**
+     * Kolom yang boleh dipakai untuk grouping "Revenue per Lokasi".
+     * Whitelist ketat supaya tidak ada risiko SQL injection lewat nama kolom.
+     */
+    private const LOCATION_COLUMNS = [
+        'province' => 'province',
+        'city'     => 'city',
+        'district' => 'district',
+    ];
+
+    /**
      * GET /admin/sales-report
      */
     public function index(Request $request)
     {
         [$from, $to] = $this->resolveDateRange($request);
-        $status  = $request->input('status', 'all');
-        $groupBy = $request->input('group_by') ?? $this->autoGroupBy($from, $to);
-        $courier = $request->input('courier');
+        $status        = $request->input('status', 'all');
+        $groupBy       = $request->input('group_by') ?? $this->autoGroupBy($from, $to);
+        $courier       = $request->input('courier');
+        $locationLevel = $this->resolveLocationLevel($request->input('location_level'));
 
         // ── Base query ──────────────────────────────────────────────
         $base = Order::query()
@@ -76,12 +87,12 @@ class SalesReportController extends Controller
             ->when($status !== 'all', fn($q) => $q->where('orders.status', $status))
             ->when($courier, fn($q) => $q->where('orders.shipping_courier', $courier))
             ->where('orders.status', 'success')
-            ->selectRaw('
-                order_items.product_name as product,
+            ->selectRaw("
+                COALESCE(NULLIF(order_items.product_name, ''), 'Produk Tanpa Nama') as product,
                 SUM(order_items.qty) as total_qty,
                 SUM(order_items.subtotal) as total_revenue,
                 COUNT(DISTINCT order_items.order_id) as total_orders
-            ')
+            ")
             ->groupBy('order_items.product_name')
             ->orderByDesc('total_revenue')
             ->limit(10)
@@ -90,12 +101,12 @@ class SalesReportController extends Controller
         // ── Top Couriers ──────────────────────────────────────────────
         $topCouriers = (clone $base)
             ->where('status', 'success')
-            ->selectRaw('
-                shipping_courier as courier,
+            ->selectRaw("
+                COALESCE(NULLIF(shipping_courier, ''), 'Tidak Diketahui') as courier,
                 COUNT(*) as total_orders,
                 SUM(total_price) as total_revenue,
                 SUM(shipping_cost) as total_shipping
-            ')
+            ")
             ->groupBy('shipping_courier')
             ->orderByDesc('total_revenue')
             ->limit(8)
@@ -108,11 +119,16 @@ class SalesReportController extends Controller
             ->get()
             ->keyBy('status');
 
-        // ── Revenue by Province ───────────────────────────────────────
-        $byProvince = (clone $base)
+        // ── Revenue by Location (Provinsi / Kota / Kecamatan) ─────────
+        $locationColumn = self::LOCATION_COLUMNS[$locationLevel];
+        $byLocation = (clone $base)
             ->where('status', 'success')
-            ->selectRaw('province, COUNT(*) as total_orders, SUM(total_price) as total_revenue')
-            ->groupBy('province')
+            ->selectRaw("
+                COALESCE(NULLIF({$locationColumn}, ''), 'Tidak Diketahui') as location,
+                COUNT(*) as total_orders,
+                SUM(total_price) as total_revenue
+            ")
+            ->groupBy($locationColumn)
             ->orderByDesc('total_revenue')
             ->limit(10)
             ->get();
@@ -130,6 +146,7 @@ class SalesReportController extends Controller
 
         // ── Available couriers for filter ─────────────────────────────
         $courierList = Order::whereBetween('created_at', [$from->startOfDay(), $to->copy()->endOfDay()])
+            ->whereNotNull('shipping_courier')
             ->distinct()
             ->orderBy('shipping_courier')
             ->pluck('shipping_courier');
@@ -165,15 +182,25 @@ class SalesReportController extends Controller
                 'prev_revenue'    => (float) $prevRevenue,
                 'prev_orders'     => (int) $prevOrders,
             ],
-            'trend'         => $trend,
-            'top_products'  => $topProducts,
-            'top_couriers'  => $topCouriers,
-            'status_dist'   => $statusDist,
-            'by_province'   => $byProvince,
-            'heatmap'       => $heatmap,
-            'recent_orders' => $recentOrders,
-            'courier_list'  => $courierList,
+            'trend'          => $trend,
+            'top_products'   => $topProducts,
+            'top_couriers'   => $topCouriers,
+            'status_dist'    => $statusDist,
+            'by_location'    => $byLocation,
+            'location_level' => $locationLevel,
+            'heatmap'        => $heatmap,
+            'recent_orders'  => $recentOrders,
+            'courier_list'   => $courierList,
         ]);
+    }
+
+    /**
+     * Validasi & fallback level lokasi supaya tidak ada nama kolom liar
+     * yang nyelip ke query mentah.
+     */
+    private function resolveLocationLevel(?string $level): string
+    {
+        return array_key_exists($level, self::LOCATION_COLUMNS) ? $level : 'province';
     }
 
     private function resolveDateRange(Request $request): array
@@ -387,12 +414,12 @@ class SalesReportController extends Controller
             ->when($status !== 'all', fn($q) => $q->where('orders.status', $status))
             ->when($courier, fn($q) => $q->where('orders.shipping_courier', $courier))
             ->where('orders.status', 'success')
-            ->selectRaw('
-                order_items.product_name as product,
+            ->selectRaw("
+                COALESCE(NULLIF(order_items.product_name, ''), 'Produk Tanpa Nama') as product,
                 SUM(order_items.qty) as total_qty,
                 SUM(order_items.subtotal) as total_revenue,
                 COUNT(DISTINCT order_items.order_id) as total_orders
-            ')
+            ")
             ->groupBy('order_items.product_name')
             ->orderByDesc('total_revenue')
             ->limit(10)
