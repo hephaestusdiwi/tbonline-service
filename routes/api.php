@@ -188,6 +188,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Orders ──
     Route::get   ('/orders/stats',         [OrderController::class, 'stats'])       ->middleware('can:orders_view');
     Route::get   ('/orders/pending-count', [OrderController::class, 'pendingCount']) ->middleware('can:orders_view');
+    Route::post  ('/orders/manual',        [OrderController::class, 'storeManual'])  ->middleware('can:orders_create');
     Route::get   ('/orders',               [OrderController::class, 'index'])       ->middleware('can:orders_view');
     Route::get   ('/orders/{id}',          [OrderController::class, 'show'])        ->middleware('can:orders_view');
     Route::get   ('/orders/{id}/invoice',  [OrderController::class, 'invoice'])     ->middleware('can:orders_view');
@@ -203,8 +204,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Order revisions
     Route::patch('/orders/{id}/revise',   [OrderRevisionController::class, 'revise'])        ->middleware('can:orders_revise');
     Route::get  ('/orders/{id}/revisions',[OrderRevisionController::class, 'history'])        ->middleware('can:orders_revise');
-    Route::get  ('/orders/products/search', [OrderRevisionController::class, 'searchProducts'])->middleware('can:orders_revise');
-
+    Route::get  ('/orders/products/search', [OrderRevisionController::class, 'searchProducts']);
+    
     // ── Roles ──
     Route::get   ('/roles',      [RoleController::class, 'index'])  ->middleware('can:roles_view');
     Route::get   ('/roles/{id}', [RoleController::class, 'show'])   ->middleware('can:roles_view');

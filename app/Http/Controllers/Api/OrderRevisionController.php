@@ -311,7 +311,7 @@ class OrderRevisionController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->can('orders_revise')) {
+        if (!$user->can('orders_revise') && !$user->can('orders_create')) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 

@@ -16,6 +16,10 @@
                         <p class="or-hero__subtitle">Kelola dan perbarui status pesanan pelanggan</p>
                     </div>
                     <div class="or-hero__right">
+                        <button v-if="canCreateOrder" @click="showManualModal = true" class="or-hero__add-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            Tambah Order
+                        </button>
                         <div class="or-hero__live">
                             <span class="or-hero__live-dot"></span>
                             Live
@@ -720,6 +724,11 @@
             @close="onReviseModalClose"
             @revised="onRevised"
         />
+        <OrderManualModal
+            :show="showManualModal"
+            @close="showManualModal = false"
+            @created="onManualOrderCreated"
+        />
     </AdminLayout>
 </template>
 
@@ -729,12 +738,13 @@ import html2canvas from 'html2canvas'
 import AdminLayout from '../../components/admin/AdminLayout.vue'
 import OrderReviseModal from './OrderReviseModal.vue'
 import OrderActionMenu from './OrderActionMenu.vue'
+import OrderManualModal from './OrderManualModal.vue'
 import axios from '../../axios.js'
 import { getPermissions } from '../../auth.js'
 
 export default {
     name: 'Orders',
-    components: { AdminLayout, OrderReviseModal, OrderActionMenu },
+    components: { AdminLayout, OrderReviseModal, OrderActionMenu, OrderManualModal },
 
     data() {
         return {
@@ -770,6 +780,7 @@ export default {
             requestDeleteLoading: false,
             requestDeleteError: '',
 
+            showManualModal: false,
             showReviseModal: false,
             orderToRevise: null,
 
@@ -800,6 +811,9 @@ export default {
     },
 
     computed: {
+        canCreateOrder() {
+            try { return getPermissions().includes('orders_create') } catch { return false }
+        },
         canDelete() {
             try { return getPermissions().includes('orders_delete') } catch { return false }
         },
@@ -845,6 +859,12 @@ export default {
             } else if (this.showDetail) {
                 this.showDetail = false
             }
+        },
+
+        onManualOrderCreated() {
+            this.showManualModal = false
+            this.fetchOrders(this.meta.current_page)
+            this.fetchStats()
         },
 
         confirmClose(dirtyFlag, closeFn) {
@@ -1127,6 +1147,8 @@ export default {
 .or-hero__title { font-size: 22px; font-weight: 700; color: #fff; margin: 0 0 2px; letter-spacing: -.3px; }
 .or-hero__subtitle { font-size: 12px; color: rgba(255,255,255,.65); margin: 0; }
 .or-hero__right { display: flex; align-items: center; gap: 12px; }
+.or-hero__add-btn { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #ED1F24; background: #fff; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+.or-hero__add-btn:hover { background: #f9fafb; }
 .or-hero__live { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #fff; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); padding: 6px 12px; border-radius: 8px; }
 .or-hero__live-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #34d399; animation: or-pulse 2s ease-in-out infinite; }
 @keyframes or-pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }

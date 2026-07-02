@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Product;
 use App\Models\PromoCode;
+use App\Models\ProductVariant;
 use Carbon\Carbon;
 
 class OrderController extends Controller
@@ -418,6 +419,173 @@ class OrderController extends Controller
             'revised_at'   => $order->revised_at?->format('d M Y, H:i'),
             ],
         ]);
+    }
+
+    /**
+     * POST /api/orders/manual
+     * Input order manual oleh admin (order offline / titipan customer).
+     */
+    public function storeManual(Request $request)
+    {
+        if (!auth()->user()?->can('orders_create')) {
+            return response()->json([
+                'message' => 'Anda tidak memiliki izin untuk membuat order manual.',
+            ], 403);
+        }
+
+        $isPickup = $request->input('fulfillment_type') === 'pickup';
+
+        $rules = [
+            'customer_name'       => 'required|string',
+            'customer_phone'      => 'required|string',
+            'customer_email'      => 'nullable|email',
+            'notes'               => 'nullable|string',
+            'fulfillment_type'    => 'required|in:delivery,pickup',
+            'status'              => 'required|in:pending,success,cancelled',
+            'cancel_reason'       => 'nullable|string|required_if:status,cancelled',
+            'discount_amount'     => 'nullable|integer|min:0',
+            'items'               => 'required|array|min:1',
+            'items.*.product_id'  => 'required|integer|exists:products,id',
+            'items.*.variant_id'  => 'nullable|integer|exists:product_variants,id',
+            'items.*.qty'         => 'required|integer|min:1',
+        ];
+
+        if ($isPickup) {
+            $rules['branch_id'] = 'required|exists:branches,id';
+        } else {
+            $rules['address']          = 'required|string';
+            $rules['subdistrict']      = 'nullable|string';
+            $rules['district']         = 'nullable|string';
+            $rules['city']             = 'nullable|string';
+            $rules['province']         = 'nullable|string';
+            $rules['postal_code']      = 'nullable|string';
+            $rules['shipping_courier'] = 'required|string';
+            $rules['shipping_service'] = 'required|string';
+            $rules['shipping_name']    = 'required|string';
+            $rules['shipping_cost']    = 'required|integer|min:0';
+            $rules['shipping_etd']     = 'nullable|string';
+        }
+
+        $validated = $request->validate($rules);
+
+        try {
+            DB::beginTransaction();
+
+            // ── Bangun item dari data produk asli — harga & nama TIDAK dipercaya dari client ──
+            $orderItems = [];
+            $subtotal   = 0;
+
+            foreach ($validated['items'] as $rawItem) {
+                $product = Product::findOrFail($rawItem['product_id']);
+                $variant = null;
+
+                if (!empty($rawItem['variant_id'])) {
+                    $variant = ProductVariant::where('id', $rawItem['variant_id'])
+                        ->where('product_id', $product->id)
+                        ->firstOrFail();
+                } elseif ($product->activeVariants()->exists()) {
+                    throw new \Exception("Produk \"{$product->name}\" punya varian, pilih variannya dulu.");
+                }
+
+                $qty       = (int) $rawItem['qty'];
+                $unitPrice = $variant ? (float) $variant->effective_sell_price : (float) $product->sell_price;
+                $lineTotal = $unitPrice * $qty;
+                $subtotal += $lineTotal;
+
+                $orderItems[] = [
+                    'product_id'    => $product->id,
+                    'variant_id'    => $variant?->id,
+                    'product_name'  => $product->name,
+                    'variant_label' => $variant?->label,
+                    'variant_names' => $variant?->label,
+                    'qty'           => $qty,
+                    'sell_price'    => $unitPrice,
+                    'subtotal'      => $lineTotal,
+                    '_stock_target' => $variant ? 'variant' : 'product',
+                ];
+            }
+
+            $discountAmount = (int) ($validated['discount_amount'] ?? 0);
+            $shippingCost   = $isPickup ? 0 : (int) $validated['shipping_cost'];
+            $grandTotal     = (int) $subtotal + $shippingCost - $discountAmount;
+
+            $status     = $validated['status'];
+            $isResolved = $status !== 'pending';
+
+            $order = Order::create([
+                'invoice_number'   => Order::generateInvoiceNumber(),
+                'customer_name'    => $validated['customer_name'],
+                'customer_phone'   => $validated['customer_phone'],
+                'customer_email'   => $validated['customer_email'] ?? null,
+                'address'          => $isPickup ? null : $validated['address'],
+                'subdistrict'      => $isPickup ? null : ($validated['subdistrict'] ?? null),
+                'district'         => $isPickup ? null : ($validated['district'] ?? null),
+                'city'             => $isPickup ? null : ($validated['city'] ?? null),
+                'province'         => $isPickup ? null : ($validated['province'] ?? null),
+                'postal_code'      => $isPickup ? null : ($validated['postal_code'] ?? null),
+                'shipping_courier' => $isPickup ? 'pickup' : $validated['shipping_courier'],
+                'shipping_service' => $isPickup ? 'PICKUP' : $validated['shipping_service'],
+                'shipping_name'    => $isPickup ? 'Ambil di Tempat' : $validated['shipping_name'],
+                'shipping_cost'    => $shippingCost,
+                'shipping_etd'     => $isPickup ? null : ($validated['shipping_etd'] ?? null),
+                'subtotal'         => $subtotal,
+                'discount_amount'  => $discountAmount,
+                'total_price'      => $grandTotal,
+                'notes'            => $validated['notes'] ?? null,
+                'status'           => $status,
+                'cancel_reason'    => $status === 'cancelled' ? $validated['cancel_reason'] : null,
+                'fulfillment_type' => $validated['fulfillment_type'],
+                'branch_id'        => $isPickup ? $validated['branch_id'] : null,
+                'confirmed_by'     => $isResolved ? auth()->id() : null,
+                'confirmed_at'     => $isResolved ? now() : null,
+            ]);
+
+            foreach ($orderItems as $item) {
+                OrderItem::create([
+                    'order_id'      => $order->id,
+                    'product_id'    => $item['product_id'],
+                    'variant_id'    => $item['variant_id'],
+                    'product_name'  => $item['product_name'],
+                    'variant_label' => $item['variant_label'],
+                    'variant_names' => $item['variant_names'],
+                    'qty'           => $item['qty'],
+                    'sell_price'    => $item['sell_price'],
+                    'subtotal'      => $item['subtotal'],
+                ]);
+
+                if ($status !== 'cancelled') {
+                    if ($item['_stock_target'] === 'variant') {
+                        DB::table('product_variants')->where('id', $item['variant_id'])->decrement('stock_qty', $item['qty']);
+                    } else {
+                        DB::table('products')->where('id', $item['product_id'])->decrement('stock_qty', $item['qty']);
+                    }
+                }
+            }
+
+            if ($status === 'success') {
+                LoyaltyPoint::earn(
+                    phone:         $order->customer_phone,
+                    subtotal:      (int) $order->subtotal,
+                    orderId:       $order->id,
+                    invoiceNumber: $order->invoice_number,
+                );
+            }
+
+            DB::commit();
+            Cache::forget('orders_pending_count');
+
+            return response()->json([
+                'message' => 'Order manual berhasil dibuat.',
+                'data'    => $order->load(['items', 'branch']),
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Gagal membuat order manual.',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
