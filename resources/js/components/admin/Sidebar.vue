@@ -377,11 +377,10 @@ export default {
                         },
                         {
                             icon: 'tag', label: 'Promotions',
-                            permission: 'settings_view',
                             children: [
-                                { path: '/admin/promo-codes',       label: 'Promo Codes',        permission: 'settings_view' },
-                                { path: '/admin/promotions',        label: 'Promotion Banners',  permission: 'settings_view' },
-                                { path: '/admin/announcements',     label: 'Announcement Bar',   permission: 'settings_view' },
+                                { path: '/admin/promo-codes',   label: 'Promo Codes',       permission: 'promo_codes_view' },
+                                { path: '/admin/promotions',    label: 'Promotion Banners', permission: 'promotions_view' },
+                                { path: '/admin/announcements', label: 'Announcement Bar',  permission: 'announcement_view' },
                             ]
                         },
                     ]
@@ -394,21 +393,24 @@ export default {
                             permission: 'orders_view',
                             badgeKey: 'pending_orders',
                             children: [
-                                { path: '/admin/orders',           label: 'All Orders', permission: 'orders_view' },
-                                { path: '/admin/orders/pending',   label: 'Pending',    permission: 'orders_view', badgeKey: 'pending_orders' },
+                                { path: '/admin/orders',         label: 'All Orders', permission: 'orders_view' },
+                                { path: '/admin/orders/pending', label: 'Pending',    permission: 'orders_view', badgeKey: 'pending_orders' },
                             ]
                         },
                         {
                             icon: 'building', label: 'Branches',
-                            permission: 'settings_view',
+                            // ⚠️ pakai branches_edit sementara — branches_view belum ada di seeder.
+                            // Ganti ke 'branches_view' setelah kamu tambahkan permission + fix route baris 184.
+                            permission: 'branches_edit',
                             children: [
-                                { path: '/admin/branches', label: 'All Branches', permission: 'settings_view' },
+                                { path: '/admin/branches', label: 'All Branches', permission: 'branches_edit' },
                             ]
                         },
                         {
                             icon: 'coins', label: 'Loyalty Points',
+                            permission: 'loyalty_manage',
                             children: [
-                                { path: '/admin/loyalty-points', label: 'Riwayat Point' },
+                                { path: '/admin/loyalty-points', label: 'Riwayat Point', permission: 'loyalty_manage' },
                             ]
                         },
                         {
@@ -417,15 +419,15 @@ export default {
                             children: [
                                 { path: '/admin/sales-reports',   label: 'Sales Reports',   permission: 'reports_view' },
                                 { path: '/admin/product-reports', label: 'Product Reports', permission: 'reports_view' },
-                                { path: '/admin/visitor-stats', label: 'Traffic Status', permission: 'reports_view' },
+                                { path: '/admin/visitor-stats',   label: 'Traffic Status',  permission: 'visitor_stats_view' },
                             ]
                         },
                         {
                             icon: 'comments', label: 'Live Chat',
-                            badgeKey: 'pending_chats', 
+                            badgeKey: 'pending_chats',
                             children: [
-                                { path: '/admin/chat',       label: 'Chat Dashboard', badgeKey: 'pending_chats' },
-                                { path: '/admin/complaints', label: 'Komplain'},
+                                { path: '/admin/chat',       label: 'Chat Dashboard', permission: 'chat_view', badgeKey: 'pending_chats' },
+                                { path: '/admin/complaints', label: 'Komplain',       permission: 'complaints_view' },
                             ]
                         },
                     ]
@@ -434,21 +436,23 @@ export default {
                     label: 'Content',
                     items: [
                         {
+                            // ⚠️ Artikel & Blog belum ketemu route admin-nya di api.php ini,
+                            // sementara gak digate dulu sampai jelas dari mana route-nya.
                             icon: 'newspaper', label: 'Content',
                             children: [
                                 { path: '/admin/articles',               label: 'Artikel & Blog' },
                                 { path: '/admin/articles/create',        label: 'Tulis Artikel' },
-                                { path: '/admin/contents/tos',           label: 'Syarat & Ketentuan' },
-                                { path: '/admin/contents/shipping_info', label: 'Info Pengiriman' },
-                                { path: '/admin/contents/return_policy', label: 'Info Pengembalian' },
+                                { path: '/admin/contents/tos',           label: 'Syarat & Ketentuan',  permission: 'contents_view' },
+                                { path: '/admin/contents/shipping_info', label: 'Info Pengiriman',      permission: 'contents_view' },
+                                { path: '/admin/contents/return_policy', label: 'Info Pengembalian',    permission: 'contents_view' },
                             ]
                         },
                         {
                             icon: 'newspaper', label: 'Help Center',
-                            permission: 'settings_view',
+                            permission: 'faq_view',
                             children: [
-                                { path: '/admin/faqs', label: 'All FAQs', permission: 'settings_view' },
-                                { path: '/admin/faqs/create', label: 'Create FAQ', permission: 'settings_view' },
+                                { path: '/admin/faqs',        label: 'All FAQs',   permission: 'faq_view' },
+                                { path: '/admin/faqs/create', label: 'Create FAQ', permission: 'faq_create' },
                             ]
                         },
                     ],
@@ -466,12 +470,11 @@ export default {
                         },
                         {
                             icon: 'gear', label: 'Settings',
-                            permission: 'settings_view',
                             children: [
-                                { path: '/admin/settings',      label: 'Site Settings', permission: 'settings_view' },
-                                { path: '/admin/sliders',       label: 'Sliders',       permission: 'settings_view' },
-                                { path: '/admin/navigations',   label: 'Navigation',    permission: 'settings_view' },
-                                { path: '/admin/footer-links',  label: 'Footer Links',  permission: 'settings_view' },
+                                { path: '/admin/settings',      label: 'Site Settings', permission: 'settings_edit' },
+                                { path: '/admin/sliders',       label: 'Sliders',       permission: 'sliders_edit' },
+                                { path: '/admin/navigations',   label: 'Navigation',    permission: 'navigations_view' },
+                                { path: '/admin/footer-links',  label: 'Footer Links',  permission: 'footer_links_manage' },
                             ]
                         },
                     ]
