@@ -932,8 +932,8 @@
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-sm font-bold text-gray-800">Kurir Ongkos Kirim (Checkout)</p>
-                                <p class="text-xs text-gray-400">Kurir yang dipakai sistem untuk cek ongkir RajaOngkir di halaman checkout. Terpisah dari logo kurir di footer.</p>
+                                <p class="text-sm font-bold text-gray-800">Opsi Pengiriman</p>
+                                <p class="text-xs text-gray-400">Narik tarif data pengiriman dari API RajaOngkir.</p>
                             </div>
                         </div>
 
@@ -1119,20 +1119,6 @@
                     </div>
                 </template>
 
-                <!-- ── OTHER SECTIONS ── -->
-                <template v-else>
-                    <div class="bg-white border border-gray-200/80 rounded-xl shadow-sm">
-                        <div class="flex flex-col items-center justify-center py-20 text-center">
-                            <div class="w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center mb-4">
-                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-                            </div>
-                            <p class="text-sm font-bold text-gray-500">{{ activeSectionData?.label }}</p>
-                            <p class="text-xs text-gray-400 mt-1">Konfigurasi untuk seksi ini akan segera tersedia.</p>
-                            <span class="mt-4 text-[10px] font-bold bg-gray-100 border border-gray-200 text-gray-400 px-3 py-1 rounded-full uppercase tracking-wider">Coming Soon</span>
-                        </div>
-                    </div>
-                </template>
-
             </div>
         </div>
 
@@ -1230,10 +1216,6 @@ export default {
                 {
                     id: 'branding', label: 'Branding', desc: 'Logo, favicon, nama',
                     icon: '<svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>',
-                },
-                {
-                    id: 'general', label: 'General', desc: 'Nama, deskripsi, URL',
-                    icon: '<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
                 },
                 {
                     id: 'seo', label: 'SEO & Meta', desc: 'Google Search Console, meta tag',
