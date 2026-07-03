@@ -35,12 +35,6 @@ use App\Http\Controllers\Api\VisitorStatsController;
 use App\Http\Controllers\Api\ComplaintController;
 use App\Http\Controllers\Api\ProductImageController;
 
-/*
-|--------------------------------------------------------------------------
-| PUBLIC ROUTES — tidak diubah, biarkan tetap public by design
-|--------------------------------------------------------------------------
-*/
-
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/homepage', [HomepageSectionController::class, 'public']);
 

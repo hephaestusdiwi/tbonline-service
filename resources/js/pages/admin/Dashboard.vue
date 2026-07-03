@@ -10,16 +10,16 @@
             <!-- Decorative circles -->
             <div class="absolute -top-8 -right-8 w-48 h-48 rounded-full opacity-10" style="background: white;"></div>
             <div class="absolute -bottom-10 -right-24 w-64 h-64 rounded-full opacity-5" style="background: white;"></div>
-            <div class="absolute top-4 right-32 w-20 h-20 rounded-full opacity-10" style="background: white;"></div>
+            <div class="absolute top-4 right-32 w-20 h-20 rounded-full opacity-10 hidden sm:block" style="background: white;"></div>
 
-            <div class="relative px-7 py-6 flex flex-wrap items-center justify-between gap-4">
+            <div class="relative px-4 sm:px-7 py-5 sm:py-6 flex flex-wrap items-center justify-between gap-3 sm:gap-4">
                 <div>
                     <p class="text-red-200 text-xs font-semibold tracking-widest uppercase mb-1">{{ greeting }}</p>
-                    <h1 class="text-2xl font-bold text-white tracking-tight">Order Analytics</h1>
+                    <h1 class="text-xl sm:text-2xl font-bold text-white tracking-tight">Order Analytics</h1>
                     <p class="text-red-200 text-xs mt-1.5">Ringkasan performa penjualan &amp; pengiriman hari ini</p>
                 </div>
-                <div class="flex items-center gap-3">
-                    <div class="flex items-center gap-2 text-xs font-semibold text-white bg-white/10 border border-white/20 px-3 py-2 rounded-lg backdrop-blur-sm">
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div class="flex items-center gap-2 text-xs font-semibold text-white bg-white/10 border border-white/20 px-2.5 sm:px-3 py-2 rounded-lg backdrop-blur-sm">
                         <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                         Live
                     </div>
@@ -31,15 +31,15 @@
             </div>
 
             <!-- Revenue strip inside hero -->
-            <div class="relative border-t border-white/10 px-7 py-4 flex flex-wrap items-center gap-6">
+            <div class="relative border-t border-white/10 px-4 sm:px-7 py-4 flex flex-wrap items-center gap-4 sm:gap-6">
                 <div>
                     <p class="text-red-200 text-[10px] font-bold uppercase tracking-widest mb-0.5">Total Revenue</p>
-                    <p class="text-white text-2xl font-bold tabular-nums">
+                    <p class="text-white text-xl sm:text-2xl font-bold tabular-nums">
                         Rp {{ displayRevenue }}
                     </p>
                     <p class="text-red-200 text-xs mt-0.5">Dari order sukses</p>
                 </div>
-                <div class="flex-1 min-w-[180px]">
+                <div class="flex-1 min-w-[140px] sm:min-w-[180px]">
                     <div v-if="loading" class="h-14 bg-white/10 rounded-xl animate-pulse"></div>
                     <apexchart v-else type="area" height="56" :options="sparklineOptions" :series="revenueLineSeries" />
                 </div>
@@ -47,9 +47,9 @@
         </div>
 
         <!-- ───────────────────────── KPI CARDS ───────────────────────── -->
-        <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-6">
+        <div class="grid grid-cols-2 xl:grid-cols-4 gap-2.5 sm:gap-3 mb-6">
             <template v-if="loading">
-                <div v-for="i in 4" :key="i" class="bg-white rounded-xl p-5 animate-pulse h-28 border border-gray-200/80 shadow-sm"></div>
+                <div v-for="i in 4" :key="i" class="bg-white rounded-xl p-4 sm:p-5 animate-pulse h-24 sm:h-28 border border-gray-200/80 shadow-sm"></div>
             </template>
             <template v-else>
                 <div
@@ -60,42 +60,42 @@
                     :style="{ transitionDelay: (0.05 + idx * 0.07) + 's' }"
                 >
                     <div class="absolute top-0 left-0 right-0 h-0.5 rounded-t-xl transition-opacity duration-300" :style="{ background: card.accentColor }"></div>
-                    <div class="p-5">
-                        <div class="flex items-start justify-between mb-3">
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 leading-tight pr-2">{{ card.label }}</span>
-                            <div class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border transition-transform duration-300 group-hover:scale-110"
+                    <div class="p-3.5 sm:p-5">
+                        <div class="flex items-start justify-between mb-2.5 sm:mb-3">
+                            <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-gray-400 leading-tight pr-1.5 sm:pr-2">{{ card.label }}</span>
+                            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 border transition-transform duration-300 group-hover:scale-110"
                                 :style="{ background: card.iconBg, borderColor: card.accentColor + '25' }">
-                                <font-awesome-icon :icon="['fas', card.icon]" :style="{ color: card.accentColor }" class="text-sm" />
+                                <font-awesome-icon :icon="['fas', card.icon]" :style="{ color: card.accentColor }" class="text-xs sm:text-sm" />
                             </div>
                         </div>
-                        <p class="text-lg font-bold text-gray-900 leading-tight tabular-nums">{{ card.value }}</p>
-                        <p v-if="card.sub" class="text-xs mt-1.5" :class="card.subColor">{{ card.sub }}</p>
+                        <p class="text-base sm:text-lg font-bold text-gray-900 leading-tight tabular-nums truncate">{{ card.value }}</p>
+                        <p v-if="card.sub" class="text-[11px] sm:text-xs mt-1 sm:mt-1.5 truncate" :class="card.subColor">{{ card.sub }}</p>
                     </div>
                 </div>
             </template>
         </div>
 
         <!-- ───────────────────────── ROW 1: Revenue Chart + Success Rate ───────────────────────── -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 mb-4">
 
             <!-- Revenue Line Chart -->
             <div
-                class="lg:col-span-2 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden anim-section"
+                class="lg:col-span-2 min-w-0 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden anim-section"
                 :class="{ 'anim-section--visible': mounted }"
                 style="transition-delay: 0.28s"
             >
-                <div class="px-6 py-4 border-b border-gray-100 flex items-start justify-between">
+                <div class="px-4 sm:px-6 py-4 border-b border-gray-100 flex items-start justify-between">
                     <div>
                         <h3 class="text-sm font-bold text-gray-800">Tren Revenue Bulanan</h3>
                         <p class="text-xs text-gray-400 mt-0.5">6 bulan terakhir</p>
                     </div>
-                    <div class="w-7 h-7 rounded-lg bg-[#ED1F24]/8 border border-[#ED1F24]/15 flex items-center justify-center">
+                    <div class="w-7 h-7 rounded-lg bg-[#ED1F24]/8 border border-[#ED1F24]/15 flex items-center justify-center shrink-0">
                         <svg class="w-3.5 h-3.5 text-[#ED1F24]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
                         </svg>
                     </div>
                 </div>
-                <div class="p-6">
+                <div class="p-4 sm:p-6">
                     <div v-if="loading" class="h-44 bg-gray-50 rounded-xl animate-pulse"></div>
                     <apexchart v-else type="area" height="180" :options="revenueLineOptions" :series="revenueLineSeries" />
                 </div>
@@ -107,28 +107,28 @@
                 :class="{ 'anim-section--visible': mounted }"
                 style="transition-delay: 0.35s"
             >
-                <div class="px-5 py-4 border-b border-gray-100">
+                <div class="px-4 sm:px-5 py-4 border-b border-gray-100">
                     <h3 class="text-sm font-bold text-gray-800">Success Rate</h3>
                     <p class="text-xs text-gray-400 mt-0.5">Rasio order berhasil</p>
                 </div>
-                <div class="p-5 flex flex-col items-center">
+                <div class="p-4 sm:p-5 flex flex-col items-center">
                     <div v-if="loading" class="w-36 h-36 rounded-full border-8 border-gray-100 animate-pulse my-4"></div>
                     <apexchart v-else type="radialBar" height="200" :options="radialOptions" :series="radialSeries" />
                     <p class="text-xs text-gray-400 -mt-2 text-center">
                         vs total <span class="font-bold text-gray-600">{{ Number(stats.summary.total_orders || 0).toLocaleString('id-ID') }}</span> order
                     </p>
-                    <div class="w-full mt-4 grid grid-cols-3 gap-2">
-                        <div class="text-center p-2 bg-emerald-50 rounded-lg border border-emerald-100 transition-transform duration-200 hover:scale-105">
-                            <p class="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Sukses</p>
-                            <p class="text-sm font-bold text-emerald-700 tabular-nums">{{ (stats.summary.total_success || 0).toLocaleString('id-ID') }}</p>
+                    <div class="w-full mt-4 grid grid-cols-3 gap-1.5 sm:gap-2">
+                        <div class="text-center p-1.5 sm:p-2 bg-emerald-50 rounded-lg border border-emerald-100 transition-transform duration-200 hover:scale-105">
+                            <p class="text-[9px] sm:text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Sukses</p>
+                            <p class="text-xs sm:text-sm font-bold text-emerald-700 tabular-nums">{{ (stats.summary.total_success || 0).toLocaleString('id-ID') }}</p>
                         </div>
-                        <div class="text-center p-2 bg-amber-50 rounded-lg border border-amber-100 transition-transform duration-200 hover:scale-105">
-                            <p class="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Pending</p>
-                            <p class="text-sm font-bold text-amber-700 tabular-nums">{{ (stats.summary.total_pending || 0).toLocaleString('id-ID') }}</p>
+                        <div class="text-center p-1.5 sm:p-2 bg-amber-50 rounded-lg border border-amber-100 transition-transform duration-200 hover:scale-105">
+                            <p class="text-[9px] sm:text-[10px] font-bold text-amber-500 uppercase tracking-wider">Pending</p>
+                            <p class="text-xs sm:text-sm font-bold text-amber-700 tabular-nums">{{ (stats.summary.total_pending || 0).toLocaleString('id-ID') }}</p>
                         </div>
-                        <div class="text-center p-2 bg-red-50 rounded-lg border border-red-100 transition-transform duration-200 hover:scale-105">
-                            <p class="text-[10px] font-bold text-red-400 uppercase tracking-wider">Batal</p>
-                            <p class="text-sm font-bold text-red-600 tabular-nums">{{ (stats.summary.total_cancelled || 0).toLocaleString('id-ID') }}</p>
+                        <div class="text-center p-1.5 sm:p-2 bg-red-50 rounded-lg border border-red-100 transition-transform duration-200 hover:scale-105">
+                            <p class="text-[9px] sm:text-[10px] font-bold text-red-400 uppercase tracking-wider">Batal</p>
+                            <p class="text-xs sm:text-sm font-bold text-red-600 tabular-nums">{{ (stats.summary.total_cancelled || 0).toLocaleString('id-ID') }}</p>
                         </div>
                     </div>
                 </div>
@@ -136,19 +136,19 @@
         </div>
 
         <!-- ───────────────────────── ROW 2: Monthly Trend + Top Couriers ───────────────────────── -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 mb-4">
 
             <!-- Monthly Trend Bar -->
             <div
-                class="lg:col-span-2 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden anim-section"
+                class="lg:col-span-2 min-w-0 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden anim-section"
                 :class="{ 'anim-section--visible': mounted }"
                 style="transition-delay: 0.42s"
             >
-                <div class="px-6 py-4 border-b border-gray-100">
+                <div class="px-4 sm:px-6 py-4 border-b border-gray-100">
                     <h3 class="text-sm font-bold text-gray-800">Tren Order Bulanan</h3>
                     <p class="text-xs text-gray-400 mt-0.5">6 bulan terakhir · stacked by status</p>
                 </div>
-                <div class="p-6">
+                <div class="p-4 sm:p-6">
                     <div v-if="loading" class="h-56 bg-gray-50 rounded-xl animate-pulse"></div>
                     <apexchart v-else type="bar" height="240" :options="trendOptions" :series="trendSeries" />
                 </div>
@@ -160,16 +160,16 @@
                 :class="{ 'anim-section--visible': mounted }"
                 style="transition-delay: 0.49s"
             >
-                <div class="px-5 py-4 border-b border-gray-100 flex items-start justify-between">
+                <div class="px-4 sm:px-5 py-4 border-b border-gray-100 flex items-start justify-between">
                     <div>
                         <h3 class="text-sm font-bold text-gray-800">Top Ekspedisi</h3>
                         <p class="text-xs text-gray-400 mt-0.5">Berdasarkan jumlah order</p>
                     </div>
-                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#ED1F24]/8 text-[#ED1F24] border border-[#ED1F24]/15 uppercase tracking-wider">
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#ED1F24]/8 text-[#ED1F24] border border-[#ED1F24]/15 uppercase tracking-wider shrink-0">
                         Top {{ stats.top_couriers?.length || 0 }}
                     </span>
                 </div>
-                <div class="p-5">
+                <div class="p-4 sm:p-5">
                     <div v-if="loading" class="space-y-4">
                         <div v-for="i in 5" :key="i" class="h-8 bg-gray-100 rounded-lg animate-pulse"></div>
                     </div>
@@ -186,7 +186,7 @@
                                     :style="i === 0 ? 'background:#ED1F24;color:white' : i === 1 ? 'background:#f3f4f6;color:#374151' : 'background:#f9fafb;color:#9ca3af'"
                                 >#{{ i + 1 }}</span>
                                 <span class="text-sm font-semibold text-gray-700 flex-1 truncate">{{ courier.courier }}</span>
-                                <span class="text-xs font-bold text-gray-600 tabular-nums">{{ courier.total.toLocaleString('id-ID') }}</span>
+                                <span class="text-xs font-bold text-gray-600 tabular-nums shrink-0">{{ courier.total.toLocaleString('id-ID') }}</span>
                             </div>
                             <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                 <div
@@ -208,36 +208,36 @@
         </div>
 
         <!-- ───────────────────────── ROW 3: TOP PRODUCTS + STATUS DONUT ───────────────────────── -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 mb-4">
 
             <!-- Top Products -->
             <div
-                class="lg:col-span-2 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden anim-section"
+                class="lg:col-span-2 min-w-0 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden anim-section"
                 :class="{ 'anim-section--visible': mounted }"
                 style="transition-delay: 0.56s"
             >
-                <div class="px-6 py-4 border-b border-gray-100 flex items-start justify-between">
+                <div class="px-4 sm:px-6 py-4 border-b border-gray-100 flex items-start justify-between">
                     <div>
                         <h3 class="text-sm font-bold text-gray-800">Produk Terlaris</h3>
                         <p class="text-xs text-gray-400 mt-0.5">Berdasarkan qty terjual (order sukses)</p>
                     </div>
-                    <a href="/admin/products" class="group flex items-center gap-1 text-xs font-semibold text-[#ED1F24] hover:text-[#C81A1E] transition-colors">
+                    <a href="/admin/products" class="group flex items-center gap-1 text-xs font-semibold text-[#ED1F24] hover:text-[#C81A1E] transition-colors shrink-0">
                         Lihat semua
                         <svg class="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                         </svg>
                     </a>
                 </div>
-                <div v-if="loading" class="p-6 space-y-3">
+                <div v-if="loading" class="p-4 sm:p-6 space-y-3">
                     <div v-for="i in 5" :key="i" class="h-10 bg-gray-50 rounded-xl animate-pulse"></div>
                 </div>
                 <div v-else class="overflow-x-auto">
                     <table class="w-full text-sm min-w-[400px]">
                         <thead>
                             <tr class="bg-gray-50/60 border-b border-gray-100">
-                                <th class="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400">Produk</th>
-                                <th class="px-6 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-gray-400">Qty Terjual</th>
-                                <th class="px-6 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-gray-400 w-36 hidden lg:table-cell">Proporsi</th>
+                                <th class="px-4 sm:px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400">Produk</th>
+                                <th class="px-4 sm:px-6 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-gray-400">Qty Terjual</th>
+                                <th class="px-4 sm:px-6 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-gray-400 w-36 hidden lg:table-cell">Proporsi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-50">
@@ -248,7 +248,7 @@
                                 :class="{ 'product-row--visible': barsVisible }"
                                 :style="{ transitionDelay: (i * 0.06) + 's' }"
                             >
-                                <td class="px-6 py-3.5">
+                                <td class="px-4 sm:px-6 py-3.5">
                                     <div class="flex items-center gap-3">
                                         <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shrink-0"
                                             :style="i === 0 ? 'background:#ED1F24;color:white' : 'background:#f3f4f6;color:#6b7280'"
@@ -256,10 +256,10 @@
                                         <span class="text-sm text-gray-700 font-medium truncate max-w-[200px]">{{ product.product }}</span>
                                     </div>
                                 </td>
-                                <td class="px-6 py-3.5 text-right font-bold text-gray-800 tabular-nums">
+                                <td class="px-4 sm:px-6 py-3.5 text-right font-bold text-gray-800 tabular-nums">
                                     {{ Number(product.total_sold).toLocaleString('id-ID') }}
                                 </td>
-                                <td class="px-6 py-3.5 hidden lg:table-cell">
+                                <td class="px-4 sm:px-6 py-3.5 hidden lg:table-cell">
                                     <div class="flex items-center gap-2 justify-end">
                                         <div class="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                             <div
@@ -275,7 +275,7 @@
                                 </td>
                             </tr>
                             <tr v-if="!stats.top_products?.length">
-                                <td colspan="3" class="px-6 py-10 text-center text-gray-400 text-sm">Belum ada data produk</td>
+                                <td colspan="3" class="px-4 sm:px-6 py-10 text-center text-gray-400 text-sm">Belum ada data produk</td>
                             </tr>
                         </tbody>
                     </table>
@@ -288,11 +288,11 @@
                 :class="{ 'anim-section--visible': mounted }"
                 style="transition-delay: 0.63s"
             >
-                <div class="px-5 py-4 border-b border-gray-100">
+                <div class="px-4 sm:px-5 py-4 border-b border-gray-100">
                     <h3 class="text-sm font-bold text-gray-800">Rasio Status Order</h3>
                     <p class="text-xs text-gray-400 mt-0.5">Success · Pending · Cancelled</p>
                 </div>
-                <div class="p-5">
+                <div class="p-4 sm:p-5">
                     <div v-if="loading" class="flex items-center justify-center py-8">
                         <div class="w-32 h-32 rounded-full border-8 border-gray-100 animate-pulse"></div>
                     </div>
@@ -302,7 +302,7 @@
         </div>
 
         <!-- ───────────────────────── ROW 4: ALERTS ───────────────────────── -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 mb-4">
 
             <!-- Low Stock -->
             <div
@@ -310,14 +310,14 @@
                 :class="{ 'anim-section--visible': mounted }"
                 style="transition-delay: 0.70s"
             >
-                <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+                <div class="px-4 sm:px-5 py-4 border-b border-gray-100 flex items-center gap-2">
                     <div class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0"></div>
                     <h3 class="text-sm font-bold text-gray-800 flex-1">Stok Hampir Habis</h3>
-                    <span class="text-xs font-bold bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-100">
+                    <span class="text-xs font-bold bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-100 shrink-0">
                         {{ alerts.low_stock?.length || 0 }}
                     </span>
                 </div>
-                <div class="p-5">
+                <div class="p-4 sm:p-5">
                     <div v-if="loading" class="space-y-3">
                         <div v-for="i in 3" :key="i" class="h-10 bg-gray-100 rounded-lg animate-pulse"></div>
                     </div>
@@ -353,14 +353,14 @@
                 :class="{ 'anim-section--visible': mounted }"
                 style="transition-delay: 0.77s"
             >
-                <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+                <div class="px-4 sm:px-5 py-4 border-b border-gray-100 flex items-center gap-2">
                     <div class="w-2 h-2 rounded-full bg-blue-400 shrink-0"></div>
                     <h3 class="text-sm font-bold text-gray-800 flex-1">Order Pending</h3>
-                    <span class="text-xs font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100">
+                    <span class="text-xs font-bold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-100 shrink-0">
                         {{ alerts.pending_orders?.length || 0 }}
                     </span>
                 </div>
-                <div class="p-5">
+                <div class="p-4 sm:p-5">
                     <div v-if="loading" class="space-y-3">
                         <div v-for="i in 3" :key="i" class="h-10 bg-gray-100 rounded-lg animate-pulse"></div>
                     </div>
@@ -370,9 +370,9 @@
                             :key="order.id"
                             class="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5 transition-all duration-200 hover:shadow-sm hover:border-blue-200"
                         >
-                            <div>
-                                <p class="text-sm font-bold text-gray-700">#{{ order.invoice_number }}</p>
-                                <p class="text-xs text-gray-400">{{ order.customer_name }}</p>
+                            <div class="min-w-0">
+                                <p class="text-sm font-bold text-gray-700 truncate">#{{ order.invoice_number }}</p>
+                                <p class="text-xs text-gray-400 truncate">{{ order.customer_name }}</p>
                             </div>
                             <span class="text-xs font-bold text-blue-600 shrink-0 bg-blue-100 px-2 py-0.5 rounded-md">{{ order.age }}</span>
                         </div>
@@ -390,14 +390,14 @@
                 :class="{ 'anim-section--visible': mounted }"
                 style="transition-delay: 0.84s"
             >
-                <div class="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+                <div class="px-4 sm:px-5 py-4 border-b border-gray-100 flex items-center gap-2">
                     <div class="w-2 h-2 rounded-full bg-[#ED1F24] shrink-0"></div>
                     <h3 class="text-sm font-bold text-gray-800 flex-1">Promo Hampir Expired</h3>
-                    <span class="text-xs font-bold text-[#ED1F24] px-2 py-0.5 rounded-full border border-red-100" style="background: rgba(237,31,36,0.06);">
+                    <span class="text-xs font-bold text-[#ED1F24] px-2 py-0.5 rounded-full border border-red-100 shrink-0" style="background: rgba(237,31,36,0.06);">
                         {{ alerts.expiring_promos?.length || 0 }}
                     </span>
                 </div>
-                <div class="p-5">
+                <div class="p-4 sm:p-5">
                     <div v-if="loading" class="space-y-3">
                         <div v-for="i in 3" :key="i" class="h-10 bg-gray-100 rounded-lg animate-pulse"></div>
                     </div>
@@ -426,30 +426,30 @@
             :class="{ 'anim-section--visible': mounted }"
             style="transition-delay: 0.91s"
         >
-            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div class="px-4 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <div>
                     <h3 class="text-sm font-bold text-gray-800">Order Terbaru</h3>
                     <p class="text-xs text-gray-400 mt-0.5">10 transaksi terakhir</p>
                 </div>
-                <a href="/admin/orders" class="group flex items-center gap-1 text-xs font-semibold text-[#ED1F24] hover:text-[#C81A1E] transition-colors">
+                <a href="/admin/orders" class="group flex items-center gap-1 text-xs font-semibold text-[#ED1F24] hover:text-[#C81A1E] transition-colors shrink-0">
                     Lihat semua
                     <svg class="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
                     </svg>
                 </a>
             </div>
-            <div v-if="loading" class="p-6 space-y-3">
+            <div v-if="loading" class="p-4 sm:p-6 space-y-3">
                 <div v-for="i in 5" :key="i" class="h-12 bg-gray-50 rounded-xl animate-pulse"></div>
             </div>
             <div v-else class="overflow-x-auto">
                 <table class="w-full text-sm min-w-[560px]">
                     <thead>
                         <tr class="bg-gray-50/60 border-b border-gray-100">
-                            <th class="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400">Order</th>
-                            <th class="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400">Pelanggan</th>
-                            <th class="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400 hidden sm:table-cell">Tanggal</th>
-                            <th class="px-6 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-gray-400">Total</th>
-                            <th class="px-6 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-gray-400">Status</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400">Order</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400">Pelanggan</th>
+                            <th class="px-4 sm:px-6 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-gray-400 hidden sm:table-cell">Tanggal</th>
+                            <th class="px-4 sm:px-6 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-gray-400">Total</th>
+                            <th class="px-4 sm:px-6 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-gray-400">Status</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
@@ -460,10 +460,10 @@
                             :class="{ 'order-row--visible': barsVisible }"
                             :style="{ transitionDelay: (i * 0.04) + 's' }"
                         >
-                            <td class="px-6 py-3.5">
+                            <td class="px-4 sm:px-6 py-3.5">
                                 <span class="font-mono font-bold text-gray-700 text-xs bg-gray-100 px-2 py-0.5 rounded-md">#{{ order.invoice_number }}</span>
                             </td>
-                            <td class="px-6 py-3.5">
+                            <td class="px-4 sm:px-6 py-3.5">
                                 <div class="flex items-center gap-2.5">
                                     <div class="w-7 h-7 rounded-lg bg-[#ED1F24]/10 border border-[#ED1F24]/15 flex items-center justify-center text-xs font-bold text-[#ED1F24] shrink-0">
                                         {{ (order.customer_name || '?')[0].toUpperCase() }}
@@ -471,20 +471,20 @@
                                     <span class="text-sm text-gray-700 font-medium">{{ order.customer_name }}</span>
                                 </div>
                             </td>
-                            <td class="px-6 py-3.5 hidden sm:table-cell">
+                            <td class="px-4 sm:px-6 py-3.5 hidden sm:table-cell">
                                 <span class="text-xs text-gray-400 tabular-nums">{{ formatDate(order.created_at) }}</span>
                             </td>
-                            <td class="px-6 py-3.5 text-right font-bold text-gray-900 tabular-nums">
+                            <td class="px-4 sm:px-6 py-3.5 text-right font-bold text-gray-900 tabular-nums">
                                 Rp {{ Number(order.total_price).toLocaleString('id-ID') }}
                             </td>
-                            <td class="px-6 py-3.5 text-right">
+                            <td class="px-4 sm:px-6 py-3.5 text-right">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border" :class="statusClass(order.status)">
                                     {{ order.status }}
                                 </span>
                             </td>
                         </tr>
                         <tr v-if="!recentOrders?.length">
-                            <td colspan="5" class="px-6 py-12 text-center">
+                            <td colspan="5" class="px-4 sm:px-6 py-12 text-center">
                                 <div class="flex flex-col items-center gap-2">
                                     <svg class="w-8 h-8 text-gray-200" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
