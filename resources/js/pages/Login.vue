@@ -733,5 +733,10 @@ export default {
     .right-panel::before { display: block; }
     .form-body { max-width: 100%; }
     .footer-row { max-width: 100%; }
+    
+    .login-field > input,
+    .login-field .password-wrap input {
+        font-size: 16px !important;
+    }
 }
 </style>
