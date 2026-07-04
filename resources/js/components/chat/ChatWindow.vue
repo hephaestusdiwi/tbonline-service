@@ -1365,4 +1365,10 @@ onUnmounted(() => {
 .text-xs { font-size: 12px; }
 .underline { text-decoration: underline; }
 .mt-1 { margin-top: 4px; }
+
+@media (max-width: 480px) {
+  .input-wrap textarea {
+    font-size: 16px;
+  }
+}
 </style>

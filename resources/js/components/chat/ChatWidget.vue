@@ -724,5 +724,9 @@ function onNewMessage() {
     bottom: 16px;
     right: 16px;
   }
+
+  .field-input-wrap input {
+    font-size: 16px;
+  }
 }
 </style>
