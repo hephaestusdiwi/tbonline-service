@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TB Store - Belanja Jadi Mudah</title>
     {{-- SEO dasar — dibaca crawler SEBELUM JS jalan --}}
-    <meta name="description" content="TB Store by TwoBrothers Vapestore menyediakan produk vape original, mod, pod, atomizer, liquid premium, coil, cartridge, dan aksesoris vape terpercaya." />
+    <meta name="description" content="TB Store menyediakan produk vape original, mod, pod system, atomizer, liquid premium, dan aksesoris vape terpercaya." />
     <meta name="robots"      content="index, follow" />
     <meta name="author"      content="TB Store" />
     
@@ -13,14 +13,14 @@
     <meta property="og:type"        content="website" />
     <meta property="og:locale"      content="id_ID" />
     <meta property="og:url"         content="{{ url('/') }}" />
-    <meta property="og:title"       content="TB Store by TwoBrothers Vapestore | Vape, Mod, Pod & Aksesoris" />
-    <meta property="og:description" content="Online vape store dari TwoBrothers Vapestore yang menyediakan produk vape original, mod, pod system, atomizer, liquid premium, dan aksesoris vape terpercaya." />
+    <meta property="og:title"       content="TB Store | Menyediakan Produk Vape Original" />
+    <meta property="og:description" content="TB Store menyediakan produk vape original, mod, pod system, atomizer, liquid premium, dan aksesoris vape terpercaya." />
     <meta property="og:image" content="https://tbstore.id/storage/logos/footer_1779262552.webp" />
 
     {{-- Twitter Card --}}
     <meta name="twitter:card"        content="summary_large_image" />
-    <meta name="twitter:title"       content="TB Store by TwoBrothers Vapestore | Vape, Mod, Pod & Aksesoris" />
-    <meta name="twitter:description" content="Online vape store dari TwoBrothers Vapestore yang menyediakan produk vape original, mod, pod system, atomizer, liquid premium, dan aksesoris vape terpercaya." />
+    <meta name="twitter:title"       content="TB Store | Menyediakan Produk Vape Original" />
+    <meta name="twitter:description" content="TB Store menyediakan produk vape original, mod, pod system, atomizer, liquid premium, dan aksesoris vape terpercaya." />
     <meta property="twitter:image" content="https://tbstore.id/storage/logos/footer_1779262552.webp">
 
     {{-- Canonical --}}
@@ -38,7 +38,7 @@
         "@type": "WebSite",
         "name": "TB Store",
         "url": "BASE_URL",
-        "description": "Online vape store dari TwoBrothers Vapestore yang menyediakan produk vape original, mod, pod system, atomizer, liquid premium, dan aksesoris vape terpercaya.",
+        "description": "TB Store menyediakan produk vape original, mod, pod system, atomizer, liquid premium, dan aksesoris vape terpercaya.",
         "potentialAction": {
             "@type": "SearchAction",
             "target": "BASE_URL/products?q={search_term_string}",
