@@ -151,7 +151,7 @@
                         type="text"
                         v-model="searchInput"
                         @keydown.enter.prevent="handleEnter"
-                        placeholder="Cari produk, brand, atau kategori..."
+                        placeholder="Cari produk, merk, atau kategori..."
                         class="search-input"
                     />
                     <button v-if="searchInput" class="search-clear-btn" @click="clearSearchInput">✕</button>
@@ -262,18 +262,6 @@
                         <span v-if="getDiscount(product)" class="badge badge-sale">-{{ getDiscount(product) }}%</span>
                         <span v-if="isLowStock(product)" class="badge badge-stock">FEW LEFT</span>
                     </div>
-
-                    <!-- Wishlist -->
-                    <button
-                        class="wishlist-btn"
-                        :class="{ active: wishlisted.has(product.id) }"
-                        @click.stop="toggleWishlist(product.id)"
-                        aria-label="Wishlist"
-                    >
-                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                        </svg>
-                    </button>
 
                     <!-- Image -->
                     <div class="image-wrap" @click="goToProduct(product)">
@@ -414,7 +402,6 @@ export default {
             currentPage: 1,
             perPage: 12,
             total: 0,
-            wishlisted: new Set(),
             mobileFilterOpen: false,
             searchInput: '',
             _searchDebounceTimer: null,
@@ -648,12 +635,6 @@ export default {
 
         addToCart(product) {
             this.cartStore.add(product)
-        },
-
-        toggleWishlist(id) {
-            const next = new Set(this.wishlisted)
-            next.has(id) ? next.delete(id) : next.add(id)
-            this.wishlisted = next
         },
 
         isBestSeller(product) {
@@ -1254,30 +1235,6 @@ export default {
 .badge-hot   { background: #333; color: #fff; }
 .badge-sale  { background: #BD2028; color: #fff; }
 .badge-stock { background: #fff; color: #BD2028; border: 1px solid #BD2028; }
-
-/* ─── Wishlist ─── */
-.wishlist-btn {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 3;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.92);
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #ccc;
-    transition: color 0.18s, transform 0.18s;
-    backdrop-filter: blur(6px);
-}
-
-.wishlist-btn:hover      { color: #BD2028; transform: scale(1.12); }
-.wishlist-btn.active     { color: #BD2028; }
-.wishlist-btn.active svg { fill: #BD2028; stroke: #BD2028; }
 
 /* ─── Image ─── */
 .image-wrap {
