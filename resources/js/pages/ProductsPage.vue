@@ -625,6 +625,67 @@ export default {
             } catch {}
         },
 
+        async fetchSuggestions(q) {
+            this.suggestLoading = true
+            try {
+                const res = await fetch(`/api/products/search?q=${encodeURIComponent(q)}&limit=6`)
+                if (res.ok) {
+                    const json = await res.json()
+                    this.suggestions = json.data ?? []
+                }
+            } catch {
+                this.suggestions = []
+            } finally {
+                this.suggestLoading = false
+            }
+        },
+
+        onSearchFocus() {
+            this.searchFocused = true
+            if (this.searchInput.trim().length >= 2 && this.suggestions.length) {
+                this.showSuggestions = true
+            }
+        },
+        onSearchBlur() {
+            this.searchFocused = false
+            setTimeout(() => { this.showSuggestions = false }, 120) 
+        },
+        closeSuggestions() {
+            this.showSuggestions = false
+            this.$refs.searchInputRef?.blur()
+        },
+        clearSearchInput() {
+            this.suggestions = []
+            this.showSuggestions = false
+            if (this.searchKeyword) {
+                this.clearSearch() 
+            } else {
+                this.searchInput = ''
+            }
+        },
+        highlightNext() {
+            if (this.highlightedIndex < this.suggestions.length - 1) this.highlightedIndex++
+        },
+        highlightPrev() {
+            if (this.highlightedIndex > 0) this.highlightedIndex--
+        },
+        goToSuggestion(item) {
+            this.showSuggestions = false
+            this.goToProduct(item)
+        },
+        handleEnter() {
+            if (this.showSuggestions && this.highlightedIndex >= 0 && this.suggestions[this.highlightedIndex]) {
+                this.goToSuggestion(this.suggestions[this.highlightedIndex])
+            } else {
+                this.commitSearch()
+            }
+        },
+        commitSearch() {
+            this.showSuggestions = false
+            const kw = this.searchInput.trim()
+            this.updateQuery({ search: kw || undefined, page: undefined })
+        },
+
         // ── Helpers ───────────────────────────────────────────────────────────
         photoUrl(path) {
             if (!path) return null
@@ -1046,6 +1107,151 @@ export default {
 .breadcrumb-item:hover { color: #555; }
 .breadcrumb-item.active { color: #333; font-weight: 500; }
 .breadcrumb-sep { color: #ccc; }
+
+/* ─── Search Bar ─── */
+.search-bar-wrap {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border: 1.5px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 10px 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.search-bar.focused {
+    border-color: #BD2028;
+    box-shadow: 0 2px 12px rgba(189,32,40,0.12);
+}
+
+.search-icon { color: #bbb; flex-shrink: 0; }
+.search-bar.focused .search-icon { color: #BD2028; }
+
+.search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-family: "Poppins", sans-serif;
+    font-size: 0.86rem;
+    color: #333;
+    background: transparent;
+}
+
+.search-input::placeholder { color: #bbb; }
+
+.search-clear-btn {
+    border: none;
+    background: #f0f0f0;
+    color: #999;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 0.65rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.search-clear-btn:hover { background: #BD2028; color: #fff; }
+
+/* ─── Suggestions Dropdown ─── */
+.search-suggestions {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.14);
+    border: 1px solid #f0f0f0;
+    max-height: 380px;
+    overflow-y: auto;
+    z-index: 60;
+}
+
+.suggest-loading,
+.suggest-empty {
+    padding: 16px;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #aaa;
+}
+
+.suggest-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.12s;
+}
+
+.suggest-item:hover,
+.suggest-item.active { background: #FFF5F5; }
+
+.suggest-img,
+.suggest-img-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: contain;
+    background: #F8F8F8;
+    flex-shrink: 0;
+}
+
+.suggest-info { flex: 1; min-width: 0; }
+
+.suggest-name {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggest-meta {
+    margin: 2px 0 0;
+    font-size: 0.68rem;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.suggest-price {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #BD2028;
+    flex-shrink: 0;
+}
+
+.suggest-viewall {
+    padding: 10px 14px;
+    text-align: center;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: #BD2028;
+    cursor: pointer;
+    border-top: 1px solid #f5f5f5;
+}
+
+.suggest-viewall:hover { background: #FFF5F5; }
+
+@media (max-width: 768px) {
+    .search-bar { padding: 9px 12px; }
+    .search-suggestions { max-height: 320px; }
+}
 
 /* ─── Top Bar ─── */
 .top-bar {
