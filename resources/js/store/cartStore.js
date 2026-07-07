@@ -1,14 +1,35 @@
-// src/store/cartStore.js
 import { reactive, computed } from 'vue'
+
+function normalizeItem(item) {
+  return {
+    ...item,
+    qty: Number.isFinite(Number(item.qty)) && Number(item.qty) > 0 ? Number(item.qty) : 1,
+    sell_price: Number.isFinite(Number(item.sell_price)) ? Number(item.sell_price) : 0,
+    variant_id: item.variant_id ?? null,
+  }
+}
+
+function loadInitialItems() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('cart') || '[]')
+    if (!Array.isArray(raw)) return []
+    return raw.filter(i => i && i.id != null).map(normalizeItem)
+  } catch (e) {
+    console.error('Gagal parse cart dari localStorage, reset ke kosong:', e)
+    return []
+  }
+}
 
 const state = reactive({
   isOpen: false,
-  items: JSON.parse(localStorage.getItem('cart') || '[]'),
+  items: loadInitialItems(),
 })
 
 function save() {
   localStorage.setItem('cart', JSON.stringify(state.items))
 }
+
+save()
 
 export const cartStore = {
   state,
@@ -26,14 +47,14 @@ export const cartStore = {
   toggle(){ state.isOpen = !state.isOpen },
 
   addItem(product) {
-    console.log('addItem payload:', product)
+    const item = normalizeItem(product)
     const found = state.items.find(
-      i => i.id === product.id && i.variant_id === product.variant_id  // ✅
+      i => i.id === item.id && i.variant_id === item.variant_id
     )
     if (found) {
-      found.qty += product.qty  // ✅ bukan found.qty++
+      found.qty += item.qty
     } else {
-      state.items.push({ ...product })  // ✅ bukan qty: 1
+      state.items.push(item)
     }
     save()
     state.isOpen = true

@@ -223,7 +223,16 @@ export default {
         },
 
         addToCart(product) {
-            cartStore.addItem(product)
+            cartStore.addItem({
+                id: product.id,
+                name: product.name,
+                category: product.category,
+                sell_price: product.sell_price,
+                market_price: product.market_price,
+                photo_1: this.photoUrl(product.photo_1),
+                qty: 1,
+                variant_id: null,
+            })
         },
 
         goToAllProducts() {
