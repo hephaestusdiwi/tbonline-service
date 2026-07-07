@@ -1071,6 +1071,7 @@ export default {
 
 @media (max-width: 768px) {
     .search-bar { padding: 9px 12px; }
+    .search-input { font-size: 16px; }
 }
 
 /* ─── Top Bar ─── */
