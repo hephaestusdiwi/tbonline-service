@@ -140,8 +140,8 @@
             </div>
 
             <!-- Search -->
-             <div class="search-bar-wrap">
-                <div class="search-bar" :class="{ focused: searchFocused }">
+            <div class="search-bar-wrap">
+                <div class="search-bar">
                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
                         <circle cx="11" cy="11" r="7"/>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -150,44 +150,11 @@
                         ref="searchInputRef"
                         type="text"
                         v-model="searchInput"
-                        @focus="onSearchFocus"
-                        @blur="onSearchBlur"
                         @keydown.enter.prevent="handleEnter"
-                        @keydown.esc="closeSuggestions"
-                        @keydown.down.prevent="highlightNext"
-                        @keydown.up.prevent="highlightPrev"
                         placeholder="Cari produk, brand, atau kategori..."
                         class="search-input"
                     />
-                    <button v-if="searchInput" class="search-clear-btn" @mousedown.prevent="clearSearchInput">✕</button>
-                </div>
-
-                <div v-if="showSuggestions" class="search-suggestions">
-                    <div v-if="suggestLoading" class="suggest-loading">Mencari...</div>
-                    <template v-else>
-                        <div
-                            v-for="(item, idx) in suggestions"
-                            :key="item.id"
-                            class="suggest-item"
-                            :class="{ active: idx === highlightedIndex }"
-                            @mousedown.prevent="goToSuggestion(item)"
-                        >
-                            <img v-if="item.photo_1" :src="photoUrl(item.photo_1)" class="suggest-img" @error="onImgError" />
-                            <div v-else class="suggest-img-placeholder"></div>
-                            <div class="suggest-info">
-                                <p class="suggest-name">{{ item.name }}</p>
-                                <p class="suggest-meta">{{ item.brand || item.category || '' }}</p>
-                            </div>
-                            <span class="suggest-price">{{ formatPrice(item.sell_price) }}</span>
-                        </div>
-
-                        <div v-if="suggestions.length === 0" class="suggest-empty">
-                            Tidak ada hasil untuk "{{ searchInput }}"
-                        </div>
-                        <div v-else class="suggest-viewall" @mousedown.prevent="commitSearch">
-                            Lihat semua hasil untuk "{{ searchInput }}"
-                        </div>
-                    </template>
+                    <button v-if="searchInput" class="search-clear-btn" @click="clearSearchInput">✕</button>
                 </div>
             </div>
 
@@ -447,12 +414,7 @@ export default {
             wishlisted: new Set(),
             mobileFilterOpen: false,
             searchInput: '',
-            showSuggestions: false,
-            searchFocused: false,
-            suggestions: [],
-            suggestLoading: false,
-            highlightedIndex: -1,
-            _searchDebounce: null,
+            _searchDebounceTimer: null,
             openSections: {
                 categories: true,
                 price: true,
@@ -534,22 +496,14 @@ export default {
         },
 
         searchInput(val) {
-            clearTimeout(this._searchDebounce)
-            if (!this.searchFocused) return
+            clearTimeout(this._searchDebounceTimer)
+            const kw = val.trim()
 
-            const q = val.trim()
-            if (q.length < 2) {
-                this.suggestions = []
-                this.showSuggestions = false
-                this.highlightedIndex = -1
-                return
-            }
+            if (kw === (this.searchKeyword || '')) return
 
-            this._searchDebounce = setTimeout(() => {
-                this.fetchSuggestions(q)
-                this.showSuggestions = true
-                this.highlightedIndex = -1
-            }, 300)
+            this._searchDebounceTimer = setTimeout(() => {
+                this.updateQuery({ search: kw || undefined, page: undefined }, true)
+            }, 450)
         },
     },
 
@@ -624,66 +578,17 @@ export default {
                 if (catRes.ok) { const j = await catRes.json(); this.allCategories = j.data ?? [] }
             } catch {}
         },
-
-        async fetchSuggestions(q) {
-            this.suggestLoading = true
-            try {
-                const res = await fetch(`/api/products/search?q=${encodeURIComponent(q)}&limit=6`)
-                if (res.ok) {
-                    const json = await res.json()
-                    this.suggestions = json.data ?? []
-                }
-            } catch {
-                this.suggestions = []
-            } finally {
-                this.suggestLoading = false
-            }
-        },
-
-        onSearchFocus() {
-            this.searchFocused = true
-            if (this.searchInput.trim().length >= 2 && this.suggestions.length) {
-                this.showSuggestions = true
-            }
-        },
-        onSearchBlur() {
-            this.searchFocused = false
-            setTimeout(() => { this.showSuggestions = false }, 120) 
-        },
-        closeSuggestions() {
-            this.showSuggestions = false
-            this.$refs.searchInputRef?.blur()
-        },
         clearSearchInput() {
-            this.suggestions = []
-            this.showSuggestions = false
-            if (this.searchKeyword) {
-                this.clearSearch() 
-            } else {
-                this.searchInput = ''
-            }
+            clearTimeout(this._searchDebounceTimer)
+            this.searchInput = ''
+            this.updateQuery({ search: undefined, page: undefined }, true)
         },
-        highlightNext() {
-            if (this.highlightedIndex < this.suggestions.length - 1) this.highlightedIndex++
-        },
-        highlightPrev() {
-            if (this.highlightedIndex > 0) this.highlightedIndex--
-        },
-        goToSuggestion(item) {
-            this.showSuggestions = false
-            this.goToProduct(item)
-        },
+
         handleEnter() {
-            if (this.showSuggestions && this.highlightedIndex >= 0 && this.suggestions[this.highlightedIndex]) {
-                this.goToSuggestion(this.suggestions[this.highlightedIndex])
-            } else {
-                this.commitSearch()
-            }
-        },
-        commitSearch() {
-            this.showSuggestions = false
+            clearTimeout(this._searchDebounceTimer)
             const kw = this.searchInput.trim()
-            this.updateQuery({ search: kw || undefined, page: undefined })
+            this.updateQuery({ search: kw || undefined, page: undefined }, true)
+            this.$refs.searchInputRef?.blur() 
         },
 
         // ── Helpers ───────────────────────────────────────────────────────────
@@ -779,12 +684,13 @@ export default {
             e.target.style.display = 'none'
         },
 
-        updateQuery(updates) {
+        updateQuery(updates, replace = false) {
             const query = { ...this.$route.query, ...updates }
             Object.keys(query).forEach(k => {
                 if (query[k] === null || query[k] === undefined || query[k] === '') delete query[k]
             })
-            this.$router.push({ name: 'Products', query }).catch(() => {})
+            const action = replace ? 'replace' : 'push'
+            this.$router[action]({ name: 'Products', query }).catch(() => {})
         },
     }
 }
@@ -1110,7 +1016,6 @@ export default {
 
 /* ─── Search Bar ─── */
 .search-bar-wrap {
-    position: relative;
     margin-bottom: 16px;
 }
 
@@ -1126,13 +1031,13 @@ export default {
     transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-.search-bar.focused {
+.search-bar:focus-within {
     border-color: #BD2028;
     box-shadow: 0 2px 12px rgba(189,32,40,0.12);
 }
 
 .search-icon { color: #bbb; flex-shrink: 0; }
-.search-bar.focused .search-icon { color: #BD2028; }
+.search-bar:focus-within .search-icon { color: #BD2028; }
 
 .search-input {
     flex: 1;
@@ -1164,93 +1069,8 @@ export default {
 
 .search-clear-btn:hover { background: #BD2028; color: #fff; }
 
-/* ─── Suggestions Dropdown ─── */
-.search-suggestions {
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 0;
-    right: 0;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 12px 32px rgba(0,0,0,0.14);
-    border: 1px solid #f0f0f0;
-    max-height: 380px;
-    overflow-y: auto;
-    z-index: 60;
-}
-
-.suggest-loading,
-.suggest-empty {
-    padding: 16px;
-    text-align: center;
-    font-size: 0.8rem;
-    color: #aaa;
-}
-
-.suggest-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    cursor: pointer;
-    transition: background 0.12s;
-}
-
-.suggest-item:hover,
-.suggest-item.active { background: #FFF5F5; }
-
-.suggest-img,
-.suggest-img-placeholder {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    object-fit: contain;
-    background: #F8F8F8;
-    flex-shrink: 0;
-}
-
-.suggest-info { flex: 1; min-width: 0; }
-
-.suggest-name {
-    margin: 0;
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #333;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.suggest-meta {
-    margin: 2px 0 0;
-    font-size: 0.68rem;
-    color: #aaa;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.suggest-price {
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #BD2028;
-    flex-shrink: 0;
-}
-
-.suggest-viewall {
-    padding: 10px 14px;
-    text-align: center;
-    font-size: 0.76rem;
-    font-weight: 600;
-    color: #BD2028;
-    cursor: pointer;
-    border-top: 1px solid #f5f5f5;
-}
-
-.suggest-viewall:hover { background: #FFF5F5; }
-
 @media (max-width: 768px) {
     .search-bar { padding: 9px 12px; }
-    .search-suggestions { max-height: 320px; }
 }
 
 /* ─── Top Bar ─── */
