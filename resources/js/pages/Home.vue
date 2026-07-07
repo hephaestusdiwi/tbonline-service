@@ -51,7 +51,7 @@ export default {
         const { siteName, settings, fetchSettings } = useSiteSettings()
 
         useHead({
-            title: 'TB Store by TwoBrothers Vapestore | Belanja Kebutuhan Vape Jadi Mudah',
+            title: 'TB Store | Belanja Kebutuhan Vape Jadi Mudah',
             meta: computed(() => {
                 const code = settings.value?.google_site_verification?.value
                 return code ? [{ name: 'google-site-verification', content: code }] : []
