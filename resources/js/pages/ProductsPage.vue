@@ -139,6 +139,58 @@
                 <span class="breadcrumb-item active">All Products</span>
             </div>
 
+            <!-- Search -->
+             <div class="search-bar-wrap">
+                <div class="search-bar" :class="{ focused: searchFocused }">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                        <circle cx="11" cy="11" r="7"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input
+                        ref="searchInputRef"
+                        type="text"
+                        v-model="searchInput"
+                        @focus="onSearchFocus"
+                        @blur="onSearchBlur"
+                        @keydown.enter.prevent="handleEnter"
+                        @keydown.esc="closeSuggestions"
+                        @keydown.down.prevent="highlightNext"
+                        @keydown.up.prevent="highlightPrev"
+                        placeholder="Cari produk, brand, atau kategori..."
+                        class="search-input"
+                    />
+                    <button v-if="searchInput" class="search-clear-btn" @mousedown.prevent="clearSearchInput">✕</button>
+                </div>
+
+                <div v-if="showSuggestions" class="search-suggestions">
+                    <div v-if="suggestLoading" class="suggest-loading">Mencari...</div>
+                    <template v-else>
+                        <div
+                            v-for="(item, idx) in suggestions"
+                            :key="item.id"
+                            class="suggest-item"
+                            :class="{ active: idx === highlightedIndex }"
+                            @mousedown.prevent="goToSuggestion(item)"
+                        >
+                            <img v-if="item.photo_1" :src="photoUrl(item.photo_1)" class="suggest-img" @error="onImgError" />
+                            <div v-else class="suggest-img-placeholder"></div>
+                            <div class="suggest-info">
+                                <p class="suggest-name">{{ item.name }}</p>
+                                <p class="suggest-meta">{{ item.brand || item.category || '' }}</p>
+                            </div>
+                            <span class="suggest-price">{{ formatPrice(item.sell_price) }}</span>
+                        </div>
+
+                        <div v-if="suggestions.length === 0" class="suggest-empty">
+                            Tidak ada hasil untuk "{{ searchInput }}"
+                        </div>
+                        <div v-else class="suggest-viewall" @mousedown.prevent="commitSearch">
+                            Lihat semua hasil untuk "{{ searchInput }}"
+                        </div>
+                    </template>
+                </div>
+            </div>
+
             <!-- Top Bar -->
             <div class="top-bar">
                 <div class="top-bar-left">
@@ -394,6 +446,13 @@ export default {
             total: 0,
             wishlisted: new Set(),
             mobileFilterOpen: false,
+            searchInput: '',
+            showSuggestions: false,
+            searchFocused: false,
+            suggestions: [],
+            suggestLoading: false,
+            highlightedIndex: -1,
+            _searchDebounce: null,
             openSections: {
                 categories: true,
                 price: true,
@@ -462,6 +521,7 @@ export default {
             immediate: true,
             handler(newQuery) {
                 this.searchKeyword  = newQuery.search    || ''
+                this.searchInput    = newQuery.search    || ''
                 this.activeCategory = newQuery.category  || 'Semua'
                 this.currentPage    = parseInt(newQuery.page) || 1
                 this.sortBy         = newQuery.sort      || ''
@@ -471,7 +531,26 @@ export default {
                 this.sliderMax      = this.priceMax ?? PRICE_ABSOLUTE_MAX
                 this.fetchProducts()
             }
-        }
+        },
+
+        searchInput(val) {
+            clearTimeout(this._searchDebounce)
+            if (!this.searchFocused) return
+
+            const q = val.trim()
+            if (q.length < 2) {
+                this.suggestions = []
+                this.showSuggestions = false
+                this.highlightedIndex = -1
+                return
+            }
+
+            this._searchDebounce = setTimeout(() => {
+                this.fetchSuggestions(q)
+                this.showSuggestions = true
+                this.highlightedIndex = -1
+            }, 300)
+        },
     },
 
     methods: {
