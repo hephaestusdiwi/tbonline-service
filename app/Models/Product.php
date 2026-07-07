@@ -104,6 +104,14 @@ class Product extends Model
         return $query->where('published', 1);
     }
 
+    public function scopeInStock($query)
+    {
+        return $query->where(function ($sub) {
+            $sub->whereHas('variants', fn ($v) => $v->where('stock_qty', '>', 0)->where('is_active', 1))
+                ->orWhereDoesntHave('variants');
+        });
+    }
+
     public function scopeTopSellers($query, int $limit = 10)
     {
         return $query->where('published', 1)

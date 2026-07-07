@@ -62,10 +62,7 @@ class ProductController extends Controller
         }
 
         if ($request->filled('in_stock')) {
-            $query->where(function ($sub) {
-                $sub->whereHas('variants', fn($v) => $v->where('stock_qty', '>', 0)->where('is_active', 1))
-                    ->orWhereDoesntHave('variants');
-            });
+            $query->inStock();
         }
 
         // Filter produk yang punya diskon (market_price > sell_price)
@@ -264,7 +261,10 @@ class ProductController extends Controller
         $product = Product::with([
             'optionTypes.values',
             'variants.optionValues.optionType',
-        ])->findOrFail($id);
+        ])
+            ->published()
+            ->inStock()
+            ->findOrFail($id);
 
         return response()->json(['data' => $product]);
     }
@@ -458,6 +458,7 @@ class ProductController extends Controller
 
         $products = Product::query()
             ->where('published', 1)
+            ->inStock()
             ->where(function ($sub) use ($q) {
                 $sub->where('name', 'like', "%{$q}%")
                     ->orWhere('alternative_name', 'like', "%{$q}%")

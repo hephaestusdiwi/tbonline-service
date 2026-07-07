@@ -17,7 +17,12 @@
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
         <p class="pd-state__text">{{ error }}</p>
-        <button class="pd-retry" @click="fetchProduct">Coba Lagi</button>
+        <button
+          v-if="errorType === 'not_found'"
+          class="pd-retry"
+          @click="$router.push({ name: 'Products' })"
+        >Lihat Produk Lain</button>
+        <button v-else class="pd-retry" @click="fetchProduct">Coba Lagi</button>
       </div>
 
       <!-- ── Content ── -->
@@ -366,6 +371,7 @@ export default {
       product:         null,
       loading:         true,
       error:           null,
+      errorType:       null,
       activePhoto:     0,
       slideDir:        'slide-left',
       qty:             1,
@@ -469,19 +475,31 @@ export default {
 
   methods: {
     async fetchProduct() {
-        this.loading = true
-        this.error   = null
-        try {
-            const slug = this.$route.params.slug  
-            const res  = await fetch(`/api/products/${slug}`)
-            if (!res.ok) throw new Error('Produk tidak ditemukan.')
-            const json   = await res.json()
-            this.product = json.data ?? json
-        } catch (e) {
-            this.error = e.message
-        } finally {
-            this.loading = false
+      this.loading   = true
+      this.error     = null
+      this.errorType = null
+      try {
+        const slug = this.$route.params.slug
+        const res  = await fetch(`/api/products/${slug}`)
+
+        if (res.status === 404) {
+            this.error = 'not_found'
+            this.error = 'Produk tidak ditemukan'
+            return
         }
+
+        if (!res.ok) {
+          throw new Error('Gagal memuat produk')
+        }
+
+        const json = await res.json()
+        this.product = json.data ?? json
+      } catch (e) {
+        this.errorType = 'network'
+        this.error = e.message
+      } finally {
+        this.loading = false
+      }
     },
 
     productSlug(product) {
