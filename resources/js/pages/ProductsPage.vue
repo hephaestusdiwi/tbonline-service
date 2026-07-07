@@ -327,8 +327,11 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="44" height="44">
                     <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
-                <p>Tidak ada produk yang sesuai filter.</p>
-                <button class="retry-btn" @click="resetFilters">Reset Filter</button>
+                <p v-if="searchKeyword">Tidak ada produk yang cocok dengan "{{ searchKeyword }}"</p>
+                <p v-else>Tidak ada produk yang sesuai filter.</p>
+                <button class="retry-btn" @click="clearAllFilters">
+                    {{ searchKeyword ? 'Hapus Pencarian' : 'Reset Filter' }}
+                </button>
             </div>
 
             <!-- Pagination -->
@@ -621,6 +624,16 @@ export default {
             this.sliderMax = PRICE_ABSOLUTE_MAX
             this.updateQuery({
                 category: undefined, price_min: undefined, price_max: undefined, sort: undefined, page: undefined
+            })
+        },
+
+        clearAllFilters() {
+            this.sliderMin = PRICE_ABSOLUTE_MIN
+            this.sliderMax = PRICE_ABSOLUTE_MAX
+            this.searchInput = ''
+            this.updateQuery({
+                category: undefined, price_min: undefined, price_max: undefined,
+                sort: undefined, page: undefined, search: undefined,
             })
         },
 
