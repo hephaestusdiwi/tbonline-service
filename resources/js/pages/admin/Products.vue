@@ -736,6 +736,21 @@
                                         class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 disabled:bg-gray-50 transition-all"
                                     />
                                 </div>
+
+                                <div v-if="!form.option_types.length">
+                                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                                        Stok
+                                        <span class="text-gray-300 font-normal normal-case">(produk tanpa varian)</span>
+                                    </label>
+                                    <input
+                                        v-model.number="form.stock_qty"
+                                        type="number"
+                                        min="0"
+                                        :disabled="modalMode === 'view'"
+                                        placeholder="0"
+                                        class="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 disabled:bg-gray-50 transition-all"
+                                    />
+                                </div>
                             </div>
                         </div>
 
@@ -1152,7 +1167,7 @@ export default {
         getTotalStock(product) {
             const variants = product.active_variants ?? product.variants ?? []
             if (variants.length) return variants.reduce((sum, v) => sum + (parseInt(v.stock_qty) || 0), 0)
-            return 0
+            return parseInt(product.stock_qty) || 0  
         },
         getMinPrice(product) {
             const variants = product.active_variants ?? product.variants ?? []
@@ -1181,6 +1196,7 @@ export default {
                 buy_price:null, market_price:null, sell_price:null,
                 pos_sell_price:null, pos_sell_price_dynamic:0,
                 comission:0, track_inventory:1, weight_kg:null,
+                stock_qty:0,
                 loyalty_points:0, published:1, pos_hidden:0,
                 description:'', notes:'', classification_id:null,
                 condition_id:'N', tax_free_item:'No',
