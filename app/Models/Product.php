@@ -14,6 +14,7 @@ class Product extends Model
         'collections', 'brand', 'condition_id', 'sku', 'barcode',
         'buy_price', 'market_price', 'sell_price', 'pos_sell_price',
         'pos_sell_price_dynamic', 'comission', 'track_inventory',
+        'stock_qty',
         'uom', 'weight_kg', 'loyalty_points',
         'published', 'pos_hidden', 'description',
         'photo_1', 'photo_2', 'photo_3', 'photo_4', 'photo_5',
@@ -108,7 +109,9 @@ class Product extends Model
     {
         return $query->where(function ($sub) {
             $sub->whereHas('variants', fn ($v) => $v->where('stock_qty', '>', 0)->where('is_active', 1))
-                ->orWhereDoesntHave('variants');
+                ->orWhere(function ($p) {
+                    $p->whereDoesntHave('variants')->where('stock_qty', '>', 0);
+                });
         });
     }
 

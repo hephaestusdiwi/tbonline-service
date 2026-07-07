@@ -52,6 +52,11 @@ class ImportOlseraJob implements ShouldQueue
                 DB::beginTransaction();
 
                 $productData = $this->mapOlseraRow($meta);
+
+                if (empty($variants)) {
+                    $productData['stock_qty'] = (int) ($meta['stock_qty'] ?? 0);
+                }
+                
                 $subfolder   = 'olsera/' . Str::slug($name);
                 $productData = array_merge(
                     $productData,
