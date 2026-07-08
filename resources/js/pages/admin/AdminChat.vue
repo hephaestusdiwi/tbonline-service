@@ -754,6 +754,7 @@ export default {
                             this.sessions[idx].last_message    = e.message.content
                             this.sessions[idx].last_message_at = e.message.sent_at
                         }
+                        if (this.activeSession?.uuid === uuid) this.fetchSessionKpi(uuid)
                     }
                 })
                 .listen('.typing.started', (e) => {
@@ -831,6 +832,7 @@ export default {
                 if (data.data && !this.messages.find(m => m.id === data.data.id)) {
                     this.messages.push(data.data)
                     this.$nextTick(() => this.scrollToBottom())
+                    this.fetchSessionKpi(this.activeSession.uuid)  
                 }
             } catch {
                 this.newMessage = body
