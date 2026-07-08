@@ -632,7 +632,7 @@ export default {
              // tidak perlu fetch, hitung dari sessions yang sudah ada
         },
 
-        async fetchSessionKpi() {
+        async fetchSessionKpi(uuid) {
             this.sessionKpi = null
             try {
                 const { data } = await axios.get(`/chat/sessions/${uuid}/kpi`)
