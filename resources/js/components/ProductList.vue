@@ -69,10 +69,6 @@
                 <!-- Card Body -->
                 <div class="card-body">
                     <p class="product-name">{{ product.name }}</p>
-                    <p v-if="product.stock_qty && product.stock_qty <= 15 && !isOutOfStock(product)" class="stock-warning">
-                        <span class="stock-dot" />
-                        Hanya tersisa {{ product.stock_qty }}
-                    </p>
                     <div class="price-row">
                         <span class="price-main" :class="{ discounted: product.market_price > product.sell_price }">
                             {{ formatPrice(product.sell_price) }}
@@ -428,24 +424,6 @@ export default {
     -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
     overflow: hidden;
-}
-
-/* Stock Warning */
-.stock-warning {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    font-size: 0.7rem;
-    color: #FFD580;
-    font-weight: 600;
-    margin: 0;
-}
-.stock-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: #FFD580;
-    flex-shrink: 0;
 }
 
 /* Price */
