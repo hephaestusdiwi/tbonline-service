@@ -15,11 +15,11 @@ class ChatKpiService
 
         return [
             'time_to_assign_seconds' => ($joinedAt && $assignedAt)
-                ? $assignedAt->diffInSeconds($joinedAt)
+                ? abs($assignedAt->diffInSeconds($joinedAt))
                 : null,
 
-            'first_response_time_seconds' => ($joinedAt && $session->first_response_at)
-                ? $session->first_response_at->diffInSeconds($joinedAt)
+            'first_response_seconds' => ($joinedAt && $session->first_response_at)
+                ? abs($session->first_response_at->diffInSeconds($joinedAt))
                 : null,
 
             'avg_response_seconds' => $this->averageResponseSeconds($session),
@@ -45,7 +45,7 @@ class ChatKpiService
             if ($msg->sender_type === 'customer') {
                 $pendingCustomerAt = $msg->sent_at;
             } elseif ($msg->sender_type === 'agent' && $pendingCustomerAt) {
-                $diffs[] = $msg->sent_at->diffInSeconds($pendingCustomerAt);
+                $diffs[] = abs($msg->sent_at->diffInSeconds($pendingCustomerAt));
                 $pendingCustomerAt = null;
             }
         }
