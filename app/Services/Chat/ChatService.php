@@ -88,13 +88,6 @@ class ChatService
             return $message;
         }
 
-        \Log::info('kpi-debug', [
-            'sender_id' => $sender?->id,
-            'sender_email' => $sender?->email,
-            'roles'     => $sender?->getRoleNames(),
-            'already_has_frt' => (bool) $session->first_response_at,
-        ]);
-
         if ($sender && $sender->hasAnyRole(['admin', 'manager', 'staff']) && !$session->first_response_at) {
             $session->update(['first_response_at' => now()]);
         }
