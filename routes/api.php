@@ -268,6 +268,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->prefix('chat')->group(function () {
     Route::get   ('sessions',                        [Chat\SessionController::class, 'index'])  ->middleware('can:chat_view');
     Route::get   ('sessions/{session:uuid}',          [Chat\SessionController::class, 'show'])   ->middleware('can:chat_view');
+    Route::get   ('sessions/{session:uuid}/kpi',      [Chat\ChatKpiController::class, 'show'])   ->middleware('can:chat_view');
     Route::delete('sessions/{session:uuid}',          [Chat\SessionController::class, 'destroy'])->middleware('can:chat_admin');
     Route::patch ('sessions/{session:uuid}/close',    [Chat\SessionController::class, 'close'])  ->middleware('can:chat_close');
     Route::patch ('sessions/{session:uuid}/reopen',   [Chat\SessionController::class, 'reopen']) ->middleware('can:chat_reopen');

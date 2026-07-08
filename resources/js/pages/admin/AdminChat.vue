@@ -314,6 +314,9 @@
                                             <p class="text-[10px] text-gray-400 mt-1 px-1">
                                                 {{ fmtTime(msg.sent_at || msg.created_at) }}
                                                 <span v-if="isOwnMessage(msg) && msg.is_read" class="ml-1 text-emerald-500">✓✓</span>
+                                                <span v-if="isOwnMessage(msg) && messageResponseTimes[msg.id] !== undefined" class="ml-1 text-gray-400">
+                                                    · dibalas {{ fmtDuration(messageResponseTimes[msg.id]) }}
+                                                </span>
                                             </p>
                                         </div>
                                     </div>
@@ -447,6 +450,24 @@
                         <p v-else class="text-xs text-gray-400 italic">Belum ada agent</p>
                     </div>
 
+                    <div class="p-4 border-b border-gray-100">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">KPI Respons</p>
+                        <div class="space-y-2.5">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-gray-400">Waktu Ambil Chat</span>
+                                <span class="font-semibold text-gray-700">{{ fmtDuration(sessionKpi?.time_to_assign_seconds) }}</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-gray-400">First Response</span>
+                                <span class="font-semibold text-gray-700">{{ fmtDuration(sessionKpi?.first_response_seconds) }}</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-gray-400">Avg Response</span>
+                                <span class="font-semibold text-gray-700">{{ fmtDuration(sessionKpi?.avg_response_seconds) }}</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Session logs -->
                     <div class="p-4">
                         <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Riwayat Sesi</p>
@@ -486,8 +507,9 @@ export default {
             activeTab:       'all',
             titleInterval:   null,
             unreadTabCount:  0,
+            sessionKpi: null,
 
-            // Tab sekarang berdasarkan KATEGORI handoff (bukan status lagi).
+            // Tab sekarang berdasarkan KATEGORI handoff.
             // Status sesi (Antrian/Active/Closed/dll) tetap tampil sebagai badge di tiap baris sesi.
             tabs: [
                 { label: 'Semua',     value: 'all'       },
@@ -565,6 +587,24 @@ export default {
                 { label: 'Selesai',     value: closed },
             ]
         },
+
+        messageResponseTimes() {
+            const map = {}
+            let pendingCustomerAt = null
+
+            for (const msg of this.messages) {
+                if (!msg || !msg.id) continue
+                if (msg.sender_type === 'customer') {
+                    pendingCustomerAt = msg.sent_at || msg.created_at
+                } else if (msg.sender_type === 'agent' && pendingCustomerAt) {
+                    map[msg.id] = Math.round(
+                        (new Date(msg.sent_at || msg.created_at) - new Date(pendingCustomerAt)) / 1000
+                    )
+                    pendingCustomerAt = null
+                }
+            }
+            return map
+        },
     },
 
     methods: {
@@ -590,6 +630,23 @@ export default {
 
         async fetchPendingCount() {
              // tidak perlu fetch, hitung dari sessions yang sudah ada
+        },
+
+        async fetchSessionKpi() {
+            this.sessionKpi = null
+            try {
+                const { data } = await axios.get(`/chat/sessions/${uuid}/kpi`)
+                this.sessionKpi = data.data
+            } catch {}
+        },
+
+        fmtDuration(seconds) {
+            if (seconds === null || seconds === undefined) return '-'
+            if (seconds < 60) return `${seconds}d`
+            const m = Math.floor(seconds / 60), s = seconds % 60
+            if (m < 60) return `${m}m ${s}d`
+            const h = Math.floor(m / 60)
+            return `${h}j ${m % 60}m`
         },
 
         openFile(url, mimeType) {
@@ -662,6 +719,7 @@ export default {
                 if (idx > -1) this.sessions[idx].unread_count = 0
 
                 this.subscribeSessionChannel(session.uuid)
+                this.fetchSessionKpi(session.uuid)
                 this.$nextTick(() => this.scrollToBottom())
             } catch (e) {
                 console.error('Gagal load messages:', e)
@@ -880,9 +938,9 @@ export default {
         fmtTime(iso) {
             if (!iso) return ''
             const d = new Date(iso), now = new Date()
-            if (d.toDateString() === now.toDateString())
-                return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-            return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })
+            const time = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+            if (d.toDateString() === now.toDateString()) return time
+            return `${d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}, ${time}`
         },
 
         fmtDate(iso) {

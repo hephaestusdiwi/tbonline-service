@@ -9,12 +9,12 @@ class AgentAssignmentService
 {
     public function findBestAgent(ChatSession $session): ?User
     {
-        return User::role('staff')  // ✅ sesuaikan dengan role name yang kamu pakai
+        return User::role('staff')  
             ->whereHas('onlineStatus', function ($q) {
                 $q->where('is_online', true)
                   ->whereColumn('active_chats_count', '<', 'max_chats_capacity');
             })
-            ->withCount(['activeSessions'])          // ✅ fix: plural
+            ->withCount(['activeSessions'])          
             ->orderBy('active_sessions_count', 'asc')
             ->first();
     }
