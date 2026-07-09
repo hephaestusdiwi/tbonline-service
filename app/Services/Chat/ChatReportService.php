@@ -3,7 +3,7 @@
 namespace App\Services\Chat;
 
 use App\Models\{Message, User};
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Carbon; 
 use Illuminate\Support\Facades\DB;
 
 class ChatReportService

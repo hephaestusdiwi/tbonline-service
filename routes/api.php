@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\OrderDeleteRequestController;
 use App\Http\Controllers\Api\V1\Chat;
 use App\Http\Controllers\Api\V1\Agent;
 use App\Http\Controllers\Api\V1\Admin;
+use App\Http\Controllers\Api\V1\Chat\ChatReportController;
 use App\Http\Controllers\Api\TopProductsController;
 use App\Http\Controllers\Api\HomepageSectionController;
 use App\Http\Controllers\Api\FooterLinkController;
@@ -290,6 +291,7 @@ Route::middleware(['auth:sanctum', 'can:chat_admin'])->prefix('chat-admin')->gro
     Route::get ('queue/stats',          [Admin\QueueController::class, 'stats']);
     Route::post('queue/{entry}/assign', [Admin\QueueController::class, 'manualAssign']);
     Route::get ('agents',               [Admin\QueueController::class, 'agents']);
+    Route::get ('report/staff',         [ChatReportController::class, 'staff']);   
 });
 
 // ── Promotions (admin) ──────────────────────────────────────────────────
