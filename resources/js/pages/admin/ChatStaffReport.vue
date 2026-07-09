@@ -23,17 +23,31 @@
                     </p>
                 </div>
             </div>
-            <button
-                @click="fetchReport"
-                :class="['group flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg border transition-all duration-150',
-                    loading ? 'border-gray-100 text-gray-300 cursor-not-allowed bg-gray-50' : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700']"
-                :disabled="loading"
-            >
-                <svg :class="['w-3.5 h-3.5 transition-transform', loading ? 'animate-spin' : 'group-hover:rotate-180 duration-300']" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Refresh
-            </button>
+            <div class="flex items-center gap-2">
+                <button
+                    @click="exportExcel"
+                    :disabled="exporting || loading || !rows.length"
+                    class="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <svg :class="['w-3.5 h-3.5', exporting && 'animate-spin']" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path v-if="!exporting" stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H8a2 2 0 01-2-2V5a2 2 0 012-2h6l6 6v11a2 2 0 01-2 2z"/>
+                        <path v-else stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    Export Excel
+                </button>
+
+                <button
+                    @click="fetchReport"
+                    :class="['group flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg border transition-all duration-150',
+                        loading ? 'border-gray-100 text-gray-300 cursor-not-allowed bg-gray-50' : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700']"
+                    :disabled="loading"
+                >
+                    <svg :class="['w-3.5 h-3.5 transition-transform', loading ? 'animate-spin' : 'group-hover:rotate-180 duration-300']" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh
+                </button>
+            </div>
         </div>
 
         <!-- ───────────────────────── FILTER BAR ───────────────────────── -->
@@ -246,6 +260,7 @@ export default {
             rows:    [],
             summary: {},
             range:   {},
+            exporting: false,
 
             filters: {
                 period:    'today',
@@ -349,6 +364,36 @@ export default {
         fmtDate(d) {
             if (!d) return '-'
             return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+        },
+
+        async exportExcel() {
+            this.exporting = true
+            try {
+                const params = this.filters.period === 'custom'
+                    ? { from: this.filters.date_from, to: this.filters.date_to }
+                    : { preset: this.filters.period }
+
+                const response = await axios.get('/chat-admin/report/staff/export-excel', {
+                    params,
+                    responseType: 'blob',
+                })
+
+                const blob = new Blob([response.data], {
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                })
+                const url  = window.URL.createObjectURL(blob)
+                const link = document.createElement('a')
+                link.href = url
+                link.download = `laporan-kpi-staff-${this.filters.period}-${Date.now()}.xlsx`
+                document.body.appendChild(link)
+                link.click()
+                link.remove()
+                window.URL.revokeObjectURL(url)
+            } catch (err) {
+                this.error = 'Gagal export laporan. ' + (err.response?.data?.message || err.message)
+            } finally {
+                this.exporting = false
+            }
         },
     },
 

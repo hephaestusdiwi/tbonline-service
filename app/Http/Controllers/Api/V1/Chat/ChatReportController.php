@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Services\Chat\ChatReportService;
 use Illuminate\Http\{Request, JsonResponse};
 use Illuminate\Support\Carbon;
+use App\Exports\ChatStaffReportExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ChatReportController extends Controller
 {
@@ -27,6 +29,21 @@ class ChatReportController extends Controller
             'summary' => $result['summary'],
             'range'   => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
         ]);
+    }
+
+    public function staffExportExcel(Request $request)
+    {
+        $data = $request->validate([
+            'preset'    => 'nullable|in:today,yesterday,week,month',
+            'from'      => 'nullable|date',
+            'to'        => 'nullable|date|after_or_equal:from',
+        ]);
+
+        [$from, $to] = $this->resolveRange($data);
+
+        $filename = 'laporan-kpi-staff_' . $from->toDateString() . '_' . $to->toDateString() . '.xlsx';
+
+        return Excel::download(new ChatStaffReportExport($from, $to), $filename);
     }
 
     private function resolveRange(array $data): array

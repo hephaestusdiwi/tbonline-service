@@ -291,7 +291,8 @@ Route::middleware(['auth:sanctum', 'can:chat_admin'])->prefix('chat-admin')->gro
     Route::get ('queue/stats',          [Admin\QueueController::class, 'stats']);
     Route::post('queue/{entry}/assign', [Admin\QueueController::class, 'manualAssign']);
     Route::get ('agents',               [Admin\QueueController::class, 'agents']);
-    Route::get ('report/staff',         [ChatReportController::class, 'staff']);   
+    Route::get ('report/staff',              [ChatReportController::class, 'staff']);
+    Route::get ('report/staff/export-excel', [ChatReportController::class, 'staffExportExcel']); 
 });
 
 // ── Promotions (admin) ──────────────────────────────────────────────────
