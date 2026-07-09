@@ -383,7 +383,6 @@ let channel             = null
 let agentStatusChannel  = null
 let typingTimer         = null
 let heartbeatInterval   = null
-let leaveTimer          = null
 
 // ── Quick topics ─────────────────────────────────────────────────────────
 // Daftar ini harus sinkron sama $flow['greeting']['options'] di ChatbotService.php
@@ -590,17 +589,6 @@ function sendLeave() {
   }
 }
 
-function handleVisibilityChange() {
-  if (document.visibilityState === 'hidden') {
-    leaveTimer = setTimeout(() => {
-      const url = import.meta.env.VITE_API_URL + '/chat/sessions/' + props.sessionUuid + '/leave'
-      navigator.sendBeacon(url)
-    }, 15000)
-  } else {
-    clearTimeout(leaveTimer)
-  }
-}
-
 // ── Load messages ─────────────────────────────────────────────────────────
 async function loadMessages() {
   isLoading.value = true
@@ -709,16 +697,13 @@ onMounted(async () => {
   subscribeChannel()
   startHeartbeat()
   window.addEventListener('beforeunload', sendLeave)
-  document.addEventListener('visibilitychange', handleVisibilityChange)
   nextTick(() => scrollToBottom())
 })
 
 onUnmounted(() => {
   clearInterval(heartbeatInterval)
-  clearTimeout(leaveTimer)
   clearTimeout(typingTimer)
   window.removeEventListener('beforeunload', sendLeave)
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
   unsubscribeAgentStatusChannel()
   leaveChannel()
 })

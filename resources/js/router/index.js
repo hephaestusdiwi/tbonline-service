@@ -52,6 +52,7 @@ const routes = [
     { path: '/cart',     component: () => import('../pages/CartPage.vue') },
     { path: '/checkout', component: () => import('../pages/CheckoutPage.vue') },
     { path: '/admin/chat', name: 'admin.chat', component: () => import('../pages/admin/AdminChat.vue'), meta: { requiresAuth: true } },
+    { path: '/admin/chat-report', name: 'admin.chat-report', component: () => import('../pages/admin/ChatStaffReport.vue'), meta: { requiresAuth: true } },
     { path: '/admin/promotions', component: () => import('../pages/admin/PromotionAdmin.vue'), meta: { requiresAuth: true } },
     { path: '/admin/announcements', component: () => import('../pages/admin/AnnouncementAdmin.vue'), meta: { requiresAuth: true } }, 
     { path: '/admin/articles', component: () => import('../pages/admin/ArticleList.vue'), meta: { requiresAuth: true } },

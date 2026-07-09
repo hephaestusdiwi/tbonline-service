@@ -420,6 +420,7 @@ export default {
                                 { path: '/admin/sales-reports',   label: 'Sales Reports',   permission: 'reports_view' },
                                 { path: '/admin/product-reports', label: 'Product Reports', permission: 'reports_view' },
                                 { path: '/admin/visitor-stats',   label: 'Traffic Status',  permission: 'visitor_stats_view' },
+                                { path: '/admin/chat-report',     label: 'Chat KPI Staff',  permission: 'chat_admin' },
                             ]
                         },
                         {

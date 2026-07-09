@@ -8,11 +8,11 @@ use Illuminate\Console\Command;
 class CloseIdleChatSessions extends Command
 {
     protected $signature   = 'chat:close-idle';
-    protected $description = 'Auto-close sesi chat yang idle lebih dari 5 menit';
+    protected $description = 'Auto-close sesi chat yang idle lebih dari 1 jam';
 
     public function handle(MessageService $messageService): void
     {
-        $idleThreshold = now()->subMinutes(5);
+        $idleThreshold = now()->subHour();
 
         $sessions = ChatSession::whereIn('status', ['active', 'queued', 'bot'])
             ->where('last_seen_at', '<', $idleThreshold)
@@ -26,17 +26,9 @@ class CloseIdleChatSessions extends Command
         ]);
 
         $sessions->each(function ($session) use ($messageService) {
-            \Log::info('closing session', [
-                'uuid'         => $session->uuid,
-                'last_seen_at' => $session->last_seen_at,
-            ]);
-
             try {
                 $session->update(['visitor_left' => true]);
-                \Log::info('visitor_left updated', ['uuid' => $session->uuid]);
-
                 broadcast(new \App\Events\Chat\VisitorLeft($session));
-                \Log::info('VisitorLeft broadcasted', ['uuid' => $session->uuid]);
 
                 $messageService->createSystemMessage(
                     $session,
@@ -57,14 +49,10 @@ class CloseIdleChatSessions extends Command
                 ]);
 
                 broadcast(new \App\Events\Chat\ChatSessionClosed($session, null));
-
-                \Log::info('session closed', ['uuid' => $session->uuid]);
-
             } catch (\Exception $e) {
                 \Log::error('gagal close session', [
                     'uuid'  => $session->uuid,
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
                 ]);
             }
         });
