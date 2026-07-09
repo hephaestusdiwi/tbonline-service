@@ -14,6 +14,7 @@ class ChatReportService
             ->join('chat_sessions', 'chat_sessions.id', '=', 'chat_session_agents.session_id')
             ->leftJoin('queue_entries', 'queue_entries.session_id', '=', 'chat_sessions.id')
             ->where('chat_session_agents.role', 'primary')
+            ->whereNull('chat_sessions.deleted_at')        
             ->whereBetween('chat_session_agents.assigned_at', [$from, $to])
             ->select([
                 'chat_session_agents.agent_id',
