@@ -451,18 +451,18 @@
                     </div>
 
                     <div class="p-4 border-b border-gray-100">
-                        <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">KPI Respons</p>
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Performa Respons</p>
                         <div class="space-y-2.5">
                             <div class="flex justify-between text-xs">
                                 <span class="text-gray-400">Waktu Ambil Chat</span>
                                 <span class="font-semibold text-gray-700">{{ fmtDuration(sessionKpi?.time_to_assign_seconds) }}</span>
                             </div>
                             <div class="flex justify-between text-xs">
-                                <span class="text-gray-400">First Response</span>
+                                <span class="text-gray-400">Respons Pertama</span>
                                 <span class="font-semibold text-gray-700">{{ fmtDuration(sessionKpi?.first_response_seconds) }}</span>
                             </div>
                             <div class="flex justify-between text-xs">
-                                <span class="text-gray-400">Avg Response</span>
+                                <span class="text-gray-400">Rata-rata Respons</span>
                                 <span class="font-semibold text-gray-700">{{ fmtDuration(sessionKpi?.avg_response_seconds) }}</span>
                             </div>
                         </div>
