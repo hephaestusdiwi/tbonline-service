@@ -14,6 +14,7 @@
 import Sidebar from './Sidebar.vue'
 import Navbar from './Navbar.vue'
 import { useChatNotification } from '@/composables/useChatNotification.js'
+import { useAgentPresenceStore } from '@/store/agentPresence.js'
 import { getUser } from '@/auth.js'
 
 export default {
@@ -28,12 +29,15 @@ export default {
         if (['admin', 'manager', 'staff'].includes(user?.role)) {
             const { subscribe } = useChatNotification()
             subscribe()
+
+            useAgentPresenceStore().start()
         }
     },
 
     beforeUnmount() {
         const { unsubscribe } = useChatNotification()
         unsubscribe()
+        // sengaja TIDAK matiin presence disini
     }
 }
 </script>

@@ -492,6 +492,8 @@
 <script>
 import AdminLayout from '../../components/admin/AdminLayout.vue'
 import axios from '@/axios.js'
+import { mapState, mapActions } from 'pinia'
+import { useAgentPresenceStore } from '@/store/agentPresence.js'
 import { getUser } from '@/auth.js'
 
 export default {
@@ -525,8 +527,6 @@ export default {
             sending:         false,
             showDetailPanel: false,
             sessionLogs:     [],
-
-            agentOnline:  false,
             pendingCount: 0,
 
             customerTyping: false,
@@ -605,6 +605,8 @@ export default {
             }
             return map
         },
+
+        ...mapState(useAgentPresenceStore, { agentOnline: 'online' }),
     },
 
     methods: {
@@ -617,8 +619,7 @@ export default {
             try {
                 const { data } = await axios.get('/chat/sessions')
                 this.sessions = data.data || data
-                this.pendingCount = this.sessions.filter(s => s.status === 'queued').length // ← tambah ini
-                this.sessions
+                this.pendingCount = this.sessions.filter(s => s.status === 'queued').length 
                     .filter(s => ['queued', 'active'].includes(s.status))
                     .forEach(s => this.subscribeSessionChannel(s.uuid))
             } catch (e) {
@@ -965,31 +966,13 @@ export default {
 
         if ('Notification' in window && Notification.permission === 'default')
             await Notification.requestPermission()
-
-        try {
-            const { data } = await axios.get('/me')
-            this.agentOnline = data.is_online ?? false
-            
-            if (!this.agentOnline) {
-                await axios.post('/agent/status/online')
-                this.agentOnline = true
-            }
-        } catch {}
-
-        this._agentPingInterval = setInterval(() => {
-            if (this.agentOnline) {
-                axios.post('/agent/status/online').catch(() => {})
-            }
-        }, 60_000)
     },
 
     beforeUnmount() {
         clearInterval(this._pollInterval)
-        clearInterval(this._agentPingInterval)
         clearTimeout(this.typingTimer)
         Object.keys(this.echoChannels).forEach(uuid => window.Echo?.leave(`chat.session.${uuid}`))
         window.Echo?.leave('queue.admin')
-        axios.post('/agent/status/offline').catch(() => {})
     },
 }
 </script>
