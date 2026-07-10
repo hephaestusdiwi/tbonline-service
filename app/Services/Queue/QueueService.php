@@ -26,6 +26,8 @@ class QueueService
             $position * 180
         ));
 
+        broadcast(new \App\Events\Queue\CustomerQueued($session));
+
         return $entry;
     }
 

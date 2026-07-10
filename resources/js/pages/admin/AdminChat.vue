@@ -610,8 +610,18 @@ export default {
     },
 
     methods: {
+        ...mapActions(useAgentPresenceStore, { toggleAgentStatus: 'toggle' }),
+
         isSessionEnded(status) {
             return status === 'closed' || status === 'resolved'
+        },
+
+        isMySession(uuid) {
+            const session = this.sessions.find(s => s.uuid === uuid)
+            if (!session) return false
+            if (session.status === 'queued') return true
+            const me = getUser()
+            return session.assigned_agent_name === me?.name
         },
 
         async fetchSessions() {
@@ -619,7 +629,8 @@ export default {
             try {
                 const { data } = await axios.get('/chat/sessions')
                 this.sessions = data.data || data
-                this.pendingCount = this.sessions.filter(s => s.status === 'queued').length 
+                this.pendingCount = this.sessions.filter(s => s.status === 'queued').length
+                this.sessions
                     .filter(s => ['queued', 'active'].includes(s.status))
                     .forEach(s => this.subscribeSessionChannel(s.uuid))
             } catch (e) {
@@ -740,38 +751,40 @@ export default {
 
         subscribeSessionChannel(uuid) {
             if (!window.Echo) return
-            Object.keys(this.echoChannels).forEach(key => {
-                if (key !== uuid) { window.Echo.leave(`chat.session.${key}`); delete this.echoChannels[key] }
-            })
             if (this.echoChannels[uuid]) return
 
             this.echoChannels[uuid] = window.Echo.channel(`chat.session.${uuid}`)
                 .listen('.message.sent', (e) => {
-                    if (e.message?.id && !this.messages.find(m => m.id === e.message.id)) {
+                    if (e.message?.id && !this.messages.find(m => m.id === e.message.id) && this.activeSession?.uuid === uuid) {
                         this.messages.push(e.message)
                         this.$nextTick(() => this.scrollToBottom())
-                        const idx = this.sessions.findIndex(s => s.uuid === uuid)
-                        if (idx > -1) {
-                            this.sessions[idx].last_message    = e.message.content
-                            this.sessions[idx].last_message_at = e.message.sent_at
-                        }
-                        if (this.activeSession?.uuid === uuid) this.fetchSessionKpi(uuid)
+                    }
+                    const idx = this.sessions.findIndex(s => s.uuid === uuid)
+                    if (idx > -1) {
+                        this.sessions[idx].last_message    = e.message.content
+                        this.sessions[idx].last_message_at = e.message.sent_at
+                        if (this.activeSession?.uuid !== uuid) this.sessions[idx].unread_count = (this.sessions[idx].unread_count || 0) + 1
+                    }
+                    if (this.activeSession?.uuid === uuid) this.fetchSessionKpi(uuid)
+
+                    if (e.message.sender_type === 'customer' && this.isMySession(uuid)) {
+                        this.playNotifSound()
+                        if (this.activeSession?.uuid !== uuid || !document.hasFocus()) this.startTitleBlink()
                     }
                 })
                 .listen('.typing.started', (e) => {
-                    if (e.sender_type === 'customer') {
+                    if (e.sender_type === 'customer' && this.activeSession?.uuid === uuid) {
                         this.customerTyping = true
                         clearTimeout(this.typingTimer)
                         this.typingTimer = setTimeout(() => { this.customerTyping = false }, 3000)
                     }
                 })
                 .listen('.typing.stopped', (e) => {
-                    if (e.sender_type === 'customer') this.customerTyping = false
+                    if (e.sender_type === 'customer' && this.activeSession?.uuid === uuid) this.customerTyping = false
                 })
                 .listen('.session.closed', (e) => {
-                    if (this.activeSession?.uuid === uuid)
-                        this.activeSession = { ...this.activeSession, status: 'closed' }
-                    if (e?.reason) {
+                    if (this.activeSession?.uuid === uuid) this.activeSession = { ...this.activeSession, status: 'closed' }
+                    if (e?.reason && this.activeSession?.uuid === uuid) {
                         this.messages.push({
                             id: `sys-close-${Date.now()}`,
                             sender_type: 'system',
@@ -782,6 +795,8 @@ export default {
                     }
                     const idx = this.sessions.findIndex(s => s.uuid === uuid)
                     if (idx > -1) this.sessions[idx].status = 'closed'
+                    window.Echo.leave(`chat.session.${uuid}`)
+                    delete this.echoChannels[uuid]
                 })
                 .listen('.session.assigned', (e) => {
                     if (this.activeSession?.uuid === uuid)
@@ -790,7 +805,7 @@ export default {
                     if (idx > -1) { this.sessions[idx].status = 'active'; this.sessions[idx].assigned_agent_name = e.agent_name || e.agent?.name }
                 })
                 .listen('.visitor.left', (e) => {
-                    const guestName = e.guest_name || this.activeSession?.guest_name || 'Visitor'
+                    const guestName = e.guest_name || this.sessions.find(s => s.uuid === uuid)?.guest_name || 'Visitor'
                     if (this.activeSession?.uuid === uuid) {
                         this.activeSession = { ...this.activeSession, visitor_left: true }
                         this.messages.push({
@@ -803,11 +818,14 @@ export default {
                     }
                     const idx = this.sessions.findIndex(s => s.uuid === uuid)
                     if (idx > -1) this.sessions[idx].visitor_left = true
-                    this.playNotifSound()
-                    this.startTitleBlink()
-                    if (Notification.permission === 'granted' && !document.hasFocus()) {
-                        const notif = new Notification(`👋 ${e.guest_name}`, { body: 'Visitor telah meninggalkan obrolan', icon: '/favicon.ico' })
-                        setTimeout(() => notif.close(), 5000)
+
+                    if (this.isMySession(uuid)) {
+                        this.playNotifSound()
+                        this.startTitleBlink()
+                        if (Notification.permission === 'granted' && !document.hasFocus()) {
+                            const notif = new Notification(`👋 ${guestName}`, { body: 'Visitor telah meninggalkan obrolan', icon: '/favicon.ico' })
+                            setTimeout(() => notif.close(), 5000)
+                        }
                     }
                 })
         },
@@ -819,6 +837,12 @@ export default {
                     if (!this.sessions.find(s => s.uuid === e.session?.uuid)) {
                         this.sessions.unshift(e.session)
                         this.pendingCount++
+                        this.playNotifSound()
+                        this.startTitleBlink()
+                        if (Notification.permission === 'granted' && !document.hasFocus()) {
+                            const notif = new Notification(`💬 Chat baru — ${e.session?.guest_name || 'Visitor'}`, { body: 'Menunggu untuk dilayani', icon: '/favicon.ico' })
+                            setTimeout(() => notif.close(), 5000)
+                        }
                     }
                 })
         },
@@ -897,14 +921,6 @@ export default {
                 if (e.response?.status === 409) alert('Session sudah diambil agent lain.')
                 else alert('Gagal mengambil chat')
             }
-        },
-
-        async toggleAgentStatus() {
-            const endpoint = this.agentOnline ? '/agent/status/offline' : '/agent/status/online'
-            try {
-                await axios.post(endpoint)
-                this.agentOnline = !this.agentOnline
-            } catch {}
         },
 
         isOwnMessage(msg)  { return msg.sender_type === 'agent' },
