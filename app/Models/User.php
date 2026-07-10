@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use App\Models\ChatSession;
 
 class User extends Authenticatable
 {
@@ -69,6 +70,12 @@ class User extends Authenticatable
     public function onlineStatus()
     {
         return $this->hasOne(\App\Models\UserOnlineStatus::class);
+    }
+
+    public function activeSessions()
+    {
+        return $this->belongsToMany(ChatSession::class, 'chat_session_agents', 'agent_id', 'session_id')
+            ->wherePivot('is_active', true);
     }
 
     public function auditLogs()

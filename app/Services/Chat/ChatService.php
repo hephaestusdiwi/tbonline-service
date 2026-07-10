@@ -119,6 +119,17 @@ class ChatService
             'closed_at'     => now(),
         ]);
 
+        $session->agents()
+            ->wherePivot('is_active', true)
+            ->each(function ($agent) {
+                $agent->onlineStatus()?->decrement('active_chats_count');
+            });
+
+        $session->agents()->updateExistingPivot(
+            $session->agents()->wherePivot('is_active', true)->pluck('users.id')->toArray(),
+            ['is_active' => false, 'left_at' => now()]
+        );
+
         $this->messageService->createSystemMessage($session, 'Sesi chat telah diakhiri');
 
         broadcast(new ChatSessionClosed($session, $closer));

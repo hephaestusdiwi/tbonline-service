@@ -46,8 +46,13 @@ class QueueService
     {
         QueueEntry::where('status', 'waiting')
             ->orderBy('joined_at')
-            ->with('session') // ← load relasi session
+            ->with('session')
             ->each(function ($entry, $index) {
+                if (!$entry->session) {
+                    $entry->update(['status' => 'cancelled']);
+                    return;
+                }
+
                 $newPosition = $index + 1;
                 $newWait     = $newPosition * 180;
 
@@ -56,7 +61,6 @@ class QueueService
                     'estimated_wait_seconds' => $newWait,
                 ]);
 
-                // ← broadcast ke masing-masing customer
                 broadcast(new \App\Events\Queue\QueuePositionUpdated(
                     $entry->session,
                     $newPosition,

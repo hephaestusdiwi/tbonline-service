@@ -120,15 +120,30 @@ class SessionController extends Controller
     public function close(Request $request, ChatSession $session): JsonResponse
     {
         $data = $request->validate(['reason' => 'required|string|max:500']);
+
+        if ($session->status === 'queued') {
+            app(\App\Services\Queue\QueueService::class)->cancel($session);
+        }
+
         $this->chatService->closeSession($session, $data['reason'], $request->user());
 
         return response()->json(['message' => 'Session closed']);
     }
 
-    public function reopen(ChatSession $session): JsonResponse
+    public function reopenSession(ChatSession $session): void
     {
-        $this->chatService->reopenSession($session);
-        return response()->json(['message' => 'Session reopened']);
+        $session->update(['status' => 'queued', 'closed_at' => null]);
+
+        if ($session->queueEntry) {
+            $session->queueEntry->update([
+                'status'      => 'waiting',
+                'joined_at'   => now(),
+                'assigned_at' => null,
+            ]);
+            $this->queueService->recalculatePositions();
+        } else {
+            $this->queueService->enqueue($session);
+        }
     }
 
     public function assign(Request $request, ChatSession $session): JsonResponse
@@ -187,9 +202,12 @@ class SessionController extends Controller
 
     public function destroy(Request $request, ChatSession $session): JsonResponse
     {
-        // Hanya admin yang boleh hapus
         if (!$request->user()->hasRole('admin')) {
             return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($session->status === 'queued') {
+            app(\App\Services\Queue\QueueService::class)->cancel($session);
         }
 
         $session->delete();

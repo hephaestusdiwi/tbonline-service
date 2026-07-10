@@ -7,6 +7,8 @@ use App\Events\Chat\ChatAssigned;
 
 class AgentAssignmentService
 {
+    public function __construct(private QueueService $queueService) {}
+
     public function findBestAgent(ChatSession $session): ?User
     {
         return User::role('staff')  
@@ -41,6 +43,8 @@ class AgentAssignmentService
             'assigned_at'   => now(),
         ]);
 
+        $this->queueService->recalculatePositions();   
+
         $agent->onlineStatus()->increment('active_chats_count');
 
         app(\App\Services\Chat\MessageService::class)->createSystemMessage(
@@ -53,7 +57,6 @@ class AgentAssignmentService
 
     public function closeSession(ChatSession $session, string $reason, User $closedBy): void
     {
-        // Pastikan baris ini ada — nonaktifkan semua agent di pivot
         $session->agents()->updateExistingPivot(
             $session->agents()->wherePivot('is_active', true)->pluck('users.id')->toArray(),
             ['is_active' => false, 'left_at' => now()]
@@ -65,7 +68,6 @@ class AgentAssignmentService
             'close_reason' => $reason,
         ]);
 
-        // Kurangi active_chats_count agent
         $session->agents->each(function ($agent) {
             $agent->onlineStatus()?->decrement('active_chats_count');
         });
