@@ -1,105 +1,75 @@
 <template>
     <AdminLayout title="Laporan KPI Staff">
 
-        <!-- ───────────────────────── HEADER ───────────────────────── -->
-        <div class="mb-8 flex flex-wrap items-start justify-between gap-4">
-            <div class="flex items-start gap-4">
-                <div class="w-10 h-10 rounded-xl bg-[#ED1F24]/10 border border-[#ED1F24]/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <svg class="w-5 h-5 text-[#ED1F24]" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                </div>
+        <!-- ───────────────────────── HERO ───────────────────────── -->
+        <div class="relative mb-8 rounded-2xl overflow-hidden"
+            style="background: linear-gradient(135deg, #ED1F24 0%, #B01419 60%, #8B0F13 100%);">
+            <div class="absolute -top-8 -right-8 w-48 h-48 rounded-full opacity-10" style="background:white;"></div>
+            <div class="absolute -bottom-10 -right-24 w-64 h-64 rounded-full opacity-5" style="background:white;"></div>
+            <div class="absolute top-4 right-32 w-20 h-20 rounded-full opacity-10" style="background:white;"></div>
+
+            <div class="relative px-7 py-6 flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="text-xl font-bold text-gray-900 tracking-tight">Laporan KPI Staff</h1>
-                        <span class="text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-md bg-gray-100 text-gray-400 border border-gray-200">Live Chat</span>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-1 flex items-center gap-1.5">
-                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <p class="text-red-200 text-xs font-semibold tracking-widest uppercase mb-1">Analytics · Live Chat</p>
+                    <h1 class="text-2xl font-bold text-white tracking-tight">Laporan KPI Staff</h1>
+                    <p class="text-red-200 text-xs mt-1.5">
                         Rekap performa respons chat per staff
-                        <span class="text-gray-300 mx-1">·</span>
-                        <span class="font-medium text-gray-500">{{ periodLabel }}</span>
-                        <span v-if="range.from" class="text-gray-400">({{ fmtDate(range.from) }} – {{ fmtDate(range.to) }})</span>
+                        <span class="text-white/40 mx-1">·</span>
+                        <span class="font-medium text-white/90">{{ periodLabel }}</span>
+                        <span v-if="range.from" class="text-red-200"> ({{ fmtDate(range.from) }} – {{ fmtDate(range.to) }})</span>
                     </p>
                 </div>
-            </div>
-            <div class="flex items-center gap-2">
-                <button
-                    @click="exportExcel"
-                    :disabled="exporting || loading || !rows.length"
-                    class="flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 hover:bg-emerald-100 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <svg :class="['w-3.5 h-3.5', exporting && 'animate-spin']" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path v-if="!exporting" stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H8a2 2 0 01-2-2V5a2 2 0 012-2h6l6 6v11a2 2 0 01-2 2z"/>
-                        <path v-else stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                    </svg>
-                    Export Excel
-                </button>
 
-                <button
-                    @click="fetchReport"
-                    :class="['group flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-lg border transition-all duration-150',
-                        loading ? 'border-gray-100 text-gray-300 cursor-not-allowed bg-gray-50' : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700']"
-                    :disabled="loading"
-                >
-                    <svg :class="['w-3.5 h-3.5 transition-transform', loading ? 'animate-spin' : 'group-hover:rotate-180 duration-300']" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Refresh
-                </button>
-            </div>
-        </div>
-
-        <!-- ───────────────────────── FILTER BAR ───────────────────────── -->
-        <div class="bg-white rounded-xl border border-gray-200/80 shadow-sm mb-6 overflow-hidden">
-            <div class="px-5 py-3 border-b border-gray-100 bg-gray-50/60 flex items-center gap-2">
-                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-                <span class="text-xs font-semibold text-gray-400 uppercase tracking-widest">Filter & Periode</span>
-            </div>
-            <div class="p-5 flex flex-wrap gap-5 items-end">
-                <div class="flex flex-col gap-2">
-                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Periode</label>
-                    <div class="flex flex-wrap gap-1">
+                <div class="flex items-center gap-3 flex-wrap">
+                    <!-- Period tabs -->
+                    <div class="flex items-center gap-1 bg-white/10 border border-white/20 rounded-lg p-1 backdrop-blur-sm">
                         <button
                             v-for="p in periodPresets"
                             :key="p.value"
                             @click="selectPeriod(p.value)"
-                            :class="['text-xs px-3 py-1.5 rounded-lg font-semibold border transition-all duration-150',
-                                filters.period === p.value
-                                    ? 'bg-[#ED1F24] text-white border-[#ED1F24] shadow-sm shadow-red-200'
-                                    : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700 bg-white']"
+                            class="text-xs font-semibold px-3 py-1.5 rounded-md transition-all duration-150"
+                            :class="filters.period === p.value
+                                ? 'bg-white text-[#ED1F24] shadow-sm'
+                                : 'text-white/80 hover:text-white hover:bg-white/10'"
                         >{{ p.label }}</button>
                     </div>
-                </div>
 
-                <div v-if="filters.period === 'custom'" class="flex items-end gap-3">
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Dari</label>
-                        <input v-model="filters.date_from" type="date"
-                            class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 transition-all bg-white" />
+                    <!-- Custom date range -->
+                    <div v-if="filters.period === 'custom'" class="flex items-center gap-2">
+                        <input type="date" v-model="filters.date_from"
+                            class="text-xs px-2 py-1.5 rounded-lg border border-white/20 bg-white/10 text-white placeholder-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/30" />
+                        <span class="text-white/50 text-xs">→</span>
+                        <input type="date" v-model="filters.date_to"
+                            class="text-xs px-2 py-1.5 rounded-lg border border-white/20 bg-white/10 text-white placeholder-white/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-white/30" />
+                        <button @click="fetchReport"
+                            class="text-xs font-bold px-3 py-1.5 bg-white text-[#ED1F24] rounded-lg hover:bg-red-50 transition-colors">Terapkan</button>
                     </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sampai</label>
-                        <input v-model="filters.date_to" type="date"
-                            class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 focus:outline-none focus:border-[#ED1F24] focus:ring-2 focus:ring-[#ED1F24]/10 transition-all bg-white" />
-                    </div>
-                </div>
 
-                <button
-                    @click="fetchReport"
-                    :disabled="loading"
-                    class="flex items-center gap-2 px-5 py-[7px] bg-[#ED1F24] hover:bg-[#C81A1E] text-white text-sm font-semibold rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-red-200 hover:shadow-md hover:shadow-red-200 active:scale-95"
-                >
-                    <svg v-if="loading" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                    </svg>
-                    Terapkan Filter
-                </button>
+                    <!-- Refresh -->
+                    <button
+                        @click="fetchReport"
+                        :disabled="loading"
+                        class="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all duration-150 disabled:opacity-40 backdrop-blur-sm"
+                    >
+                        <svg :class="['w-3.5 h-3.5', loading && 'animate-spin']" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Refresh
+                    </button>
+
+                    <!-- Export -->
+                    <button
+                        @click="exportExcel"
+                        :disabled="exporting || loading || !rows.length"
+                        class="flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all duration-150 disabled:opacity-40 backdrop-blur-sm"
+                    >
+                        <svg :class="['w-3.5 h-3.5', exporting && 'animate-spin']" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path v-if="!exporting" stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H8a2 2 0 01-2-2V5a2 2 0 012-2h6l6 6v11a2 2 0 01-2 2z"/>
+                            <path v-else stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Export Excel
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -114,53 +84,74 @@
                     :key="card.label"
                     class="group bg-white rounded-xl border border-gray-200/80 shadow-sm hover:shadow-md hover:border-gray-300/80 transition-all duration-200 overflow-hidden relative"
                 >
-                    <div class="absolute top-0 left-0 right-0 h-0.5 rounded-t-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" :style="{ background: card.iconColor }"></div>
-                    <div class="p-4 flex flex-col justify-between h-full">
+                    <div class="absolute top-0 left-0 right-0 h-0.5 rounded-t-xl" :style="{ background: card.accent }"></div>
+                    <div class="p-4">
                         <div class="flex items-start justify-between mb-3">
                             <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400 leading-tight pr-2">{{ card.label }}</span>
-                            <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border" :style="{ background: card.iconBg, borderColor: card.iconColor + '25' }">
-                                <font-awesome-icon :icon="card.icon" :style="{ color: card.iconColor }" class="text-xs" />
+                            <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border"
+                                :style="{ background: card.iconBg, borderColor: card.accent + '25' }">
+                                <font-awesome-icon :icon="card.icon" :style="{ color: card.accent }" class="text-xs" />
                             </div>
                         </div>
                         <p class="text-lg font-bold leading-tight" :class="card.valueColor || 'text-gray-900'">{{ card.value }}</p>
+                        <p v-if="card.sub" class="text-xs mt-1.5 text-gray-400">{{ card.sub }}</p>
                     </div>
                 </div>
             </template>
         </div>
 
-        <!-- ───────────────────────── PERINGKAT STAFF ───────────────────────── -->
-        <div class="bg-white rounded-xl border border-gray-200/80 shadow-sm mb-4 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 flex items-start justify-between">
-                <div>
-                    <h3 class="text-sm font-bold text-gray-800">Peringkat Beban Kerja</h3>
-                    <p class="text-xs text-gray-400 mt-0.5">Berdasarkan jumlah sesi yang ditangani</p>
+        <!-- ───────────────────────── ROW: Response Time Chart + Ranking ───────────────────────── -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+
+            <!-- Response Time per Staff -->
+            <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 flex items-start justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-800">Waktu Respons per Staff</h3>
+                        <p class="text-xs text-gray-400 mt-0.5">Waktu ambil chat, first response, & rata-rata (menit)</p>
+                    </div>
+                    <div class="w-7 h-7 rounded-lg bg-[#ED1F24]/8 border border-[#ED1F24]/15 flex items-center justify-center">
+                        <font-awesome-icon icon="stopwatch" class="text-xs text-[#ED1F24]" />
+                    </div>
                 </div>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#ED1F24]/8 text-[#ED1F24] border border-[#ED1F24]/15 uppercase tracking-wider">
-                    {{ rows.length }} Staff
-                </span>
+                <div class="p-6">
+                    <div v-if="loading" class="h-52 bg-gray-50 rounded-xl animate-pulse"></div>
+                    <apexchart v-else-if="rows.length" type="bar" height="220" :options="responseTimeOptions" :series="responseTimeSeries" />
+                    <div v-else class="h-52 flex items-center justify-center text-sm text-gray-400">Belum ada data di periode ini</div>
+                </div>
             </div>
-            <div class="p-6">
-                <div v-if="loading" class="space-y-5">
-                    <div v-for="i in 4" :key="i" class="h-8 bg-gray-100 rounded-lg animate-pulse"></div>
+
+            <!-- Peringkat Beban Kerja -->
+            <div class="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 flex items-start justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-800">Peringkat Beban Kerja</h3>
+                        <p class="text-xs text-gray-400 mt-0.5">Jumlah sesi ditangani</p>
+                    </div>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#ED1F24]/8 text-[#ED1F24] border border-[#ED1F24]/15 uppercase tracking-wider shrink-0">
+                        {{ rows.length }} Staff
+                    </span>
                 </div>
-                <div v-else class="space-y-5">
-                    <div v-for="(r, i) in rows" :key="r.agent_id">
-                        <div class="flex items-center gap-3 mb-1.5">
-                            <span class="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0"
-                                :style="i === 0 ? 'background:#ED1F24;color:white' : i === 1 ? 'background:#f3f4f6;color:#374151' : 'background:#f9fafb;color:#9ca3af'"
-                            >#{{ i + 1 }}</span>
-                            <span class="text-sm font-semibold text-gray-700 flex-1 truncate">{{ r.agent_name }}</span>
-                            <div class="text-right shrink-0">
-                                <span class="text-sm font-bold text-gray-800">{{ r.total_sessions }}</span>
-                                <span class="text-xs text-gray-400 ml-1.5">sesi</span>
+                <div class="p-5 space-y-4">
+                    <div v-if="loading">
+                        <div v-for="i in 4" :key="i" class="h-7 bg-gray-100 rounded animate-pulse mb-3"></div>
+                    </div>
+                    <template v-else>
+                        <div v-for="(r, i) in rows" :key="r.agent_id">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold shrink-0"
+                                    :style="i === 0 ? 'background:#ED1F24;color:white' : i === 1 ? 'background:#f3f4f6;color:#374151' : 'background:#f9fafb;color:#9ca3af'"
+                                >#{{ i + 1 }}</span>
+                                <span class="text-xs font-semibold text-gray-700 flex-1 truncate">{{ r.agent_name }}</span>
+                                <span class="text-xs font-bold text-gray-500 tabular-nums shrink-0">{{ r.total_sessions }}</span>
+                            </div>
+                            <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-700"
+                                    :style="{ width: barWidth(r.total_sessions) + '%', background: paletteAt(i) }"></div>
                             </div>
                         </div>
-                        <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div class="h-full rounded-full transition-all duration-700"
-                                :style="{ width: barWidth(r.total_sessions) + '%', background: COLORS[i % COLORS.length] }"></div>
-                        </div>
-                    </div>
-                    <div v-if="!rows.length" class="text-center text-gray-400 text-sm py-8">Belum ada data di periode ini</div>
+                        <div v-if="!rows.length" class="text-center text-gray-400 text-sm py-8">Belum ada data di periode ini</div>
+                    </template>
                 </div>
             </div>
         </div>
@@ -244,13 +235,25 @@
 
 <script>
 import AdminLayout from '../../components/admin/AdminLayout.vue'
+import VueApexCharts from 'vue3-apexcharts'
 import axios from '@/axios.js'
+
+const CHART_BASE = {
+    chart: {
+        background: 'transparent',
+        fontFamily: 'inherit',
+        toolbar: { show: false },
+        animations: { enabled: true, easing: 'easeinout', speed: 600 },
+    },
+    grid: { borderColor: '#f3f4f6', strokeDashArray: 4 },
+    tooltip: { theme: 'light' },
+}
 
 const COLORS = ['#ED1F24', '#3B82F6', '#22C55E', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6', '#F97316']
 
 export default {
     name: 'ChatStaffReport',
-    components: { AdminLayout },
+    components: { AdminLayout, apexchart: VueApexCharts },
 
     data() {
         return {
@@ -288,29 +291,67 @@ export default {
             return [
                 {
                     label: 'Total Sesi', value: s.total_sessions ?? 0,
-                    icon: 'headset', iconBg: 'rgba(237,31,36,0.07)', iconColor: '#ED1F24', valueColor: 'text-[#ED1F24]',
+                    icon: 'headset', iconBg: 'rgba(237,31,36,0.07)', accent: '#ED1F24', valueColor: 'text-[#ED1F24]',
+                    sub: 'Seluruh sesi tertangani',
                 },
                 {
                     label: 'Staff Aktif', value: s.total_staff ?? 0,
-                    icon: 'users', iconBg: 'rgba(59,130,246,0.07)', iconColor: '#3B82F6',
+                    icon: 'users', iconBg: 'rgba(59,130,246,0.07)', accent: '#3B82F6',
+                    sub: 'Menangani sesi periode ini',
                 },
                 {
                     label: 'Avg Waktu Ambil', value: this.fmtDuration(s.avg_time_to_assign_seconds),
-                    icon: 'stopwatch', iconBg: 'rgba(245,158,11,0.07)', iconColor: '#F59E0B',
+                    icon: 'stopwatch', iconBg: 'rgba(245,158,11,0.07)', accent: '#F59E0B',
+                    sub: 'Sebelum sesi direspon',
                 },
                 {
                     label: 'Avg First Response', value: this.fmtDuration(s.avg_first_response_seconds),
-                    icon: 'bolt', iconBg: 'rgba(139,92,246,0.07)', iconColor: '#8B5CF6',
+                    icon: 'bolt', iconBg: 'rgba(139,92,246,0.07)', accent: '#8B5CF6',
+                    sub: 'Balasan pertama ke visitor',
                 },
                 {
                     label: 'Avg Response', value: this.fmtDuration(s.avg_response_seconds),
-                    icon: 'reply', iconBg: 'rgba(20,184,166,0.07)', iconColor: '#14B8A6',
+                    icon: 'reply', iconBg: 'rgba(20,184,166,0.07)', accent: '#14B8A6',
+                    sub: 'Rata-rata seluruh balasan',
                 },
                 {
                     label: 'Avg Rating', value: s.avg_rating ? `⭐ ${s.avg_rating}` : '-',
-                    icon: 'star', iconBg: 'rgba(34,197,94,0.07)', iconColor: '#22C55E',
+                    icon: 'star', iconBg: 'rgba(34,197,94,0.07)', accent: '#22C55E',
+                    sub: 'Dari rating visitor',
                 },
             ]
+        },
+
+        // ── Response Time Bar Chart ──────────────────────────────────────────
+        responseTimeSeries() {
+            const toMin = s => s === null || s === undefined ? 0 : +(s / 60).toFixed(1)
+            return [
+                { name: 'Waktu Ambil',    data: this.rows.map(r => toMin(r.avg_time_to_assign_seconds)) },
+                { name: 'First Response', data: this.rows.map(r => toMin(r.avg_first_response_seconds)) },
+                { name: 'Avg Response',   data: this.rows.map(r => toMin(r.avg_response_seconds)) },
+            ]
+        },
+        responseTimeOptions() {
+            return {
+                ...CHART_BASE,
+                chart: { ...CHART_BASE.chart, type: 'bar' },
+                colors: ['#F59E0B', '#8B5CF6', '#14B8A6'],
+                plotOptions: { bar: { borderRadius: 3, columnWidth: '60%' } },
+                xaxis: {
+                    categories: this.rows.map(r => r.agent_name),
+                    labels: { style: { fontSize: '10px', colors: '#9ca3af' } },
+                    axisBorder: { show: false }, axisTicks: { show: false },
+                },
+                yaxis: {
+                    labels: {
+                        style: { fontSize: '10px', colors: '#9ca3af' },
+                        formatter: v => v + 'm',
+                    },
+                },
+                dataLabels: { enabled: false },
+                legend: { position: 'top', fontSize: '11px', labels: { colors: '#6b7280' }, markers: { radius: 4 } },
+                tooltip: { theme: 'light', y: { formatter: v => v + ' menit' } },
+            }
         },
     },
 
@@ -342,6 +383,10 @@ export default {
         barWidth(value) {
             const max = Math.max(...this.rows.map(r => r.total_sessions), 1)
             return Math.round((value / max) * 100)
+        },
+
+        paletteAt(i) {
+            return COLORS[i % COLORS.length]
         },
 
         durationBadgeClass(seconds, goodUnder, warnUnder) {
