@@ -486,6 +486,84 @@
             </transition>
         </div>
 
+        <!-- ═══════════════════════════════════════════
+             MODAL — Tutup Sesi Chat (enterprise style)
+        ═══════════════════════════════════════════ -->
+        <transition name="modal-fade">
+            <div v-if="showCloseModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <!-- Backdrop -->
+                <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" @click="cancelCloseModal"></div>
+
+                <!-- Modal card -->
+                <div class="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
+
+                    <!-- Header -->
+                    <div class="relative px-6 py-5 overflow-hidden" style="background: linear-gradient(135deg, #ED1F24 0%, #B01419 60%, #8B0F13 100%);">
+                        <div class="absolute -top-6 -right-6 w-32 h-32 rounded-full opacity-10" style="background: white;"></div>
+                        <div class="relative flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-white">Tutup Sesi Chat</h3>
+                                <p class="text-xs text-red-200 mt-0.5">{{ activeSession?.guest_name || activeSession?.customer_name || 'Guest' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="px-6 py-5">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">Pilih Alasan Cepat</p>
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <button
+                                v-for="preset in closeReasonPresets"
+                                :key="preset"
+                                type="button"
+                                @click="closeReason = preset"
+                                :class="['text-xs font-semibold px-3 py-2 rounded-xl border text-left transition-all',
+                                    closeReason === preset
+                                        ? 'border-[#ED1F24] bg-red-50 text-[#ED1F24]'
+                                        : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50']"
+                            >{{ preset }}</button>
+                        </div>
+
+                        <label class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 block">Detail Alasan</label>
+                        <textarea
+                            v-model="closeReason"
+                            rows="3"
+                            placeholder="Tulis atau lengkapi alasan menutup sesi..."
+                            class="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm resize-none focus:outline-none focus:border-[#ED1F24] transition-colors bg-gray-50/50"
+                        ></textarea>
+                        <p v-if="closeModalError" class="text-xs text-red-500 font-semibold mt-2">{{ closeModalError }}</p>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="px-6 py-4 bg-gray-50/60 border-t border-gray-100 flex items-center justify-end gap-2.5">
+                        <button
+                            type="button"
+                            @click="cancelCloseModal"
+                            :disabled="closingSession"
+                            class="text-xs font-semibold px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-100 transition-all disabled:opacity-50"
+                        >Batal</button>
+                        <button
+                            type="button"
+                            @click="confirmCloseSession"
+                            :disabled="closingSession"
+                            class="flex items-center gap-2 text-xs font-semibold px-4 py-2.5 rounded-xl bg-[#ED1F24] hover:bg-[#C81A1E] text-white transition-all disabled:opacity-60 shadow-sm"
+                        >
+                            <svg v-if="closingSession" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            {{ closingSession ? 'Menutup...' : 'Tutup Sesi' }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
     </AdminLayout>
 </template>
 
@@ -540,6 +618,18 @@ export default {
                 'Terima kasih sudah menghubungi kami!',
                 'Maaf atas ketidaknyamanannya.',
                 'Pesanan Anda sedang diproses.',
+            ],
+
+            // Modal tutup sesi
+            showCloseModal:  false,
+            closeReason:     '',
+            closeModalError: '',
+            closingSession:  false,
+            closeReasonPresets: [
+                'Selesai dibantu',
+                'Tidak ada respon',
+                'Pertanyaan sudah terjawab',
+                'Spam / tidak relevan',
             ],
         }
     },
@@ -889,18 +979,43 @@ export default {
             e.target.value = ''
         },
 
-        async closeSession() {
-            const reason = prompt('Alasan menutup sesi (wajib):')
-            if (!reason?.trim()) return
+        // Buka modal tutup sesi (menggantikan prompt() bawaan browser)
+        closeSession() {
+            this.closeReason     = ''
+            this.closeModalError = ''
+            this.showCloseModal  = true
+        },
+
+        cancelCloseModal() {
+            if (this.closingSession) return
+            this.showCloseModal  = false
+            this.closeReason     = ''
+            this.closeModalError = ''
+        },
+
+        async confirmCloseSession() {
+            const reason = this.closeReason.trim()
+            if (!reason) {
+                this.closeModalError = 'Alasan wajib diisi.'
+                return
+            }
+            this.closingSession  = true
+            this.closeModalError = ''
             try {
-                await axios.patch(`/chat/sessions/${this.activeSession.uuid}/close`, { reason: reason.trim() })
-                this.activeSession = { ...this.activeSession, status: 'closed', close_reason: reason.trim() }
+                await axios.patch(`/chat/sessions/${this.activeSession.uuid}/close`, { reason })
+                this.activeSession = { ...this.activeSession, status: 'closed', close_reason: reason }
                 const idx = this.sessions.findIndex(s => s.uuid === this.activeSession.uuid)
                 if (idx > -1) {
                     this.sessions[idx].status = 'closed'
-                    this.sessions[idx].close_reason = reason.trim()
+                    this.sessions[idx].close_reason = reason
                 }
-            } catch { alert('Gagal menutup sesi') }
+                this.showCloseModal = false
+                this.closeReason    = ''
+            } catch {
+                this.closeModalError = 'Gagal menutup sesi. Coba lagi.'
+            } finally {
+                this.closingSession = false
+            }
         },
 
         async reopenSession() {
@@ -999,4 +1114,11 @@ export default {
 .slide-panel-leave-active { transition: all .15s ease-in; }
 .slide-panel-enter-from,
 .slide-panel-leave-to     { opacity: 0; transform: translateX(16px); }
+
+.modal-fade-enter-active { transition: all .18s ease-out; }
+.modal-fade-leave-active { transition: all .12s ease-in; }
+.modal-fade-enter-from,
+.modal-fade-leave-to     { opacity: 0; }
+.modal-fade-enter-from .relative.w-full.max-w-md,
+.modal-fade-leave-to .relative.w-full.max-w-md { transform: scale(.96) translateY(4px); }
 </style>

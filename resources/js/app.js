@@ -74,7 +74,11 @@ import {
   faGlobe,
   faEye,
   faArrowRight,
-  faArrowRightFromBracket
+  faArrowRightFromBracket,
+  faHeadset,
+  faStopwatch,
+  faBolt,
+  faReply
 } from '@fortawesome/free-solid-svg-icons'
 
 
@@ -122,7 +126,11 @@ library.add(
   faSearch,
   faGlobe,
   faEye,
-  faArrowRightFromBracket
+  faArrowRightFromBracket,
+  faHeadset,
+  faStopwatch,
+  faBolt,
+  faReply
 )
 const head = createHead()
 const pinia = createPinia()
