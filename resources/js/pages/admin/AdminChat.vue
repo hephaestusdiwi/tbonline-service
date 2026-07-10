@@ -527,7 +527,6 @@ export default {
             sending:         false,
             showDetailPanel: false,
             sessionLogs:     [],
-            pendingCount: 0,
 
             customerTyping: false,
             typingTimer:    null,
@@ -573,6 +572,10 @@ export default {
 
         activeTabLabel() {
             return this.tabs.find(t => t.value === this.activeTab)?.label || ''
+        },
+
+        pendingCount() {
+            return this.sessions.filter(s => s.status === 'queued').length
         },
 
         heroStrips() {
@@ -629,7 +632,6 @@ export default {
             try {
                 const { data } = await axios.get('/chat/sessions')
                 this.sessions = data.data || data
-                this.pendingCount = this.sessions.filter(s => s.status === 'queued').length
                 this.sessions
                     .filter(s => ['queued', 'active'].includes(s.status))
                     .forEach(s => this.subscribeSessionChannel(s.uuid))
@@ -834,9 +836,9 @@ export default {
             if (!window.Echo) return
             window.Echo.channel('queue.admin')
                 .listen('.customer.queued', (e) => {
-                    if (!this.sessions.find(s => s.uuid === e.session?.uuid)) {
+                    if (e.session?.uuid && !this.sessions.find(s => s.uuid === e.session.uuid)) {
                         this.sessions.unshift(e.session)
-                        this.pendingCount++
+                        this.subscribeSessionChannel(e.session.uuid)   // ← baris kunci, biar status-nya update real-time
                         this.playNotifSound()
                         this.startTitleBlink()
                         if (Notification.permission === 'granted' && !document.hasFocus()) {
@@ -976,7 +978,6 @@ export default {
         document.title = 'Live Chat - Two Brothers Vape System'
 
         await this.fetchSessions()
-        this.fetchPendingCount()
         this.subscribeAdminChannel()
         this.startPolling()
 
