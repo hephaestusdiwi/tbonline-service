@@ -6,14 +6,14 @@ use App\Models\ChatSession;
 use App\Services\Queue\AgentAssignmentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable; // ← tambah ini
+use Illuminate\Foundation\Bus\Dispatchable; 
 use Illuminate\Queue\{InteractsWithQueue, SerializesModels};
 
 class AssignAgentJob implements ShouldQueue
 {
-    use Dispatchable, Queueable, InteractsWithQueue, SerializesModels; // ← tambah Dispatchable
+    use Dispatchable, Queueable, InteractsWithQueue, SerializesModels; 
 
-    public int $tries  = 3;  // ← fix typo 'thies' → 'tries'
+    public int $tries  = 3;  
     public int $backoff = 10;
 
     public function __construct(private ChatSession $session) {}

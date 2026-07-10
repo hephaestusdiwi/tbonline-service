@@ -31,16 +31,29 @@ class MessageController extends Controller
 
         $sender = auth('sanctum')->user();
 
-        if ($sender && $sender->hasRole('staff')) {
+        if ($sender && $sender->hasAnyRole(['admin', 'manager', 'staff'])) {
             $isAssignee = $session->agents()
                 ->wherePivot('agent_id', $sender->id)
                 ->wherePivot('is_active', true)
                 ->exists();
 
             if (!$isAssignee) {
-                return response()->json(['message' => 'Anda hanya bisa membaca session ini'], 403);
+                $hasOtherPrimary = $session->agents()
+                    ->wherePivot('role', 'primary')
+                    ->wherePivot('is_active', true)
+                    ->exists();
+
+                // Kalau session udah dipegang orang lain, staff dilarang nyerobot.
+                // Manager/admin boleh (misal buat backup/supervisi), tapi tetep gak reset assignment orang lain.
+                if ($hasOtherPrimary && $sender->hasRole('staff')) {
+                    return response()->json(['message' => 'Anda hanya bisa membaca session ini'], 403);
+                }
+
+                if (!$hasOtherPrimary) {
+                    app(\App\Services\Queue\AgentAssignmentService::class)->assign($session, $sender);
+                }
             }
-        }        
+        }
 
         $message = $this->chatService->sendMessage($session, $sender, $data);
 
