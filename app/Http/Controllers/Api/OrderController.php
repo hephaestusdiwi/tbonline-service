@@ -23,7 +23,7 @@ class OrderController extends Controller
     {
         $query = Order::with(['items', 'branch'])->latest();
 
-        if ($request->status && in_array($request->status, ['pending', 'success', 'cancelled'])) {
+        if ($request->status && in_array($request->status, Order::STATUSES)) {
             $query->where('status', $request->status);
         }
 
@@ -288,15 +288,21 @@ class OrderController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status'        => 'required|in:success,cancelled',
+            'status'        => 'required|in:' . implode(',', Order::STATUSES),
             'cancel_reason' => 'nullable|string|required_if:status,cancelled',
         ]);
 
         $order = Order::with('items')->lockForUpdate()->findOrFail($id);
 
-        if ($order->status !== 'pending') {
+        if ($order->isFinal()) {
             return response()->json([
                 'message' => "Order ini sudah berstatus '{$order->status}', tidak bisa diubah lagi.",
+            ], 422);
+        }
+
+        if ($order->status === $request->status) {
+            return response()->json([
+                'message' => "Order sudah berstatus '{$request->status}'.",
             ], 422);
         }
 
@@ -307,9 +313,7 @@ class OrderController extends Controller
             'confirmed_at'  => now(),
         ]);
 
-        // ── Loyalty Point ─────────────────────────────────────────────────────
         if ($request->status === 'success') {
-            // Order dikonfirmasi → earn point ke customer
             LoyaltyPoint::earn(
                 phone:         $order->customer_phone,
                 subtotal:      (int) $order->subtotal,
@@ -319,20 +323,14 @@ class OrderController extends Controller
         } elseif ($request->status === 'cancelled') {
             LoyaltyPoint::expireByOrder($order->id);
 
-            // Kembalikan stok
             foreach ($order->items as $item) {
                 if ($item->variant_id) {
-                    DB::table('product_variants')
-                        ->where('id', $item->variant_id)
-                        ->increment('stock_qty', $item->qty);
+                    DB::table('product_variants')->where('id', $item->variant_id)->increment('stock_qty', $item->qty);
                 } elseif ($item->product_id) {
-                    DB::table('products')
-                        ->where('id', $item->product_id)
-                        ->increment('stock_qty', $item->qty);
+                    DB::table('products')->where('id', $item->product_id)->increment('stock_qty', $item->qty);
                 }
             }
         }
-        // ─────────────────────────────────────────────────────────────────────
 
         $order->refresh();
 
@@ -441,7 +439,7 @@ class OrderController extends Controller
             'customer_email'      => 'nullable|email',
             'notes'               => 'nullable|string',
             'fulfillment_type'    => 'required|in:delivery,pickup',
-            'status'              => 'required|in:pending,success,cancelled',
+            'status'              => 'required|in:' . implode(',', \App\Models\Order::STATUSES),
             'cancel_reason'       => 'nullable|string|required_if:status,cancelled',
             'discount_amount'     => 'nullable|integer|min:0',
             'items'               => 'required|array|min:1',
@@ -597,6 +595,7 @@ class OrderController extends Controller
         $success      = Order::where('status', 'success')->count();
         $cancelled    = Order::where('status', 'cancelled')->count();
         $pending      = Order::where('status', 'pending')->count();
+        $diproses     = Order::where('status', 'diproses')->count();
         $totalRevenue = Order::where('status', 'success')->sum('total_price');
 
         $activeProducts = Product::where('published', 1)->count();
@@ -683,6 +682,7 @@ class OrderController extends Controller
                 'total_success'   => $success,
                 'total_cancelled' => $cancelled,
                 'total_pending'   => $pending,
+                'total_diproses'  => $diproses,
                 'total_revenue'   => $totalRevenue,
                 'success_rate'    => $total > 0 ? round(($success / $total) * 100, 1) : 0,
                 'active_products' => $activeProducts,
@@ -692,6 +692,7 @@ class OrderController extends Controller
                 'success'   => $success,
                 'cancelled' => $cancelled,
                 'pending'   => $pending,
+                'diproses' => $diproses,
             ],
             'top_couriers'  => $topCouriers,
             'top_products'  => $topProducts,

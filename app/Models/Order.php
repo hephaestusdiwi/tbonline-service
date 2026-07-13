@@ -33,7 +33,9 @@ class Order extends Model
     ];
 
     // Status yang boleh direvisi
-    const REVISABLE_STATUSES = ['pending', 'confirmed'];
+    const STATUSES                  = ['pending', 'diproses', 'success', 'cancelled'];
+    const FINAL_STATUSES            = ['success', 'cancelled'];
+    const REVISABLE_STATUSES        = ['pending', 'diproses'];
 
     public function items()
     {
@@ -58,6 +60,11 @@ class Order extends Model
     public function isRevisable(): bool
     {
         return in_array($this->status, self::REVISABLE_STATUSES);
+    }
+
+    public function isFinal(): bool
+    {
+        return in_array($this->status, self::FINAL_STATUSES);
     }
 
     public function confirmer()
