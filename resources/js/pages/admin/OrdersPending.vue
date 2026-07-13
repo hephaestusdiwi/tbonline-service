@@ -58,6 +58,10 @@
                         <span><strong>{{ selectedIds.length }}</strong> order dipilih</span>
                     </div>
                     <div class="or-bulk-bar__right">
+                        <button @click="bulkDiproses" class="or-btn or-btn--sm or-btn--blue">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            Tandai Diproses
+                        </button>
                         <button @click="bulkSuccess" class="or-btn or-btn--sm or-btn--primary">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                             Tandai Sukses
@@ -309,7 +313,7 @@
         <!-- MODAL UPDATE STATUS -->
         <Transition name="or-modal">
             <div v-if="showStatusModal" class="or-modal-backdrop" @click.self="showStatusModal = false">
-                <div class="or-modal or-modal--sm">
+                <div class="or-modal or-modal--md">
                     <div class="or-modal__header">
                         <div class="or-modal__header-left">
                             <div class="or-modal__icon or-modal__icon--blue">
@@ -328,6 +332,11 @@
                             <div class="or-field">
                                 <label class="or-label">Pilih Status Baru <span class="or-label__req">*</span></label>
                                 <div class="or-status-options">
+                                    <label class="or-status-opt" :class="{ 'or-status-opt--diproses': statusForm.status === 'diproses' }">
+                                        <input type="radio" v-model="statusForm.status" value="diproses" class="or-status-radio"/>
+                                        <div class="or-status-opt__icon or-status-opt__icon--diproses"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                                        <div class="or-status-opt__text"><span class="or-status-opt__label">Diproses</span><span class="or-status-opt__desc">Pesanan sedang diproses</span></div>
+                                    </label>
                                     <label class="or-status-opt" :class="{ 'or-status-opt--success': statusForm.status === 'success' }">
                                         <input type="radio" v-model="statusForm.status" value="success" class="or-status-radio"/>
                                         <div class="or-status-opt__icon or-status-opt__icon--success"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
@@ -348,7 +357,7 @@
                     </div>
                     <div class="or-modal__footer">
                         <button @click="showStatusModal = false" class="or-btn or-btn--ghost">Batal</button>
-                        <button @click="submitStatus" :disabled="statusLoading" :class="['or-btn', statusForm.status === 'cancelled' ? 'or-btn--danger' : 'or-btn--primary']">
+                        <button @click="submitStatus" :disabled="statusLoading || !statusForm.status" :class="['or-btn', statusForm.status === 'cancelled' ? 'or-btn--danger' : (statusForm.status === 'diproses' ? 'or-btn--blue' : 'or-btn--primary')]">
                             <svg v-if="statusLoading" class="or-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
                             {{ statusLoading ? 'Menyimpan...' : 'Simpan Status' }}
                         </button>
@@ -478,7 +487,7 @@ export default {
             search: '', filterKurir: '', sortBy: 'newest', perPage: 15, searchTimeout: null,
             selectedIds: [], showBulkCancelModal: false, bulkCancelReason: '', bulkLoading: false, bulkError: '',
             showDetail: false, selectedOrder: null,
-            showStatusModal: false, statusForm: { status: 'success', cancel_reason: '' }, statusLoading: false, statusError: '',
+            showStatusModal: false, statusForm: { status: '', cancel_reason: '' }, statusLoading: false, statusError: '',
             showDeleteModal: false, orderToDelete: null, deleteLoading: false, deleteError: '',
             showRequestDeleteModal: false, orderToRequestDelete: null, requestDeleteForm: { reason: '' }, requestDeleteLoading: false, requestDeleteError: '',
             showReviseModal: false, orderToRevise: null,
@@ -492,6 +501,7 @@ export default {
                 trash: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`,
                 flag:  `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,
                 wa:    `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.118 1.528 5.851L.057 23.547a.75.75 0 0 0 .916.919l5.808-1.517A11.943 11.943 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.75a9.708 9.708 0 0 1-4.953-1.354l-.355-.21-3.678.961.98-3.589-.23-.37A9.718 9.718 0 0 1 2.25 12C2.25 6.615 6.615 2.25 12 2.25S21.75 6.615 21.75 12 17.385 21.75 12 21.75z"/></svg>`,
+                clock: `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
             },
         }
     },
@@ -555,7 +565,7 @@ export default {
             }
             groups.push(info)
             if (order.status === 'pending') {
-                const ops = [{ key: 'status', label: 'Update Status', desc: 'Tandai sukses atau batalkan', icon: s.check, handler: () => this.openUpdateStatus(order) }]
+                const ops = [{ key: 'status', label: 'Update Status', desc: 'Ubah status pesanan', icon: s.check, handler: () => this.openUpdateStatus(order) }]
                 if (this.canRevise) ops.push({ key: 'revise', label: 'Revisi Item', desc: 'Edit produk, qty, atau harga', icon: s.edit, badge: order.revision_count > 0 ? `Rev.${order.revision_count}` : null, handler: () => this.openRevise(order) })
                 groups.push(ops)
             }
@@ -591,6 +601,7 @@ export default {
         toggleSelect(id)    { const idx = this.selectedIds.indexOf(id); idx === -1 ? this.selectedIds.push(id) : this.selectedIds.splice(idx, 1) },
         toggleSelectAll()   { this.isAllSelected ? this.selectedIds = [] : this.selectedIds = this.orders.map(o => o.id) },
         bulkSuccess()       { if (!confirm(`Tandai ${this.selectedIds.length} order sebagai Sukses?`)) return; this.submitBulkStatus('success', '') },
+        bulkDiproses()      { if (!confirm(`Tandai ${this.selectedIds.length} order sebagai Diproses?`)) return; this.submitBulkStatus('diproses', '') },
         bulkCancel()        { this.bulkCancelReason = ''; this.bulkError = ''; this.showBulkCancelModal = true },
         async submitBulkCancel() { if (!this.bulkCancelReason.trim()) { this.bulkError = 'Alasan pembatalan wajib diisi.'; return }; await this.submitBulkStatus('cancelled', this.bulkCancelReason); this.showBulkCancelModal = false },
         async submitBulkStatus(status, cancelReason) {
@@ -603,8 +614,8 @@ export default {
             try { const res = await axios.get(`/orders/${order.id}`); this.selectedOrder = res.data?.data || order } catch { this.selectedOrder = order }
             this.showDetail = true
         },
-        openUpdateStatus(order)      { this.selectedOrder = order; this.statusForm = { status: 'success', cancel_reason: '' }; this.statusError = ''; this.showStatusModal = true },
-        openUpdateStatusFromDetail() { this.statusForm = { status: 'success', cancel_reason: '' }; this.statusError = ''; this.showDetail = false; this.showStatusModal = true },
+        openUpdateStatus(order)      { this.selectedOrder = order; this.statusForm = { status: '', cancel_reason: '' }; this.statusError = ''; this.showStatusModal = true },
+        openUpdateStatusFromDetail() { this.statusForm = { status: '', cancel_reason: '' }; this.statusError = ''; this.showDetail = false; this.showStatusModal = true },
         async submitStatus() {
             if (!this.statusForm.status) { this.statusError = 'Pilih status terlebih dahulu.'; return }
             if (this.statusForm.status === 'cancelled' && !this.statusForm.cancel_reason.trim()) { this.statusError = 'Alasan pembatalan wajib diisi.'; return }
@@ -864,6 +875,13 @@ export default {
 .or-status-opt__desc  { font-size: 11px; color: #9ca3af; }
 .or-status-opt--success   .or-status-opt__label { color: #15803d; }
 .or-status-opt--cancelled .or-status-opt__label { color: #b91c1c; }
+.or-status-opt--diproses { border-color: #3b82f6; background: #eff6ff; }
+.or-status-opt__icon--diproses { background: #dbeafe; color: #2563eb; }
+.or-status-opt--diproses .or-status-opt__icon--diproses { background: #3b82f6; color: #fff; }
+.or-status-opt--diproses .or-status-opt__label { color: #1d4ed8; }
+
+.or-btn--blue { background: #2563eb; color: #fff; box-shadow: 0 1px 3px rgba(37,99,235,.3); }
+.or-btn--blue:hover:not(:disabled) { background: #1d4ed8; }
 .or-textarea { padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 13px; color: #111827; resize: vertical; outline: none; font-family: inherit; width: 100%; box-sizing: border-box; transition: border-color .15s, box-shadow .15s; background: #fff; line-height: 1.6; }
 .or-textarea:focus { border-color: #ED1F24; box-shadow: 0 0 0 3px rgba(237,31,36,.08); }
 .or-info-box { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; font-size: 13px; color: #1e40af; line-height: 1.5; }

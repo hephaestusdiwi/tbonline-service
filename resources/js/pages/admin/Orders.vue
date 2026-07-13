@@ -384,7 +384,7 @@
         <!-- ===== MODAL UPDATE STATUS ===== -->
         <Transition name="or-modal">
             <div v-if="showStatusModal" class="or-modal-backdrop" :style="statusLoading ? 'pointer-events:none' : ''">
-                <div class="or-modal or-modal--sm">
+                <div class="or-modal or-modal--md">
                     <div class="or-modal__header">
                         <div class="or-modal__header-left">
                             <div class="or-modal__icon or-modal__icon--blue">
