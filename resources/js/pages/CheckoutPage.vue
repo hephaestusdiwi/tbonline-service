@@ -888,16 +888,44 @@ export default {
       return Object.keys(e).length === 0
     },
 
+    buildFulfillmentNote() {
+      if (this.fulfillmentType === 'pickup') {
+        const b = this.selectedBranch
+        return (
+          `Metode: Ambil di Tempat\n` +
+          `Cabang: ${b?.name || '-'}\n` +
+          `Alamat Cabang: ${b?.address || '-'}`
+        )
+      }
+
+      if (this.isCustomShipping) {
+        return (
+          `Metode: Kirim (Request)\n` +
+          `Alamat: ${this.form.address}\n` +
+          `Catatan Pengiriman: ${this.customShippingNote || '-'}`
+        )
+      }
+
+      const d = this.selectedDestination
+      const s = this.selectedShipping
+      return (
+        `Metode: Kirim dengan ${s?.code ? s.code.toUpperCase() : '-'} ${s?.service || ''} (est. ${s?.etd || '-'})\n` +
+        `Alamat: ${this.form.address}${d?.label ? `, ${d.label}` : ''}`
+      )
+    },
+
     buildOrderChatMessage(orderId) {
       const invoiceUrl = `${window.location.origin}/i/${orderId}`
       const itemsList = cartStore.state.items
         .map(item => `- ${item.name}${item.variant_names ? ` (${item.variant_names})` : ''} x${item.qty}`)
         .join('\n')
+      const fulfillmentNote = this.buildFulfillmentNote()
 
       return (
         `Halo, saya baru saja melakukan pemesanan.\n` +
         `Invoice: #${orderId}\n\n` +
         `${itemsList}\n\n` +
+        `${fulfillmentNote}\n\n` +
         `Total: ${this.formatPrice(this.grandTotal)}\n` +
         `Link invoice: ${invoiceUrl}\n\n` +
         `Mohon diproses ya 🙏`
