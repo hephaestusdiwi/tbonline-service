@@ -1,7 +1,8 @@
 <template>
     <div
         class="relative w-full overflow-hidden bg-gray-100
-                h-[55vh] sm:h-[65vh] md:h-[75vh] lg:h-[75vh]"
+                h-auto sm:h-[65vh] md:h-[75vh] lg:h-[75vh]"
+        :style="{ aspectRatio: currentRatio }"
         >
 
         <!-- Loading -->
@@ -37,6 +38,7 @@
                         :alt="slider.title"
                         class="absolute inset-0 w-full h-full"
                         style="object-fit: cover; object-position: center;"
+                        @load="onMediaLoad($event, slider, 'img')"
                     />
 
                     <!-- Video -->
@@ -51,6 +53,7 @@
                         playsinline
                         preload="auto"
                         @ended="next"
+                        @loadedmetadata="onMediaLoad($event, slider, 'video')"
                     />
                 </div>
             </div>
@@ -139,11 +142,18 @@ export default {
             isPlaying: true,
             progress: 0,
             duration: 4000,
+            ratios: {},          
+            defaultRatio: 16 / 9 
         }
     },
     computed: {
         progressWidth() {
             return (this.progress / this.duration) * 100
+        },
+        currentRatio() {
+            const current = this.sliders[this.currentIndex]
+            if (!current) return this.defaultRatio
+            return this.ratios[current.id] || this.defaultRatio
         }
     },
     watch: {
@@ -226,6 +236,14 @@ export default {
             } else {
                 this.stopAutoPlay()
             }
+        },
+
+        onMediaLoad(e, slider, type) {
+            const el = e.target
+            const ratio = type === 'video'
+                ? el.videoWidth / el.videoHeight
+                : el.naturalWidth / el.naturalHeight
+            if (ratio) this.ratios[slider.id] = ratio
         }
     }
 }
