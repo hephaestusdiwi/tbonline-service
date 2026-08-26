@@ -1015,8 +1015,14 @@
                                     <span v-else class="text-[9px] font-bold text-gray-400 text-center leading-tight">{{ courier.name }}</span>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-semibold text-gray-700 truncate">{{ courier.name }}</p>
-                                    <p class="text-[11px] text-gray-400 truncate">{{ courier.logo || '— tanpa logo —' }}</p>
+                                    <p class="text-sm font-semibold text-gray-700 truncate">
+                                        {{ courier.name }}
+                                        <span v-if="courier.service" class="text-gray-400 font-normal">— {{ courier.service }}</span>
+                                    </p>
+                                    <p class="text-[11px] text-gray-400 truncate">
+                                        <span v-if="courier.code" class="uppercase font-semibold text-gray-500">{{ courier.code }}</span>
+                                        <span v-else class="text-amber-500">tanpa kode — tidak muncul di revisi order</span>
+                                    </p>
                                 </div>
                                 <span class="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 border"
                                     :class="courier.active ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-gray-100 text-gray-400 border-gray-200'">
@@ -1037,9 +1043,22 @@
                                 <p class="text-xs font-bold text-[#ED1F24]">Tambah Kurir Baru</p>
                                 <div>
                                     <label class="block text-[10px] text-gray-400 uppercase tracking-wider mb-1">Nama Kurir *</label>
-                                    <input v-model="shipping.newCourier.name" type="text" placeholder="Contoh: Wahana"
+                                    <input v-model="shipping.newCourier.name" type="text" placeholder="Contoh: JNE Reguler"
                                         class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:border-[#ED1F24] transition-colors" />
                                 </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-[10px] text-gray-400 uppercase tracking-wider mb-1">Kode Kurir</label>
+                                        <input v-model="shipping.newCourier.code" type="text" placeholder="jne, jnt, sicepat..."
+                                            class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:border-[#ED1F24] transition-colors" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] text-gray-400 uppercase tracking-wider mb-1">Layanan</label>
+                                        <input v-model="shipping.newCourier.service" type="text" placeholder="REG, YES, OKE..."
+                                            class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:border-[#ED1F24] transition-colors" />
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-gray-400 -mt-1">Isi kode kurir agar kurir ini muncul di pilihan dropdown saat revisi pesanan.</p>
                                 <div>
                                     <label class="block text-[10px] text-gray-400 uppercase tracking-wider mb-1">Logo Kurir</label>
                                     <div v-if="!shipping.newCourier.logoFile"
@@ -1265,7 +1284,7 @@ export default {
                 success: '',
                 couriers: [],
                 addingNew: false,
-                newCourier: { name: '', logoFile: null, logoPreview: null, logoDragging: false, uploading: false },
+                newCourier: { name: '', code: '', service: '', logoFile: null, logoPreview: null, logoDragging: false, uploading: false },
             },
 
             rajaongkirCouriers: {
@@ -1395,13 +1414,17 @@ export default {
         },
         cancelAddCourier() {
             this.shipping.addingNew = false; this.shipping.error = ''
-            this.shipping.newCourier = { name: '', logoFile: null, logoPreview: null, logoDragging: false, uploading: false }
+            this.shipping.newCourier = { name: '', code: '', service: '', logoFile: null, logoPreview: null, logoDragging: false, uploading: false }
             if (this.$refs.courierLogoInput) this.$refs.courierLogoInput.value = ''
         },
         async addCourier() {
-            const name = this.shipping.newCourier.name.trim()
+            const name    = this.shipping.newCourier.name.trim()
+            const code    = this.shipping.newCourier.code.trim().toLowerCase()
+            const service = this.shipping.newCourier.service.trim().toUpperCase()
             if (!name) return
-            if (this.shipping.couriers.find(c => c.name.toLowerCase() === name.toLowerCase())) { this.shipping.error = `Kurir "${name}" sudah ada.`; return }
+            if (this.shipping.couriers.find(c => c.name.toLowerCase() === name.toLowerCase() && (c.service || '').toUpperCase() === service)) {
+                this.shipping.error = `Kurir "${name}"${service ? ' - ' + service : ''} sudah ada.`; return
+            }
             let logoUrl = ''
             if (this.shipping.newCourier.logoFile) {
                 this.shipping.newCourier.uploading = true; this.shipping.error = ''
@@ -1412,7 +1435,7 @@ export default {
                 } catch (e) { this.shipping.error = e.response?.data?.message ?? 'Gagal mengupload logo.'; this.shipping.newCourier.uploading = false; return }
                 finally { this.shipping.newCourier.uploading = false }
             }
-            this.shipping.couriers.push({ name, logo: logoUrl, active: true })
+            this.shipping.couriers.push({ name, code, service, logo: logoUrl, active: true })
             this.cancelAddCourier()
         },
         removeCourier(index) { this.shipping.couriers.splice(index, 1) },

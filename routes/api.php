@@ -201,6 +201,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/orders/{id}/revise',   [OrderRevisionController::class, 'revise'])        ->middleware('can:orders_revise');
     Route::get  ('/orders/{id}/revisions',[OrderRevisionController::class, 'history'])        ->middleware('can:orders_revise');
     Route::get  ('/orders/products/search', [OrderRevisionController::class, 'searchProducts']);
+    // Opsi kurir untuk dropdown revisi order — dari site settings "Jasa Pengiriman", BUKAN dari RajaOngkir
+    Route::get  ('/orders/revise/couriers', [SiteSettingController::class, 'getRevisionCouriers'])->middleware('can:orders_revise_courier');
 
     // ── Roles ──
     Route::get   ('/roles',      [RoleController::class, 'index'])  ->middleware('can:roles_view');

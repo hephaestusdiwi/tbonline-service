@@ -241,35 +241,30 @@
                         </div>
 
                         <div class="or-revise-courier-fields">
-                            <div class="or-field">
-                                <label class="or-label">Kode Kurir</label>
-                                <input
-                                    v-model="form.shipping_courier"
-                                    type="text"
-                                    class="or-input"
-                                    placeholder="jne, jnt, sicepat..."
-                                    @input="markDirty"
-                                />
-                            </div>
-                            <div class="or-field">
-                                <label class="or-label">Layanan</label>
-                                <input
-                                    v-model="form.shipping_service"
-                                    type="text"
-                                    class="or-input"
-                                    placeholder="REG, YES, OKE..."
-                                    @input="markDirty"
-                                />
-                            </div>
-                            <div class="or-field">
-                                <label class="or-label">Nama Kurir</label>
-                                <input
-                                    v-model="form.shipping_name"
-                                    type="text"
-                                    class="or-input"
-                                    placeholder="JNE Regular..."
-                                    @input="markDirty"
-                                />
+                            <div class="or-field or-field--grow">
+                                <label class="or-label">
+                                    Kurir & Layanan <span class="or-label__req">*</span>
+                                </label>
+                                <select
+                                    :value="selectedCourierKey"
+                                    @change="onCourierOptionChange($event.target.value)"
+                                    class="or-input or-select"
+                                    :disabled="courierOptionsLoading"
+                                >
+                                    <option value="">
+                                        {{ courierOptionsLoading ? 'Memuat jasa pengiriman...' : '-- Pilih jasa pengiriman --' }}
+                                    </option>
+                                    <option
+                                        v-for="opt in courierOptions"
+                                        :key="opt.code + '|' + opt.service"
+                                        :value="opt.code + '|' + opt.service"
+                                    >
+                                        {{ opt.name }}<template v-if="opt.service"> — {{ opt.service }}</template> ({{ opt.code.toUpperCase() }})
+                                    </option>
+                                </select>
+                                <p v-if="!courierOptionsLoading && courierOptions.length === 0" class="or-help-text">
+                                    Belum ada jasa pengiriman berkode di Site Settings → Jasa Pengiriman. Tambahkan dulu di sana.
+                                </p>
                             </div>
                             <div class="or-field">
                                 <label class="or-label">Ongkir (Rp)</label>
@@ -486,6 +481,11 @@ export default {
             _keyCounter:  0,
             // Map debounce timers per item index
             _searchTimers: {},
+
+            // Opsi kurir untuk dropdown revisi — dari Site Settings > Jasa Pengiriman
+            // (BUKAN dari RajaOngkir)
+            courierOptions:        [],
+            courierOptionsLoading: false,
         }
     },
 
@@ -501,6 +501,12 @@ export default {
 
         hasStockWarning() {
             return this.form.items.some(i => i._stockWarn)
+        },
+
+        // Value select saat ini, format "kode|layanan"
+        selectedCourierKey() {
+            if (!this.form.shipping_courier) return ''
+            return `${this.form.shipping_courier}|${this.form.shipping_service || ''}`
         },
     },
 
@@ -560,6 +566,42 @@ export default {
 
             this.originalItems = JSON.parse(JSON.stringify(items))
             this.originalTotal = this.order.total_price || 0
+
+            if (this.canChangeCourier) {
+                this.fetchCourierOptions()
+            }
+        },
+
+        // ─── Kurir (dari Site Settings > Jasa Pengiriman) ───────────────────────
+
+        async fetchCourierOptions() {
+            this.courierOptionsLoading = true
+            try {
+                const res = await axios.get('/orders/revise/couriers')
+                this.courierOptions = res.data || []
+            } catch (e) {
+                this.courierOptions = []
+            } finally {
+                this.courierOptionsLoading = false
+            }
+        },
+
+        onCourierOptionChange(value) {
+            if (!value) {
+                this.form.shipping_courier = ''
+                this.form.shipping_service = ''
+                this.form.shipping_name    = ''
+                this.markDirty()
+                return
+            }
+            const [code, service] = value.split('|')
+            const opt = this.courierOptions.find(
+                o => o.code === code && (o.service || '') === (service || '')
+            )
+            this.form.shipping_courier = code
+            this.form.shipping_service = service || ''
+            this.form.shipping_name    = opt ? opt.name : ''
+            this.markDirty()
         },
 
         // ─── Product Search ───────────────────────────────────────────────────
@@ -755,7 +797,7 @@ export default {
 
             if (this.canChangeCourier) {
                 if (!this.form.shipping_courier?.trim()) {
-                    this.error = 'Kode kurir wajib diisi jika mengganti pengiriman.'
+                    this.error = 'Pilih jasa pengiriman terlebih dahulu.'
                     return false
                 }
                 if ((this.form.shipping_cost || 0) < 0) {
@@ -1186,6 +1228,23 @@ export default {
     background: #f3f4f6;
     color: #9ca3af;
     cursor: not-allowed;
+}
+
+.or-select {
+    cursor: pointer;
+    appearance: auto;
+}
+
+.or-select:disabled {
+    background: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.or-help-text {
+    font-size: 11px;
+    color: #d97706;
+    margin: 2px 0 0;
 }
 
 .or-input--searching {
