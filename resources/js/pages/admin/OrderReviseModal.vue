@@ -246,8 +246,7 @@
                                     Kurir & Layanan <span class="or-label__req">*</span>
                                 </label>
                                 <select
-                                    :value="selectedCourierKey"
-                                    @change="onCourierOptionChange($event.target.value)"
+                                    v-model="selectedCourierValue"
                                     class="or-input or-select"
                                     :disabled="courierOptionsLoading"
                                 >
@@ -255,14 +254,14 @@
                                         {{ courierOptionsLoading ? 'Memuat jasa pengiriman...' : '-- Pilih jasa pengiriman --' }}
                                     </option>
                                     <option
-                                        v-for="opt in courierOptions"
+                                        v-for="opt in courierOptionsMerged"
                                         :key="opt.code + '|' + opt.service"
                                         :value="opt.code + '|' + opt.service"
                                     >
-                                        {{ opt.name }}<template v-if="opt.service"> — {{ opt.service }}</template> ({{ opt.code.toUpperCase() }})
+                                        {{ opt.name }}<template v-if="opt.service"> — {{ opt.service }}</template> ({{ opt.code.toUpperCase() }})<template v-if="opt._stale"> — tidak aktif di Site Settings</template>
                                     </option>
                                 </select>
-                                <p v-if="!courierOptionsLoading && courierOptions.length === 0" class="or-help-text">
+                                <p v-if="!courierOptionsLoading && courierOptionsMerged.length === 0" class="or-help-text">
                                     Belum ada jasa pengiriman berkode di Site Settings → Jasa Pengiriman. Tambahkan dulu di sana.
                                 </p>
                             </div>
@@ -503,10 +502,46 @@ export default {
             return this.form.items.some(i => i._stockWarn)
         },
 
-        // Value select saat ini, format "kode|layanan"
-        selectedCourierKey() {
-            if (!this.form.shipping_courier) return ''
-            return `${this.form.shipping_courier}|${this.form.shipping_service || ''}`
+        // Value select saat ini, format "kode|layanan".
+        // Pakai get/set supaya bisa dipasang v-model langsung di <select> —
+        // WAJIB v-model (bukan :value + @change manual), karena hanya
+        // v-model yang bikin Vue re-sync pilihan setelah daftar <option>
+        // berubah (mis. setelah fetch async courierOptions selesai).
+        selectedCourierValue: {
+            get() {
+                if (!this.form.shipping_courier) return ''
+                return `${this.form.shipping_courier}|${this.form.shipping_service || ''}`
+            },
+            set(value) {
+                this.onCourierOptionChange(value)
+            },
+        },
+
+        // Opsi kurir aktif dari Site Settings, DITAMBAH kurir yang sedang
+        // dipakai order ini kalau kombinasi kode+layanannya sudah tidak ada
+        // / tidak aktif di sana — supaya select tidak tampil kosong padahal
+        // datanya masih ada (cuma sudah tidak terdaftar di Jasa Pengiriman).
+        courierOptionsMerged() {
+            const opts = [...this.courierOptions]
+            const currentCode    = this.order?.shipping_courier || ''
+            const currentService = this.order?.shipping_service || ''
+
+            if (currentCode) {
+                const exists = opts.some(
+                    o => o.code === currentCode && (o.service || '') === currentService
+                )
+                if (!exists) {
+                    opts.unshift({
+                        code:    currentCode,
+                        service: currentService,
+                        name:    this.order?.shipping_name || currentCode.toUpperCase(),
+                        logo:    '',
+                        _stale:  true,
+                    })
+                }
+            }
+
+            return opts
         },
     },
 
@@ -595,7 +630,7 @@ export default {
                 return
             }
             const [code, service] = value.split('|')
-            const opt = this.courierOptions.find(
+            const opt = this.courierOptionsMerged.find(
                 o => o.code === code && (o.service || '') === (service || '')
             )
             this.form.shipping_courier = code
