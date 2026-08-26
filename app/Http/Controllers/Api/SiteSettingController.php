@@ -286,18 +286,25 @@ class SiteSettingController extends Controller
     public function saveShippingCouriers(Request $request): JsonResponse
     {
         $request->validate([
-            'couriers'          => ['required', 'array'],
-            'couriers.*.name'   => ['required', 'string', 'max:100'],
-            'couriers.*.logo'   => ['nullable', 'string', 'max:500'],
-            'couriers.*.active' => ['required', 'boolean'],
+            'couriers'           => ['required', 'array'],
+            'couriers.*.name'    => ['required', 'string', 'max:100'],
+            'couriers.*.code'    => ['nullable', 'string', 'max:50'],
+            'couriers.*.service' => ['nullable', 'string', 'max:50'],
+            'couriers.*.logo'    => ['nullable', 'string', 'max:500'],
+            'couriers.*.active'  => ['required', 'boolean'],
         ]);
- 
-        $couriers = collect($request->couriers)->map(fn($c) => [
-            'name'    => trim($c['name']),
-            'logo'    => trim($c['logo'] ?? ''),
-            'active'  => (bool) $c['active'],
-        ])->values()->toArray();
- 
+
+        $couriers = collect($request->couriers)
+            ->map(fn ($c) => [
+                'name'    => trim($c['name']),
+                'code'    => trim($c['code'] ?? ''),
+                'service' => trim($c['service'] ?? ''),
+                'logo'    => trim($c['logo'] ?? ''),
+                'active'  => (bool) $c['active'],
+            ])
+            ->values()
+            ->toArray();
+
         SiteSetting::updateOrCreate(
             ['key' => 'shipping_couriers'],
             [
@@ -307,11 +314,51 @@ class SiteSettingController extends Controller
                 'description' => 'Daftar kurir yang tampil di footer',
             ]
         );
- 
+
         return response()->json([
             'message'  => 'Daftar pengiriman berhasil disimpan',
             'couriers' => $couriers,
         ]);
+    }
+
+    /**
+     * GET /api/orders/revise/couriers
+     *
+     * Daftar opsi kurir untuk dropdown saat revisi order.
+     *
+     * Sumber:
+     * Site Settings > Jasa Pengiriman
+     *
+     * Hanya kurir yang:
+     * - aktif
+     * - memiliki kode kurir
+     *
+     * Ongkir tidak diambil dari sini karena tetap diisi
+     * manual pada revisi order.
+     */
+    public function getRevisionCouriers(): JsonResponse
+    {
+        $value = SiteSetting::get('shipping_couriers');
+
+        $couriers = $value
+            ? (json_decode($value, true) ?? [])
+            : [];
+
+        $options = collect($couriers)
+            ->filter(fn ($c) =>
+                is_array($c) &&
+                !empty($c['active']) &&
+                !empty($c['code'])
+            )
+            ->map(fn ($c) => [
+                'code'    => $c['code'],
+                'service' => $c['service'] ?? '',
+                'name'    => $c['name'],
+                'logo'    => $c['logo'] ?? '',
+            ])
+            ->values();
+
+        return response()->json($options);
     }
  
     public function uploadCourierLogo(Request $request): JsonResponse
