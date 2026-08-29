@@ -341,14 +341,14 @@ class ChatbotService
         if ($method === 'transfer') {
             $this->sendBotMessage(
                 $session,
-                "Baik, kamu pilih *Transfer*.\n" .
-                "Mohon tunggu sebentar, tim CS kami akan segera mengirimkan info rekening untuk transfer."
+                "Baik, kamu pilih [Transfer].\n" .
+                "Mohon tunggu sebentar, tim CS kami akan segera mengirimkan informasi rekening ke kamu."
             );
         } else {
             $this->sendBotMessage(
                 $session,
-                "Baik, kamu pilih *Bayar di Toko*.\n" .
-                "Silakan datang ke toko kami untuk melakukan pembayaran & ambil pesanan ya."
+                "Baik, kamu pilih [Bayar di Toko].\n" .
+                "Silakan datang ke toko cabang yang sudah kamu pilih untuk melakukan pembayaran ditempat & mengambil pesanan."
             );
         }
 
