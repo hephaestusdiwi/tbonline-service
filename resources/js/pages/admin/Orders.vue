@@ -147,6 +147,9 @@
                                     <span v-if="order.revision_count > 0" class="or-badge-rev" :title="`Direvisi ${order.revision_count}x`">
                                         Rev.{{ order.revision_count }}
                                     </span>
+                                    <span v-if="order.payment_method" class="or-badge-payment" :title="paymentMethodLabel(order.payment_method)">
+                                        {{ order.payment_method === 'transfer' ? '💳' : '🏬' }}
+                                    </span>
                                 </td>
                                 <td class="or-td or-td--action">
                                     <OrderActionMenu
@@ -276,6 +279,13 @@
                                 <div class="or-detail-item">
                                     <span class="or-detail-label">Estimasi</span>
                                     <span class="or-detail-value">{{ selectedOrder.shipping_etd }}</span>
+                                </div>
+                                <div class="or-detail-item">
+                                    <span class="or-detail-label">Metode Pembayaran</span>
+                                    <span v-if="selectedOrder.payment_method" class="or-detail-value">
+                                        {{ paymentMethodLabel(selectedOrder.payment_method) }}
+                                    </span>
+                                    <span v-else class="or-detail-value or-detail-value--muted">Belum dipilih</span>
                                 </div>
                             </div>
                         </div>
@@ -896,6 +906,9 @@ export default {
         statusLabel(status) {
             return { pending: 'Pending', diproses: 'Diproses', success: 'Sukses', cancelled: 'Dibatalkan' }[status] || status
         },
+        paymentMethodLabel(method) {
+            return { offline: 'Bayar di Toko', transfer: 'Transfer Bank' }[method] || method
+        },
         statusClass(status) {
             return { pending: 'or-badge--amber', diproses: 'or-badge--blue', success: 'or-badge--green', cancelled: 'or-badge--red' }[status] || ''
         },
@@ -1245,6 +1258,7 @@ export default {
 .or-badge--green { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
 .or-badge--red   { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
 .or-badge-rev { display: inline-block; padding: 2px 6px; border-radius: 20px; font-size: 10px; font-weight: 700; background: #ede9fe; color: #7c3aed; margin-left: 4px; vertical-align: middle; }
+.or-badge-payment { display: inline-block; margin-left: 4px; font-size: 12px; vertical-align: middle; cursor: default; }
 .or-loading { text-align: center; padding: 40px; color: #9ca3af; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .or-empty { padding: 48px; text-align: center; }
 .or-empty__inner { display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -1451,6 +1465,7 @@ export default {
 .or-detail-item { display: flex; flex-direction: column; gap: 3px; }
 .or-detail-label { font-size: 10px; color: #9ca3af; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
 .or-detail-value { font-size: 13px; color: #111827; font-weight: 500; }
+.or-detail-value--muted { color: #9ca3af; font-style: italic; font-weight: 400; }
 .or-detail-meta  { font-size: 11px; color: #9ca3af; }
 .or-detail-link  { font-size: 13px; color: #ED1F24; font-weight: 600; text-decoration: none; }
 .or-detail-link:hover { text-decoration: underline; }

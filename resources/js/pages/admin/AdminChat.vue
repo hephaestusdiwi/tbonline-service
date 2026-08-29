@@ -51,10 +51,11 @@
         <!-- ═══════════════════════════════════════════
              MAIN CHAT AREA — 3-column layout
         ═══════════════════════════════════════════ -->
-        <div class="flex gap-4 overflow-hidden" style="height: calc(100vh - 280px)">
+        <div class="flex gap-4 overflow-hidden h-[calc(100vh-230px)] md:h-[calc(100vh-280px)]">
 
             <!-- ── SIDEBAR KIRI ── -->
-            <div class="w-72 shrink-0 flex flex-col bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+            <!-- Mobile: full-width, disembunyikan begitu ada sesi aktif (biar chat window yang tampil). Desktop: selalu tampil, lebar tetap 72. -->
+            <div :class="['w-full md:w-72 md:shrink-0 flex-col bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden', activeSession ? 'hidden md:flex' : 'flex']">
 
                 <!-- Search -->
                 <div class="px-4 pt-4 pb-3 border-b border-gray-100">
@@ -155,7 +156,8 @@
             </div>
 
             <!-- ── AREA TENGAH — Chat Window ── -->
-            <div class="flex-1 flex flex-col min-w-0 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+            <!-- Mobile: full-width, cuma tampil kalau ada sesi aktif (gantiin sidebar). Desktop: selalu tampil, isi sisa ruang. -->
+            <div :class="['w-full md:flex-1 flex-col min-w-0 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden', activeSession ? 'flex' : 'hidden md:flex']">
 
                 <!-- Empty state -->
                 <div v-if="!activeSession" class="flex-1 flex flex-col items-center justify-center text-gray-400 gap-4">
@@ -173,48 +175,58 @@
                 <template v-else>
                     <!-- Header chat aktif — mirip card header di Dashboard -->
                     <div class="bg-white border-b border-gray-100 px-5 py-3.5 flex items-center justify-between shrink-0">
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <!-- Tombol kembali ke daftar sesi — cuma muncul di mobile -->
+                            <button
+                                @click="activeSession = null"
+                                class="md:hidden -ml-1 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors shrink-0"
+                                aria-label="Kembali ke daftar sesi"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
                             <div class="w-9 h-9 rounded-xl bg-[#ED1F24]/10 border border-[#ED1F24]/20 flex items-center justify-center text-[#ED1F24] text-sm font-bold shrink-0">
                                 {{ (activeSession.guest_name || activeSession.customer_name || '?').charAt(0).toUpperCase() }}
                             </div>
-                            <div>
-                                <p class="text-sm font-bold text-gray-800">{{ activeSession.guest_name || activeSession.customer_name || 'Guest' }}</p>
+                            <div class="min-w-0">
+                                <p class="text-sm font-bold text-gray-800 truncate">{{ activeSession.guest_name || activeSession.customer_name || 'Guest' }}</p>
                                 <div class="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
                                     <span :class="statusBadgeClass(activeSession.status)">{{ statusLabel(activeSession.status) }}</span>
-                                    <span v-if="activeSession.guest_phone">· {{ activeSession.guest_phone }}</span>
+                                    <span v-if="activeSession.guest_phone" class="hidden sm:inline">· {{ activeSession.guest_phone }}</span>
                                     <span v-if="customerTyping" class="text-emerald-500 font-medium animate-pulse">· mengetik...</span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Actions -->
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-1.5 md:gap-2 shrink-0">
                             <button
                                 v-if="canManage && activeSession.status === 'queued'"
                                 @click="assignToMyself"
-                                class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-all"
+                                class="flex items-center gap-1.5 text-xs font-semibold px-2 md:px-3 py-1.5 rounded-xl border border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50 transition-all"
                             >
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
-                                Ambil Chat
+                                <span class="hidden md:inline">Ambil Chat</span>
                             </button>
 
                             <button
                                 v-if="!isSessionEnded(activeSession.status)"
                                 @click="closeSession"
-                                class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-gray-200 text-gray-600 hover:border-red-200 hover:text-[#ED1F24] hover:bg-red-50/50 transition-all"
+                                class="flex items-center gap-1.5 text-xs font-semibold px-2 md:px-3 py-1.5 rounded-xl border border-gray-200 text-gray-600 hover:border-red-200 hover:text-[#ED1F24] hover:bg-red-50/50 transition-all"
                             >
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
-                                Tutup Sesi
+                                <span class="hidden md:inline">Tutup Sesi</span>
                             </button>
 
                             <button
                                 v-if="isSessionEnded(activeSession.status)"
                                 @click="reopenSession"
-                                class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-emerald-200 text-emerald-600 hover:bg-emerald-50 transition-all"
+                                class="flex items-center gap-1.5 text-xs font-semibold px-2 md:px-3 py-1.5 rounded-xl border border-emerald-200 text-emerald-600 hover:bg-emerald-50 transition-all"
                             >
                                 Buka Kembali
                             </button>
@@ -222,12 +234,12 @@
                             <button
                                 v-if="isAdmin && isSessionEnded(activeSession.status)"
                                 @click="deleteSession"
-                                class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border border-red-200 text-red-500 hover:bg-red-50 transition-all"
+                                class="flex items-center gap-1.5 text-xs font-semibold px-2 md:px-3 py-1.5 rounded-xl border border-red-200 text-red-500 hover:bg-red-50 transition-all"
                             >
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
-                                Hapus
+                                <span class="hidden md:inline">Hapus</span>
                             </button>
 
                             <!-- Detail panel toggle -->
@@ -393,9 +405,24 @@
             </div>
 
             <!-- ── PANEL KANAN — Detail — sama style dengan card Dashboard ── -->
+            <!-- Mobile: overlay full-screen di atas chat window. Desktop (md:): tetap panel samping w-60 seperti semula. -->
             <transition name="slide-panel">
                 <div v-if="showDetailPanel && activeSession"
-                    class="w-60 shrink-0 flex flex-col bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden overflow-y-auto">
+                    class="fixed inset-0 z-40 bg-white overflow-y-auto md:static md:z-auto md:inset-auto md:w-60 md:shrink-0 md:flex md:flex-col md:rounded-xl md:border md:border-gray-200/80 md:shadow-sm md:overflow-hidden md:overflow-y-auto">
+
+                    <!-- Tombol tutup — cuma muncul di mobile (desktop pakai toggle di header) -->
+                    <div class="flex md:hidden items-center justify-between px-4 py-3 border-b border-gray-100 sticky top-0 bg-white z-10">
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Detail Sesi</p>
+                        <button
+                            @click="showDetailPanel = false"
+                            class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                            aria-label="Tutup panel detail"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
 
                     <!-- Profile header -->
                     <div class="p-5 border-b border-gray-100 text-center">

@@ -264,6 +264,11 @@
                                 <p v-if="!courierOptionsLoading && courierOptionsMerged.length === 0" class="or-help-text">
                                     Belum ada jasa pengiriman berkode di Site Settings → Jasa Pengiriman. Tambahkan dulu di sana.
                                 </p>
+                                <p v-if="form.shipping_courier" class="or-courier-resolved">
+                                    Kode: <strong>{{ form.shipping_courier }}</strong>
+                                    · Layanan: <strong>{{ form.shipping_service || '—' }}</strong>
+                                    · Nama: <strong>{{ form.shipping_name || '—' }}</strong>
+                                </p>
                             </div>
                             <div class="or-field">
                                 <label class="or-label">Ongkir (Rp)</label>
@@ -1282,6 +1287,17 @@ export default {
     margin: 2px 0 0;
 }
 
+ .or-courier-resolved {
+    font-size: 11px;
+    color: #6b7280;
+    margin: 4px 0 0;
+}
+
+.or-courier-resolved strong {
+    color: #374151;
+    font-weight: 600;
+}
+
 .or-input--searching {
     padding-right: 30px;
 }
@@ -1515,13 +1531,29 @@ export default {
 /* ─── Courier fields ─────────────────────────────────────────────────────── */
 .or-revise-courier-fields {
     display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
 }
 
 .or-revise-courier-fields .or-field {
-    flex: 1;
-    min-width: 130px;
+    min-width: 0;
+    flex: none;
+}
+
+.or-revise-courier-fields .or-field--grow {
+    width: 42%;
+}
+
+.or-revise-courier-fields .or-field:nth-child(2) {
+    width: 100px;
+}
+
+.or-revise-courier-fields .or-field:nth-child(3) {
+    width: 220px;
+}
+
+.or-revise-courier-fields .or-select {
+    width: 100%;
 }
 
 /* ─── Summary ────────────────────────────────────────────────────────────── */

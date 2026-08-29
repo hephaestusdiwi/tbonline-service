@@ -48,33 +48,43 @@ class ChatService
                 $session->update(['inquiry_type' => 'purchase']);
                 $this->handoffToQueue($session);
             }
-        } else {
-            $session = ChatSession::create([
-                'customer_id'  => null,
-                'guest_name'   => $data['guest_name'],
-                'guest_phone'  => $data['guest_phone'],
-                'guest_token'  => \Str::uuid(),
-                'subject'      => $data['subject'] ?? 'Pesanan Baru',
-                'channel'      => $data['channel'] ?? 'web',
-                'status'       => 'queued',
-                'priority'     => $data['priority'] ?? 'normal',
-                'inquiry_type' => 'purchase',
+
+            $this->sendMessage($session, null, [
+                'content' => $data['order_message'],
+                'type'    => 'text',
             ]);
 
-            $this->queueService->enqueue($session);
-
-            $this->messageService->createSystemMessage(
-                $session,
-                'Pesanan Anda telah diterima. Tim kami akan segera menghubungi Anda di sini untuk konfirmasi.'
-            );
+            return $session;
         }
 
-        $this->sendMessage($session, null, [
+        // Sesi baru → mulai sebagai 'bot': pesan order dikirim dulu sebagai pesan
+        // customer, LALU bot otomatis nanya metode pembayaran (tombol Bayar di
+        // Toko / Transfer) sebelum di-handoff ke CS. Ini beda dari sesi yang
+        // sudah ada di atas — di situ langsung handoff, nggak diinterupsi bot,
+        // supaya nggak ganggu percakapan yang lagi berjalan.
+        $session = ChatSession::create([
+            'customer_id'  => null,
+            'guest_name'   => $data['guest_name'],
+            'guest_phone'  => $data['guest_phone'],
+            'guest_token'  => \Str::uuid(),
+            'subject'      => $data['subject'] ?? 'Pesanan Baru',
+            'channel'      => $data['channel'] ?? 'web',
+            'status'       => 'bot',
+            'priority'     => $data['priority'] ?? 'normal',
+            'inquiry_type' => 'purchase',
+        ]);
+
+        // Kirim langsung lewat MessageService (bukan sendMessage()), karena ini
+        // pesan PEMBUKA — bukan balasan atas pertanyaan bot — jadi nggak boleh
+        // diproses chatbotService->handleInput().
+        $this->messageService->create($session, null, [
             'content' => $data['order_message'],
             'type'    => 'text',
         ]);
 
-        return $session;
+        $this->chatbotService->startOrderFlow($session, $data['order_id'] ?? null);
+
+        return $session->load('chatbotSession');
     }
 
     public function sendMessage(ChatSession $session, ?User $sender, array $data): Message

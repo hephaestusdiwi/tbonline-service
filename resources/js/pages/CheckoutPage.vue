@@ -932,13 +932,14 @@ export default {
       )
     },
 
-    async sendOrderToChat(orderId) {
+    async sendOrderToChat(orderId, orderRecordId) {
       try {
         const { data } = await axiosInstance.post(`/chat/sessions/order`, {
           guest_name:    this.form.name,
           guest_phone:   `0${this.form.phone}`,
           order_message: this.buildOrderChatMessage(orderId),
           subject:       `Pesanan #${orderId}`,
+          order_id:      orderRecordId,
         })
 
         localStorage.setItem('chat_guest_token', data.guest_token)
@@ -1043,11 +1044,12 @@ export default {
         }
 
         const response = await axiosInstance.post(`/orders`, payload)
-        const orderId = response.data?.data?.invoice_number || response.data?.data?.id || 'N/A'
+        const orderId       = response.data?.data?.invoice_number || response.data?.data?.id || 'N/A'
+        const orderRecordId = response.data?.data?.id ?? null   // ID numerik asli, buat link ke payment_method di chat bot
         this.orderId = orderId
 
         this.submitStep = 2
-        await this.sendOrderToChat(orderId)
+        await this.sendOrderToChat(orderId, orderRecordId)
 
         cartStore.clearCart()
         this.showSuccess = true

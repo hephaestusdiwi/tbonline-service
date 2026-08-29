@@ -34,6 +34,13 @@ class SessionResource extends JsonResource
             'visitor_left'      => (bool) $this->visitor_left,
             'rating' => $this->rating,
 
+            // Node flow bot saat ini (mis. 'payment_method') — dipakai frontend
+            // buat nentuin tombol quick-reply mana yang harus ditampilkan,
+            // tanpa perlu nebak dari isi teks pesan bot.
+            'chatbot_node' => $this->whenLoaded('chatbotSession', fn() =>
+                $this->chatbotSession?->current_node
+            ),
+
             'assigned_agent_name' => $primaryAgent?->name ?? null,
 
             'assigned_agent' => $primaryAgent ? [

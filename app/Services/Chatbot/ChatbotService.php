@@ -57,6 +57,17 @@ class ChatbotService
         'save_complaint' => ['action' => 'save_complaint'],
         'save_purchase'  => ['action' => 'save_purchase'],
 
+        // ── Flow khusus: dipicu otomatis setelah checkout (bukan dari menu greeting) ──
+        'payment_method' => [
+            'message' => 'Pembayaran ingin dilakukan di toko atau transfer?',
+            'options' => [
+                '1' => ['label' => 'Bayar di Toko', 'next' => 'payment_offline'],
+                '2' => ['label' => 'Transfer',      'next' => 'payment_transfer'],
+            ],
+        ],
+        'payment_offline'  => ['action' => 'save_payment_offline'],
+        'payment_transfer' => ['action' => 'save_payment_transfer'],
+
         'handoff'  => ['action' => 'handoff_to_agent'],
         'resolved' => ['action' => 'mark_resolved'],
     ];
@@ -84,6 +95,29 @@ class ChatbotService
         if ($botSession->wasRecentlyCreated) {
             $this->sendBotMessage($session, $this->flow['greeting']['message']);
             $this->sendOptions($session, $this->flow['greeting']['options'] ?? []);
+        }
+    }
+
+    /**
+     * Mulai flow bot khusus setelah checkout — LANGSUNG ke node 'payment_method',
+     * skip 'greeting' karena visitor barusan checkout, bukan lagi pilih menu FAQ.
+     * $orderId disimpan di context supaya nanti bisa update Order::payment_method
+     * begitu customer pilih (lihat handleSavePaymentMethod()).
+     */
+    public function startOrderFlow(ChatSession $session, ?int $orderId = null): void
+    {
+        $botSession = ChatbotSession::firstOrCreate(
+            ['session_id' => $session->id],
+            [
+                'current_node' => 'payment_method',
+                'context'      => $orderId ? ['order_id' => $orderId] : [],
+            ]
+        );
+
+        if ($botSession->wasRecentlyCreated) {
+            $this->sendBotMessage($session, 'Terima kasih! Pesanan kamu sudah kami terima 🙏');
+            $this->sendBotMessage($session, $this->flow['payment_method']['message']);
+            $this->sendOptions($session, $this->flow['payment_method']['options'] ?? []);
         }
     }
 
@@ -139,15 +173,20 @@ class ChatbotService
     private function handleAction(string $action, ChatSession $session, ChatbotSession $botSession): void
     {
         match ($action) {
-            'handoff_to_agent'  => $this->handoffWithCategory($session, 'cs'),
-            'mark_resolved'     => $session->update(['status' => 'resolved', 'resolved_at' => now()]),
-            'show_order_status' => $this->handleShowOrderStatus($session, $botSession),
-            'save_complaint'    => $this->handleSaveComplaint($session, $botSession),
-            'save_purchase'     => $this->handleSavePurchase($session, $botSession),
-            default             => null,
+            'handoff_to_agent'      => $this->handoffWithCategory($session, 'cs'),
+            'mark_resolved'         => $session->update(['status' => 'resolved', 'resolved_at' => now()]),
+            'show_order_status'     => $this->handleShowOrderStatus($session, $botSession),
+            'save_complaint'        => $this->handleSaveComplaint($session, $botSession),
+            'save_purchase'         => $this->handleSavePurchase($session, $botSession),
+            'save_payment_offline'  => $this->handleSavePaymentMethod($session, $botSession, 'offline'),
+            'save_payment_transfer' => $this->handleSavePaymentMethod($session, $botSession, 'transfer'),
+            default                 => null,
         };
 
-        if (!in_array($action, ['show_order_status', 'save_complaint', 'save_purchase'])) {
+        if (!in_array($action, [
+            'show_order_status', 'save_complaint', 'save_purchase',
+            'save_payment_offline', 'save_payment_transfer',
+        ])) {
             $botSession->update(['is_completed' => true, 'handed_off_at' => now()]);
         }
     }
@@ -282,6 +321,36 @@ class ChatbotService
             "━━━━━━━━━━━━━━━━━━\n" .
             "Mohon tunggu sebentar, tim CS kami akan segera memproses pesanan kamu."
         );
+
+        $this->handoffWithCategory($session, 'purchase');
+        $botSession->update(['is_completed' => true, 'handed_off_at' => now()]);
+    }
+
+    /**
+     * Simpan pilihan metode pembayaran ke Order (kalau order_id ada di context),
+     * kirim konfirmasi ke customer, lalu handoff ke CS supaya agent lanjut proses.
+     */
+    private function handleSavePaymentMethod(ChatSession $session, ChatbotSession $botSession, string $method): void
+    {
+        $orderId = $botSession->context['order_id'] ?? null;
+
+        if ($orderId) {
+            Order::whereKey($orderId)->update(['payment_method' => $method]);
+        }
+
+        if ($method === 'transfer') {
+            $this->sendBotMessage(
+                $session,
+                "Baik, kamu pilih *Transfer*.\n" .
+                "Mohon tunggu sebentar, tim CS kami akan segera mengirimkan info rekening untuk transfer."
+            );
+        } else {
+            $this->sendBotMessage(
+                $session,
+                "Baik, kamu pilih *Bayar di Toko*.\n" .
+                "Silakan datang ke toko kami untuk melakukan pembayaran & ambil pesanan ya."
+            );
+        }
 
         $this->handoffWithCategory($session, 'purchase');
         $botSession->update(['is_completed' => true, 'handed_off_at' => now()]);

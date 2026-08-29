@@ -16,6 +16,7 @@ class Order extends Model
         'subtotal', 'discount_amount', 'promo_code', 'total_price',
         'notes', 'status', 'cancel_reason',
         'fulfillment_type', 'branch_id', 
+        'payment_method',
         'revised_at', 'revised_by', 'revision_count',
         'shipping_is_custom', 'shipping_custom_note',
         'confirmed_by', 'confirmed_at',

@@ -119,7 +119,7 @@
         </div>
 
         <div
-          v-else-if="!isBotMenuMessage(message)"
+          v-else-if="!isBotMenuMessage(message) && !isPaymentOptionsMessage(message)"
           class="message-row"
           :class="{ 'row-left': isLeft(message), 'row-right': !isLeft(message) }"
         >
@@ -192,6 +192,39 @@
         </div>
 
       </template>
+
+      <!-- Tombol metode pembayaran — muncul otomatis begitu bot nyampe node
+           'payment_method' (dipicu server-side setelah checkout). Teks mentah
+           "1. Bayar di Toko\n2. Transfer" dari bot tetap dikirim & tersimpan di
+           riwayat (kepakai agent CS di AdminChat.vue), tapi disembunyikan di sini
+           lewat isPaymentOptionsMessage() supaya nggak dobel sama tombol ini. -->
+      <div v-if="showPaymentButtons" class="message-row row-left">
+        <div class="msg-avatar">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M12 2a5 5 0 1 0 0 10A5 5 0 0 0 12 2zM3 21a9 9 0 0 1 18 0"
+              stroke="white"
+              stroke-width="2"
+              stroke-linecap="round"
+            />
+          </svg>
+        </div>
+        <div class="bubble-wrap">
+          <div class="quick-replies">
+            <button
+              v-for="opt in paymentMethodOptions"
+              :key="opt.id"
+              class="quick-reply-btn"
+              :class="{ selected: selectedPaymentId === opt.id }"
+              :disabled="selectedPaymentId !== null"
+              @click="selectPaymentMethod(opt)"
+            >
+              <span class="qr-icon">{{ opt.icon }}</span>
+              <span class="qr-label">{{ opt.label }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- Lightbox -->
       <teleport to="body">
@@ -395,9 +428,28 @@ const quickTopics = [
   { id: 5, icon: '🛒', label: 'Pembelian',                message: '5', displayText: 'Pembelian' },
 ]
 
+// ── Payment method options ──────────────────────────────────────────────
+// Harus sinkron sama $flow['payment_method']['options'] di ChatbotService.php
+// (angka '1'/'2' inilah yang dikirim balik sbg jawaban user ke bot)
+const paymentMethodOptions = [
+  { id: 1, icon: '🏬', label: 'Bayar di Toko', message: '1', displayText: 'Bayar di Toko' },
+  { id: 2, icon: '💳', label: 'Transfer',      message: '2', displayText: 'Transfer'      },
+]
+const chatbotNode      = ref(null)
+const selectedPaymentId = ref(null)
+
 // ── Computed ──────────────────────────────────────────────────────────────
 const agentInitials = computed(() =>
   assignedAgent.value ? initials(assignedAgent.value.name) : ''
+)
+
+// Tombol pembayaran tampil kalau bot lagi nunggu jawaban di node 'payment_method'
+// DAN customer belum klik salah satu (selectedPaymentId masih null) DAN sesi belum ditutup.
+const showPaymentButtons = computed(() =>
+  chatbotNode.value === 'payment_method' &&
+  selectedPaymentId.value === null &&
+  sessionStatus.value !== 'closed' &&
+  sessionStatus.value !== 'resolved'
 )
 
 const todayLabel = computed(() =>
@@ -443,6 +495,15 @@ function isBotMenuMessage(msg) {
     msg.content.includes('1.') &&
     msg.content.includes('2.') &&
     msg.content.includes('3.')
+}
+
+// Sembunyiin teks mentah opsi node 'payment_method' (cuma 2 opsi, jadi nggak
+// kena isBotMenuMessage() di atas yang minimal 3) — digantikan tombol
+// showPaymentButtons. Exact-match sengaja, harus sinkron sama label di
+// $flow['payment_method']['options'] @ ChatbotService.php.
+function isPaymentOptionsMessage(msg) {
+  if (msg.sender_type !== 'bot') return false
+  return msg.content === '1. Bayar di Toko\n2. Transfer'
 }
 
 function openFile(url, mimeType) {
@@ -601,6 +662,10 @@ async function loadMessages() {
     })
     const session = sessionRes.data.data ?? sessionRes.data
 
+    // Node flow bot saat ini (mis. 'payment_method') — nentuin tombol
+    // quick-reply mana yang harus ditampilkan (lihat showPaymentButtons).
+    chatbotNode.value = session.chatbot_node ?? null
+
     if (session.status === 'queued' && session.queue_entry) {
       queuePosition.value = session.queue_entry.position
       estimatedWait.value  = session.queue_entry.estimated_wait_seconds
@@ -662,6 +727,15 @@ async function selectTopic(topic) {
   showQuickReplies.value = false
   inputText.value = topic.message
   await send(topic.displayText)
+}
+
+async function selectPaymentMethod(opt) {
+  selectedPaymentId.value = opt.id
+  inputText.value = opt.message
+  await send(opt.displayText)
+  // Bot pindah node (payment_offline/transfer → handoff) begitu jawaban ini
+  // diproses; nggak perlu nunggu chatbot_node lagi karena selectedPaymentId
+  // udah cukup buat nyembunyiin tombolnya (lihat showPaymentButtons).
 }
 
 // ── Attachment ────────────────────────────────────────────────────────────

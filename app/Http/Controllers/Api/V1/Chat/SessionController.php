@@ -53,12 +53,13 @@ class SessionController extends Controller
             'guest_phone'   => 'required|string|max:20',
             'order_message' => 'required|string|max:3000',
             'subject'       => 'nullable|string|max:255',
+            'order_id'      => 'nullable|integer|exists:orders,id',
         ]);
 
         $session = $this->chatService->initiateOrderChat($data);
 
         return response()->json([
-            'data'          => new SessionResource($session->load(['agents', 'queueEntry'])),
+            'data'          => new SessionResource($session->load(['agents', 'queueEntry', 'chatbotSession'])),
             'guest_token'   => $session->guest_token,
         ], 201);
     }
@@ -70,7 +71,7 @@ class SessionController extends Controller
             ->firstOrFail();
 
         return response()->json([
-            'data' => new SessionResource($session->load(['agents', 'queueEntry']))
+            'data' => new SessionResource($session->load(['agents', 'queueEntry', 'chatbotSession']))
         ]);
     }
 
