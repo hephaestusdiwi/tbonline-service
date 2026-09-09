@@ -761,6 +761,7 @@ export default {
                 formData.append('title', slider.title)
                 formData.append('order', slider.order)
                 formData.append('is_active', slider.is_active ? 0 : 1)
+                formData.append('_method', 'PUT')
                 await axios.post(`/sliders/${slider.id}`, formData)
                 await this.fetchSliders()
             } catch (e) { console.error(e) }
@@ -782,6 +783,7 @@ export default {
                 if (this.modalMode === 'create') {
                     await axios.post('/sliders', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
                 } else {
+                    formData.append('_method', 'PUT')
                     await axios.post(`/sliders/${this.selectedId}`, formData)
                 }
                 await this.fetchSliders()
