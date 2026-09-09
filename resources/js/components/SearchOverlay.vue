@@ -216,6 +216,7 @@ export default {
     const isLoading  = ref(false)
     const isExpanded = ref(false)
     const showDropdown = ref(false)
+    const searchTop = ref(0)
 
     let debounceTimer = null
 
@@ -232,28 +233,51 @@ export default {
      * tepat di bawah / dari posisi icon.
      * Kalau iconRect tidak ada, fallback ke pojok kanan dengan margin default.
      */
+    function getNavbarBottom() {
+      const navbar = document.querySelector('.navbar')
+      if (!navbar) return 0
+
+      const rect = navbar.getBoundingClientRect()
+      return Math.max(0, Math.round(rect.bottom))
+    }
+
     const containerStyle = computed(() => {
-      if (!props.iconRect) return {}
-      // Jarak dari kanan viewport ke tengah icon
-      const rightEdge = window.innerWidth - props.iconRect.right
-      return {
-        '--icon-right': `${Math.max(0, rightEdge - 6)}px`,
+      const style = {
+        '--search-top': `${searchTop.value}px`,
       }
+
+      if (props.iconRect) {
+        // Jarak dari kanan viewport ke tengah icon
+        const rightEdge = window.innerWidth - props.iconRect.right
+        style['--icon-right'] = `${Math.max(0, rightEdge - 6)}px`
+      }
+
+      return style
     })
 
     watch(() => props.modelValue, async (val) => {
       if (val) {
         document.body.style.overflow = 'hidden'
         await nextTick()
-        // Sedikit delay agar mount() selesai dulu, baru trigger expand CSS
+
+        // Ambil posisi navbar yang BENAR-BENAR sedang tampil.
+        // Saat halaman di posisi atas, nilainya mencakup AnnouncementBar.
+        // Saat navbar sudah sticky setelah scroll, nilainya hanya tinggi navbar.
+        searchTop.value = getNavbarBottom()
+
+        // Sedikit delay agar mount() selesai dulu, baru trigger expand CSS.
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             isExpanded.value = true
-            // Delay dropdown agar animasi bar selesai dulu
-            setTimeout(() => { showDropdown.value = true }, 180)
+
+            // Delay dropdown agar animasi bar selesai dulu.
+            setTimeout(() => {
+              showDropdown.value = true
+            }, 180)
           })
         })
-        // Fokus input setelah expand
+
+        // Fokus input setelah expand.
         setTimeout(() => inputRef.value?.focus(), 250)
       } else {
         showDropdown.value = false
@@ -1051,11 +1075,7 @@ export default {
 ────────────────────────────────────────────── */
 @media (max-width: 767px) {
   .search-container {
-    top:
-      calc(
-        var(--announcement-height, 0px) +
-        var(--navbar-height, 0px)
-      );
+    top: var(--search-top, 0px);
   }
 
   .search-backdrop {
@@ -1067,22 +1087,11 @@ export default {
   }
 
   .search-bar.is-expanded {
-    max-height:
-      calc(
-        100dvh -
-        var(--announcement-height, 0px) -
-        var(--navbar-height, 0px)
-      );
+    max-height: calc(100dvh - var(--search-top, 0px));
   }
 
   .search-bar__dropdown {
-    max-height:
-      calc(
-        100dvh -
-        var(--announcement-height, 0px) -
-        var(--navbar-height, 0px) -
-        60px
-      );
+    max-height: calc(100dvh - var(--search-top, 0px) - 60px);
   }
 
   .search-bar.is-expanded .search-bar__row {
