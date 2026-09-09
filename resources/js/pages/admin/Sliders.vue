@@ -275,7 +275,7 @@
                 <div v-if="showModal"
                      class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4"
                      @click.self="closeModal">
-                    <div class="bg-white border border-gray-200/80 rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
+                    <div class="bg-white border border-gray-200/80 rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col">
 
                         <!-- Modal Header -->
                         <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
@@ -302,8 +302,8 @@
                             {{ errorMessage }}
                         </div>
 
-                        <!-- Form Body -->
-                        <div class="p-6 space-y-5">
+                        <!-- Form Body — scrollable (header & footer tetap kepasang di tempat) -->
+                        <div class="p-6 space-y-5 overflow-y-auto flex-1">
 
                             <!-- Title -->
                             <div>
@@ -369,6 +369,45 @@
                                         <img v-if="form.type === 'image'" :src="previewUrl" class="w-full h-44 object-cover rounded-lg" />
                                         <video v-else :src="previewUrl" controls class="w-full h-44 rounded-lg" />
                                         <button @click.stop="clearFile"
+                                                class="absolute top-5 right-5 w-7 h-7 rounded-full bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-red-500 hover:border-red-200 flex items-center justify-center transition-all">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- File Upload Mobile (opsional, khusus tipe gambar) -->
+                            <div v-if="form.type === 'image'">
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+                                    Gambar Mobile
+                                    <span class="normal-case font-normal text-gray-400 ml-1">— opsional, kalau kosong pakai gambar desktop di atas (di-crop otomatis)</span>
+                                </label>
+                                <div class="relative rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer"
+                                     :class="isDraggingMobile
+                                         ? 'border-[#ED1F24] bg-red-50 scale-[1.01]'
+                                         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'"
+                                     @dragover.prevent="isDraggingMobile = true"
+                                     @dragleave="isDraggingMobile = false"
+                                     @drop.prevent="handleDropMobile"
+                                     @click="$refs.fileInputMobile.click()">
+                                    <input ref="fileInputMobile" type="file"
+                                           accept="image/*"
+                                           @change="handleFileChangeMobile"
+                                           class="hidden" />
+
+                                    <div v-if="!previewUrlMobile" class="flex flex-col items-center justify-center gap-3 py-8 px-4">
+                                        <div class="w-11 h-11 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center">
+                                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+                                        </div>
+                                        <div class="text-center">
+                                            <p class="text-sm text-gray-500"><span class="text-[#ED1F24] font-semibold">Pilih file</span> atau drag &amp; drop</p>
+                                            <p class="text-xs text-gray-400 mt-1">JPG, PNG, WEBP — potret/persegi lebih pas buat layar HP</p>
+                                        </div>
+                                    </div>
+
+                                    <div v-else class="relative p-3">
+                                        <img :src="previewUrlMobile" class="w-full h-44 object-cover rounded-lg" />
+                                        <button @click.stop="clearFileMobile"
                                                 class="absolute top-5 right-5 w-7 h-7 rounded-full bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-red-500 hover:border-red-200 flex items-center justify-center transition-all">
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                         </button>
@@ -501,6 +540,9 @@ export default {
             loading: false,
             errorMessage: '',
             previewUrl: null,
+            previewUrlMobile: null,
+            isDraggingMobile: false,
+            removeMobileImage: false,
             showPreview: false,
             previewSlider: null,
             isDragging: false,
@@ -522,6 +564,7 @@ export default {
                 title: '',
                 type: 'image',
                 file: null,
+                fileMobile: null,
                 order: 0,
                 is_active: true,
             }
@@ -648,17 +691,57 @@ export default {
             if (this.$refs.fileInput) this.$refs.fileInput.value = ''
         },
 
+        handleFileChangeMobile(e) {
+            const file = e.target.files[0]
+            if (!file) return
+            this.form.fileMobile = file
+            this.removeMobileImage = false
+            this.previewUrlMobile = URL.createObjectURL(file)
+        },
+        handleDropMobile(e) {
+            this.isDraggingMobile = false
+            const file = e.dataTransfer.files[0]
+            if (!file) return
+            this.form.fileMobile = file
+            this.removeMobileImage = false
+            this.previewUrlMobile = URL.createObjectURL(file)
+        },
+        clearFileMobile() {
+            const hadPendingNewFile = !!this.form.fileMobile
+            this.form.fileMobile = null
+            if (this.$refs.fileInputMobile) this.$refs.fileInputMobile.value = ''
+
+            if (this.modalMode === 'edit' && this.selectedId) {
+                const existingUrl = this.sliders.find(s => s.id === this.selectedId)?.file_url_mobile || null
+                if (hadPendingNewFile) {
+                    // Baru pilih file baru terus dibatalin → balik ke gambar mobile yang udah tersimpan (kalau ada)
+                    this.previewUrlMobile  = existingUrl
+                    this.removeMobileImage = false
+                } else {
+                    // Belum pilih apa-apa baru, klik X berarti mau hapus yang udah tersimpan
+                    this.previewUrlMobile  = null
+                    this.removeMobileImage = !!existingUrl
+                }
+            } else {
+                this.previewUrlMobile  = null
+                this.removeMobileImage = false
+            }
+        },
+
         openModal(mode, slider = null) {
             this.modalMode = mode
             this.errorMessage = ''
             this.previewUrl = null
+            this.previewUrlMobile = null
+            this.removeMobileImage = false
             if (mode === 'edit' && slider) {
                 this.selectedId = slider.id
-                this.form = { title: slider.title, type: slider.type, file: null, order: slider.order, is_active: slider.is_active }
+                this.form = { title: slider.title, type: slider.type, file: null, fileMobile: null, order: slider.order, is_active: slider.is_active }
                 this.previewUrl = slider.file_url
+                this.previewUrlMobile = slider.file_url_mobile || null
             } else {
                 this.selectedId = null
-                this.form = { title: '', type: 'image', file: null, order: 0, is_active: true }
+                this.form = { title: '', type: 'image', file: null, fileMobile: null, order: 0, is_active: true }
             }
             this.showModal = true
         },
@@ -666,7 +749,10 @@ export default {
             this.showModal = false
             this.errorMessage = ''
             this.previewUrl = null
+            this.previewUrlMobile = null
+            this.removeMobileImage = false
             this.isDragging = false
+            this.isDraggingMobile = false
         },
 
         async toggleActive(slider) {
@@ -675,7 +761,6 @@ export default {
                 formData.append('title', slider.title)
                 formData.append('order', slider.order)
                 formData.append('is_active', slider.is_active ? 0 : 1)
-                formData.append('_method', 'PUT')
                 await axios.post(`/sliders/${slider.id}`, formData)
                 await this.fetchSliders()
             } catch (e) { console.error(e) }
@@ -691,12 +776,13 @@ export default {
                 formData.append('order', this.form.order)
                 formData.append('is_active', this.form.is_active ? 1 : 0)
                 if (this.form.file) formData.append('file', this.form.file)
+                if (this.form.type === 'image' && this.form.fileMobile) formData.append('file_mobile', this.form.fileMobile)
+                if (this.modalMode === 'edit' && this.removeMobileImage) formData.append('remove_mobile', 1)
 
                 if (this.modalMode === 'create') {
                     await axios.post('/sliders', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
                 } else {
-                    formData.append('_method', 'PUT')
-                    await axios.post(`/sliders/${this.selectedId}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+                    await axios.post(`/sliders/${this.selectedId}`, formData)
                 }
                 await this.fetchSliders()
                 this.closeModal()

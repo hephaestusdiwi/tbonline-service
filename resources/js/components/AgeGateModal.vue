@@ -2,25 +2,49 @@
     <transition name="agegate-fade">
         <div v-if="visible" class="agegate-overlay">
             <div class="agegate-card">
+
                 <div class="agegate-logo-wrap">
-                    <img v-if="logoUrl" :src="logoUrl" alt="Logo" class="agegate-logo" />
-                    <span v-else class="agegate-logo-text">{{ siteName || 'Store' }}</span>
+                    <img
+                        v-if="logoUrl"
+                        :src="logoUrl"
+                        alt="Logo"
+                        class="agegate-logo"
+                    />
+
+                    <span
+                        v-else
+                        class="agegate-logo-text"
+                    >
+                        {{ siteName || 'Store' }}
+                    </span>
                 </div>
 
-                <h2 class="agegate-title">Apakah kamu sudah berusia 21 tahun ke atas?</h2>
+                <h2 class="agegate-title">
+                    Apakah kamu sudah berusia 21 tahun ke atas?
+                </h2>
+
                 <p class="agegate-desc">
                     Situs ini berisi produk dengan nikotin dan hanya untuk pengguna dewasa (21+).
                 </p>
 
-                <button class="agegate-btn agegate-btn--yes" @click="confirm">
+                <button
+                    class="agegate-btn agegate-btn--yes"
+                    @click="confirm"
+                >
                     YA, SAYA SUDAH 21+
                 </button>
-                <button class="agegate-btn agegate-btn--no" @click="deny">
+
+                <button
+                    class="agegate-btn agegate-btn--no"
+                    @click="deny"
+                >
                     SAYA BELUM 21
                 </button>
 
-                <!-- Peringatan muncul inline setelah tombol -->
-                <p v-if="denied" class="agegate-warning">
+                <p
+                    v-if="denied"
+                    class="agegate-warning"
+                >
                     Maaf, Anda harus berusia minimal 21 tahun untuk mengakses situs ini.
                 </p>
 
@@ -30,6 +54,7 @@
                     Dengan masuk, Anda menyatakan memahami bahwa produk di situs ini mengandung
                     nikotin yang bersifat adiktif.
                 </p>
+
             </div>
         </div>
     </transition>
@@ -53,27 +78,75 @@ export default {
     },
 
     async mounted() {
-        if (window.innerWidth > 768) return
-        if (localStorage.getItem(STORAGE_KEY)) return
+        // Age gate hanya digunakan pada mobile
+        if (window.innerWidth > 768) {
+            return
+        }
+
+        // Sudah pernah dikonfirmasi
+        if (localStorage.getItem(STORAGE_KEY)) {
+            return
+        }
 
         try {
-            const { fetchSettings, settings } = useSiteSettings()
+            const {
+                fetchSettings,
+                settings,
+            } = useSiteSettings()
+
             await fetchSettings()
+
             const s = settings.value
-            if (s?.site_logo_footer?.value)  this.logoUrl  = s.site_logo_footer.value
-            else if (s?.site_logo?.value)    this.logoUrl  = s.site_logo.value
-            if (s?.site_name?.value)         this.siteName = s.site_name.value
+
+            if (s?.site_logo_footer?.value) {
+                this.logoUrl = s.site_logo_footer.value
+            } else if (s?.site_logo?.value) {
+                this.logoUrl = s.site_logo.value
+            }
+
+            if (s?.site_name?.value) {
+                this.siteName = s.site_name.value
+            }
+
         } catch (e) {
-            console.error('AgeGate: failed to load settings', e)
+            console.error(
+                'AgeGate: failed to load settings',
+                e
+            )
         }
 
         this.visible = true
-        document.body.style.overflow = 'hidden'
+
+        this.lockScroll()
+    },
+
+    beforeUnmount() {
+        this.unlockScroll()
     },
 
     methods: {
+        lockScroll() {
+            /*
+             * Jangan mengubah overflow pada <html>.
+             * Hanya lock body ketika Age Gate benar-benar tampil.
+             */
+            document.body.style.overflow = 'hidden'
+        },
+
+        unlockScroll() {
+            /*
+             * Pastikan body kembali normal ketika modal ditutup
+             * atau component di-unmount.
+             */
+            document.body.style.removeProperty('overflow')
+        },
+
         confirm() {
-            localStorage.setItem(STORAGE_KEY, '1')
+            localStorage.setItem(
+                STORAGE_KEY,
+                '1'
+            )
+
             this.close()
         },
 
@@ -83,7 +156,8 @@ export default {
 
         close() {
             this.visible = false
-            document.body.style.overflow = ''
+
+            this.unlockScroll()
         },
     },
 }
@@ -167,7 +241,9 @@ export default {
     border: 1px solid transparent;
 }
 
-.agegate-btn:hover { opacity: 0.85; }
+.agegate-btn:hover {
+    opacity: 0.85;
+}
 
 .agegate-btn--yes {
     background: #BD2028;
@@ -200,6 +276,7 @@ export default {
 .agegate-fade-leave-active {
     transition: opacity 0.25s ease;
 }
+
 .agegate-fade-enter-from,
 .agegate-fade-leave-to {
     opacity: 0;

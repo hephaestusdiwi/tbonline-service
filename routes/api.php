@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\SliderController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\HomeVideoController;
+use App\Http\Controllers\Api\FlashSaleController;
 use App\Http\Controllers\Api\NavigationController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\BranchController;
@@ -40,6 +43,9 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/homepage', [HomepageSectionController::class, 'public']);
 
 Route::get('/sliders', [SliderController::class, 'index']);
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/home-videos', [HomeVideoController::class, 'index']);
+Route::get('/flash-sale', [FlashSaleController::class, 'index']);
 Route::get('/navigations', [NavigationController::class, 'index']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/branches/cities',  [BranchController::class, 'cities']);
@@ -141,8 +147,22 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Sliders ──
     Route::post  ('/sliders',         [SliderController::class, 'store'])  ->middleware('can:sliders_create');
     Route::post  ('/sliders/reorder', [SliderController::class, 'reorder'])->middleware('can:sliders_edit');
-    Route::post  ('/sliders/{id}',    [SliderController::class, 'update']) ->middleware('can:sliders_edit');
+    Route::put   ('/sliders/{id}',    [SliderController::class, 'update']) ->middleware('can:sliders_edit');
     Route::delete('/sliders/{id}',    [SliderController::class, 'destroy'])->middleware('can:sliders_delete');
+
+    // ── Categories ──
+    Route::post  ('/categories',         [CategoryController::class, 'store'])  ->middleware('can:categories_create');
+    Route::post  ('/categories/reorder', [CategoryController::class, 'reorder'])->middleware('can:categories_edit');
+    Route::put   ('/categories/{id}',    [CategoryController::class, 'update']) ->middleware('can:categories_edit');
+    Route::delete('/categories/{id}',    [CategoryController::class, 'destroy'])->middleware('can:categories_delete');
+
+    // ── Home Videos (2 slot fixed — cuma edit, gak ada create/delete) ──
+    Route::put   ('/home-videos/{slot}', [HomeVideoController::class, 'update'])->middleware('can:home_videos_edit');
+
+    // ── Flash Sale ──
+    Route::put ('/flash-sale/settings',        [FlashSaleController::class, 'updateSettings']) ->middleware('can:flash_sale_edit');
+    Route::put ('/flash-sale/products',        [FlashSaleController::class, 'syncProducts'])   ->middleware('can:flash_sale_edit');
+    Route::get ('/flash-sale/products/search', [FlashSaleController::class, 'searchProducts'])->middleware('can:flash_sale_edit');
 
     // ── Navigation ──
     Route::get   ('/admin/navigations',      [NavigationController::class, 'adminIndex'])->middleware('can:navigations_view');

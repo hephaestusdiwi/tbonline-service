@@ -7,6 +7,9 @@ import Login from '../pages/Login.vue'
 import Dashboard from '../pages/admin/Dashboard.vue'
 import Users from '../pages/admin/Users.vue'
 import Sliders from '../pages/admin/Sliders.vue'
+import Categories from '../pages/admin/Categories.vue'
+import HomeVideos from '../pages/admin/HomeVideos.vue'
+import FlashSale from '../pages/admin/FlashSale.vue'
 import Navigations from '../pages/admin/Navigations.vue'
 import Products from '../pages/admin/Products.vue'
 import ProductDetail from '../pages/ProductDetail.vue'
@@ -34,6 +37,9 @@ const routes = [
     { path: '/admin/dashboard', component: Dashboard, meta: { requiresAuth: true } },
     { path: '/admin/users', component: Users, meta: { requiresAuth: true } },
     { path: '/admin/sliders', component: Sliders, meta: { requiresAuth: true } },
+    { path: '/admin/categories', component: Categories, meta: { requiresAuth: true } },
+    { path: '/admin/home-videos', component: HomeVideos, meta: { requiresAuth: true } },
+    { path: '/admin/flash-sale', component: FlashSale, meta: { requiresAuth: true } },
     { path: '/admin/navigations', component: Navigations, meta: { requiresAuth: true } },
     { path: '/admin/products', component: Products, meta: { requiresAuth: true } },
     { path: '/admin/featured-products', component: FeaturedProducts, meta: { requiresAuth: true } },

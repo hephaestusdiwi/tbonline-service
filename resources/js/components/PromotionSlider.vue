@@ -4,7 +4,9 @@
     <!-- Header -->
     <div class="promo-container">
       <div class="promo-header">
-        <h2 class="promo-title">{{ title }}</h2>
+        <h2 class="promo-title">
+          <strong>tbtb.</strong><span>event</span>
+        </h2>
       </div>
     </div>
 
@@ -143,12 +145,15 @@ export default {
     let trackEl     = null    // ref ke DOM element .promo-track
 
     // ── Computed (hanya untuk state non-drag) ──────────────
-    const maxIndex = computed(() =>
-      Math.max(0, promotions.value.length - 1)
-    )
+    const maxOffset = ref(0)
+
+    const maxIndex = computed(() => {
+      const step = cardPx.value + GAP
+      return Math.max(0, Math.ceil(maxOffset.value / step))
+    })
 
     const snapOffset = computed(() =>
-      currentIndex.value * (cardPx.value + GAP)
+      Math.min(currentIndex.value * (cardPx.value + GAP), maxOffset.value)
     )
 
     // trackStyle hanya dipakai untuk snap animation (saat tidak drag)
@@ -163,8 +168,15 @@ export default {
     const fillStyle = computed(() => {
       const total = promotions.value.length
       if (!total) return { width: '0%', left: '0%' }
-      const w = Math.min(100, ((visibleN.value + 1) / total) * 100)
-      const l = (currentIndex.value / total) * 100
+
+      // Indikator = 1 segmen per promotion, bukan selebar seluruh track.
+      // Jadi pada 3 promotion: thumb hitam = 1/3 lebar track.
+      const w = 100 / total
+      const l = Math.min(
+        Math.max(0, currentIndex.value),
+        Math.max(0, total - 1)
+      ) * w
+
       return { width: w + '%', left: l + '%' }
     })
 
@@ -206,10 +218,33 @@ export default {
         cardPx.value = Math.floor((usableW - GAP * cols) / (cols + peekFrac))
       }
 
-      if (currentIndex.value > maxIndex.value)
-        currentIndex.value = Math.max(0, maxIndex.value)
+      nextTick(() => {
+        const scroller = scrollerRef.value
+        const track = scroller?.querySelector('.promo-track')
 
-      nextTick(() => setTrackX(-snapOffset.value))
+        if (scroller && track) {
+          const styles = window.getComputedStyle(scroller)
+          const paddingLeft = parseFloat(styles.paddingLeft) || 0
+          const paddingRight = parseFloat(styles.paddingRight) || 0
+          const viewportWidth = Math.max(
+            0,
+            scroller.clientWidth - paddingLeft - paddingRight
+          )
+
+          maxOffset.value = Math.max(
+            0,
+            track.scrollWidth - viewportWidth
+          )
+        } else {
+          maxOffset.value = 0
+        }
+
+        if (currentIndex.value > maxIndex.value) {
+          currentIndex.value = maxIndex.value
+        }
+
+        setTrackX(-snapOffset.value)
+      })
     }
 
     // ── Navigation ─────────────────────────────────────────
@@ -248,7 +283,7 @@ export default {
       let rawOffset = -snapOffset.value + totalDeltaX
 
       // Resistance di ujung kiri dan kanan
-      const minOffset = -(maxIndex.value * (cardPx.value + GAP))
+      const minOffset = -maxOffset.value
       if (rawOffset > 0) {
         // Ujung kiri
         rawOffset = rawOffset * RESISTANCE
@@ -393,10 +428,18 @@ export default {
   margin-bottom: 18px;
 }
 .promo-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #BD2028;
+  font-size: 1.50rem;
+  font-weight: 400;
+  color: #000;
   margin: 0;
+}
+
+.promo-title strong {
+  font-weight: 700;
+}
+
+.promo-title span {
+  font-weight: 400;
 }
 .promo-see-all {
   display: inline-flex;

@@ -15,29 +15,34 @@ class TopProductsController extends Controller
     // GET /api/homepage/top-products
     public function index(): JsonResponse
     {
-        $products = $this->service->getHomepageProducts(total: 10);
+        // Maksimal 6 produk.
+        // Featured diprioritaskan, sisanya otomatis
+        // diisi dari produk terlaris.
+        $products = $this->service->getHomepageProducts();
 
         return response()->json([
-            'data'  => ProductResource::collection($products),
+            'data' => ProductResource::collection($products),
         ]);
     }
 
-    // GET /api/admin/featured-products  — list untuk admin page
+    // GET /api/admin/featured-products
+    // List featured products untuk halaman admin
     public function adminList(): JsonResponse
     {
         $featured = $this->service->getFeaturedList();
 
         return response()->json([
-            'data'  => $featured->map(fn($f) => [
-                'id'            => $f->id,
-                'product_id'    => $f->product_id,
-                'sort_order'    => $f->sort_order,
-                'product'       => new ProductResource($f->product),
+            'data' => $featured->map(fn($f) => [
+                'id'         => $f->id,
+                'product_id' => $f->product_id,
+                'sort_order' => $f->sort_order,
+                'product'    => new ProductResource($f->product),
             ]),
         ]);
     }
 
-    // POST /api/admin/featured-products  — set/replace semua
+    // POST /api/admin/featured-products
+    // Set/replace semua featured products
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -47,10 +52,13 @@ class TopProductsController extends Controller
 
         $this->service->setFeaturedProducts($validated['product_ids']);
 
-        return response()->json(['message' => 'Featured products updated']);
+        return response()->json([
+            'message' => 'Featured products updated',
+        ]);
     }
 
-    // PATCH /api/admin/featured-products/reorder  — hanya ubah urutan
+    // PATCH /api/admin/featured-products/reorder
+    // Hanya mengubah urutan featured products
     public function reorder(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -60,6 +68,8 @@ class TopProductsController extends Controller
 
         $this->service->reorderFeatured($validated['ids']);
 
-        return response()->json(['message' => 'Order updated']);
+        return response()->json([
+            'message' => 'Order updated',
+        ]);
     }
 }

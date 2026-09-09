@@ -1,9 +1,8 @@
 <template>
     <div
         class="relative w-full overflow-hidden bg-gray-100
-                h-auto sm:h-[65vh] md:h-[75vh] lg:h-[75vh]"
-        :style="{ aspectRatio: currentRatio }"
-        >
+            h-[390px] sm:h-[15vh] md:h-[25vh] lg:h-[100vh]"
+    >
 
         <!-- Loading -->
         <div v-if="loading" class="flex items-center justify-center h-full">
@@ -31,15 +30,20 @@
                     :key="slider.id"
                     class="min-w-full h-full flex-shrink-0 relative overflow-hidden"
                 >
-                    <!-- Image -->
-                    <img
-                        v-if="slider.type === 'image'"
-                        :src="slider.file_url"
-                        :alt="slider.title"
-                        class="absolute inset-0 w-full h-full"
-                        style="object-fit: cover; object-position: center;"
-                        @load="onMediaLoad($event, slider, 'img')"
-                    />
+                    <picture v-if="slider.type === 'image'">
+                        <source
+                            v-if="slider.file_url_mobile"
+                            media="(max-width: 767px)"
+                            :srcset="slider.file_url_mobile"
+                        />
+                        <img
+                            :src="slider.file_url"
+                            :alt="slider.title"
+                            class="absolute inset-0 w-full h-full"
+                            style="object-fit: cover; object-position: center;"
+                            @load="onMediaLoad($event, slider, 'img')"
+                        />
+                    </picture>
 
                     <!-- Video -->
                     <video
@@ -142,8 +146,6 @@ export default {
             isPlaying: true,
             progress: 0,
             duration: 4000,
-            ratios: {},          
-            defaultRatio: 16 / 9 
         }
     },
     computed: {

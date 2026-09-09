@@ -285,12 +285,13 @@
                     <!-- Info -->
                     <div class="product-info" @click="goToProduct(product)">
                         <p class="product-brand" v-if="product.brand">{{ product.brand }}</p>
+                        <span v-if="isFlashSale(product)" class="flash-badge">⚡ FLASH SALE</span>
                         <p class="product-name">{{ product.name }}</p>
                         <div class="bottom-row">
                             <div class="price-block">
-                                <span class="sell-price">{{ formatPrice(product.sell_price) }}</span>
-                                <span v-if="product.market_price > product.sell_price" class="market-price">
-                                    {{ formatPrice(product.market_price) }}
+                                <span class="sell-price">{{ formatPrice(effectivePrice(product)) }}</span>
+                                <span v-if="effectiveMarketPrice(product) > effectivePrice(product)" class="market-price">
+                                    {{ formatPrice(effectiveMarketPrice(product)) }}
                                 </span>
                             </div>
                             <div class="stars" v-if="getStarRating(product) > 0">
@@ -342,6 +343,7 @@
 
 <script>
 import { cartStore } from '../store/cartStore'
+import { getFlashPriceMap } from '../utils/flashSale.js'
 import Navbar from '../components/Navbar.vue'
 import CartDrawer from '../components/CartDrawer.vue'
 import CustomerChat from '../components/chat/ChatWidget.vue'
@@ -398,6 +400,7 @@ export default {
             sortBy: '',
             viewMode: 'grid3',
             loading: false,
+            flashPriceMap: {},   // { product_id: flash_price } — cuma yang lagi aktif
             error: null,
             currentPage: 1,
             perPage: 12,
@@ -466,6 +469,7 @@ export default {
 
     mounted() {
         this.fetchFilterOptions()
+        this.fetchFlashPriceMap()
     },
 
     watch: {
@@ -633,8 +637,38 @@ export default {
             this.$router.push({ name: 'ProductDetail', params: { slug: this.productSlug(product) } })
         },
 
+        async fetchFlashPriceMap() {
+            this.flashPriceMap = await getFlashPriceMap()
+        },
+
+        effectivePrice(product) {
+            return this.flashPriceMap[product.id] ?? product.sell_price
+        },
+
+        effectiveMarketPrice(product) {
+            // Lagi flash sale → "harga coret" harus tetep nunjukkin harga
+            // normal (bukan cuma market_price), biar potongannya nggak
+            // keliatan lebih kecil dari yang sebenernya.
+            if (this.flashPriceMap[product.id] !== undefined) {
+                return Math.max(product.market_price || 0, product.sell_price || 0)
+            }
+            return product.market_price
+        },
+
+        isFlashSale(product) {
+            return this.flashPriceMap[product.id] !== undefined
+        },
+
         addToCart(product) {
-            this.cartStore.add(product)
+            this.cartStore.addItem({
+                id:         product.id,
+                name:       product.name,
+                photo_1:    this.photoUrl(product.photo_1),
+                sell_price: this.effectivePrice(product),
+                weight:     product.weight_kg ? product.weight_kg * 1000 : 1000,
+                qty:        1,
+                variant_id: null,
+            })
         },
 
         isBestSeller(product) {
@@ -646,8 +680,10 @@ export default {
         },
 
         getDiscount(product) {
-            if (!product.market_price || product.market_price <= product.sell_price) return null
-            return Math.round((1 - product.sell_price / product.market_price) * 100)
+            const price  = this.effectivePrice(product)
+            const market = this.effectiveMarketPrice(product)
+            if (!market || market <= price) return null
+            return Math.round((1 - price / market) * 100)
         },
 
         getStarRating(product) {
@@ -1235,6 +1271,19 @@ export default {
 .badge-hot   { background: #333; color: #fff; }
 .badge-sale  { background: #BD2028; color: #fff; }
 .badge-stock { background: #fff; color: #BD2028; border: 1px solid #BD2028; }
+
+.flash-badge {
+    display: inline-block;
+    font-family: "Poppins", sans-serif;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    background: #ED1F24;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-bottom: 4px;
+}
 
 /* ─── Image ─── */
 .image-wrap {

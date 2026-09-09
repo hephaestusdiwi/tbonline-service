@@ -9,10 +9,19 @@ use Illuminate\Support\Collection;
 class TopProductsService
 {
     /**
-     * Ambil top products untuk homepage.
-     * Manual featured products tampil duluan, sisanya auto dari terlaris.
+     * Ambil produk untuk homepage.
+     *
+     * Maksimal 6 produk.
+     *
+     * Prioritas:
+     * 1. Featured products dari admin
+     * 2. Jika jumlah featured kurang dari 6,
+     *    slot sisanya diisi oleh produk terlaris
+     *
+     * Produk yang sudah menjadi featured tidak akan
+     * muncul lagi sebagai produk terlaris.
      */
-    public function getHomepageProducts(int $total = 5): Collection
+    public function getHomepageProducts(int $total = 6): Collection
     {
         $featured = FeaturedProduct::active()
             ->with('product.optionTypes')
@@ -21,26 +30,32 @@ class TopProductsService
             ->filter();
 
         $featuredIds = $featured->pluck('id');
-        $remaining   = $total - $featured->count();
+        $remaining = $total - $featured->count();
 
-        $auto = collect();
-        if ($remaining > 0) {
-            $auto = Product::topSellers($remaining)
-                ->whereNotIn('id', $featuredIds)
-                ->with('optionTypes')
-                ->get();
+        if ($remaining <= 0) {
+            return $featured->take($total);
         }
 
-        return $featured->concat($auto)->take($total);
+        $auto = Product::topSellers($remaining)
+            ->whereNotIn('id', $featuredIds)
+            ->with('optionTypes')
+            ->get();
+
+        return $featured
+            ->concat($auto)
+            ->take($total);
     }
 
     /**
      * Set/replace semua featured products sekaligus.
-     * $productIds = array of product IDs, urutan = sort_order.
+     *
+     * $productIds = array of product IDs
+     * Urutan array akan menjadi sort_order.
      */
     public function setFeaturedProducts(array $productIds): void
     {
-        $existing = Product::whereIn('id', $productIds)->pluck('id');
+        $existing = Product::whereIn('id', $productIds)
+            ->pluck('id');
 
         \DB::transaction(function () use ($productIds, $existing) {
             FeaturedProduct::query()->delete();
@@ -56,22 +71,36 @@ class TopProductsService
                     'updated_at' => now(),
                 ])
                 ->all();
+
             FeaturedProduct::insert($inserts);
         });
     }
 
+    /**
+     * Reorder featured products.
+     *
+     * $orderedIds berisi ID dari tabel featured_products,
+     * bukan product_id.
+     */
     public function reorderFeatured(array $orderedIds): void
     {
         \DB::transaction(function () use ($orderedIds) {
             foreach ($orderedIds as $index => $id) {
                 FeaturedProduct::where('id', $id)
-                    ->update(['sort_order' => $index]);
+                    ->update([
+                        'sort_order' => $index,
+                    ]);
             }
         });
     }
 
+    /**
+     * Ambil daftar featured products untuk halaman admin.
+     */
     public function getFeaturedList(): Collection
     {
-        return FeaturedProduct::active()->with('product.optionTypes')->get();
+        return FeaturedProduct::active()
+            ->with('product.optionTypes')
+            ->get();
     }
 }

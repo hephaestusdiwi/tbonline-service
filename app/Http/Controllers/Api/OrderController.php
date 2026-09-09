@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Cache;
 use App\Models\Product;
 use App\Models\PromoCode;
 use App\Models\ProductVariant;
+use App\Models\FlashSale;
+use App\Models\FlashSaleProduct;
 use Carbon\Carbon;
 
 class OrderController extends Controller
@@ -107,6 +109,13 @@ class OrderController extends Controller
 
         $validated = $request->validate($rules);
 
+        // ── Validasi ulang harga tiap item DI SERVER — jangan pernah percaya
+        //    harga kiriman client mentah-mentah, biar checkout nggak bisa
+        //    di-tamper (mis. lewat DevTools/Postman ngubah sell_price jadi
+        //    lebih murah). Ini juga otomatis nerapin harga flash sale yang
+        //    lagi aktif, konsisten sama yang ditampilkan di frontend.
+        [$verifiedItems, $computedSubtotal] = $this->resolveVerifiedItems($validated['items']);
+
         try {
             DB::beginTransaction();
 
@@ -118,10 +127,10 @@ class OrderController extends Controller
                 $promo = PromoCode::where('code', strtoupper($request->promo_code))->first();
 
                 if ($promo) {
-                    $check = $promo->isValid((int) $request->subtotal, $request->customer_phone);
+                    $check = $promo->isValid($computedSubtotal, $request->customer_phone);
                     if ($check['valid']) {
                         $discountAmount = $promo->calculateDiscount(
-                            (int) $request->subtotal,
+                            $computedSubtotal,
                             $isPickup ? 0 : ($isCustomShipping ? 0 : (int) $request->shipping_cost)
                         );
                         $appliedPromoCode = $promo->code;
@@ -181,7 +190,7 @@ class OrderController extends Controller
             }
 
             // ── Grand total ───────────────────────────────────────────────────
-            $grandTotal = (int) $request->subtotal + $shippingCost - $discountAmount;
+            $grandTotal = $computedSubtotal + $shippingCost - $discountAmount;
 
             // ── Buat order ────────────────────────────────────────────────────
             $order = Order::create([
@@ -203,7 +212,7 @@ class OrderController extends Controller
                 'shipping_etd'         => $shippingEtd,
                 'shipping_is_custom'   => $shippingIsCustom,
                 'shipping_custom_note' => $shippingCustomNote,
-                'subtotal'             => $request->subtotal,
+                'subtotal'             => $computedSubtotal,
                 'promo_code'           => $appliedPromoCode,
                 'discount_amount'      => $discountAmount,
                 'total_price'          => $grandTotal,
@@ -213,9 +222,7 @@ class OrderController extends Controller
                 'branch_id'            => $isPickup ? ($validated['branch_id'] ?? null) : null,
             ]);
 
-            foreach ($validated['items'] as $item) {
-                \Log::info('item_debug', $item);
-
+            foreach ($verifiedItems as $item) {
                 OrderItem::create([
                     'order_id'      => $order->id,
                     'product_id'    => $item['product_id'] ?? null,
@@ -244,7 +251,7 @@ class OrderController extends Controller
             DB::commit();
 
             // ── Preview point yang akan didapat (belum di-earn, menunggu konfirmasi) ──
-            $pointsWillEarn = LoyaltyPoint::calculateEarnPoints((int) $request->subtotal);
+            $pointsWillEarn = LoyaltyPoint::calculateEarnPoints($computedSubtotal);
 
             return response()->json([
                 'message' => 'Order berhasil dibuat.',
@@ -262,6 +269,78 @@ class OrderController extends Controller
                 'error'   => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Hitung ulang harga tiap item order berdasarkan data PRODUK ASLI di
+     * database (bukan dari input client) — mencegah price tampering saat
+     * checkout. Otomatis nerapin harga flash sale yang lagi aktif juga.
+     *
+     * Item tanpa product_id (mis. barang custom/manual) dilewatin apa
+     * adanya karena memang nggak ada produk buat divalidasi.
+     *
+     * @return array{0: array, 1: int} [$verifiedItems, $computedSubtotal]
+     */
+    private function resolveVerifiedItems(array $items): array
+    {
+        $flashSale   = FlashSale::first();
+        $flashIsLive = $flashSale
+            && $flashSale->is_active
+            && $flashSale->ends_at
+            && $flashSale->ends_at->isFuture();
+
+        $flashPrices = $flashIsLive
+            ? FlashSaleProduct::whereNotNull('flash_price')->pluck('flash_price', 'product_id')
+            : collect();
+
+        $verifiedItems = [];
+        $computedSubtotal = 0;
+
+        foreach ($items as $item) {
+            $realPrice = $this->resolveItemPrice($item, $flashPrices);
+            $itemSubtotal = $realPrice * (int) $item['qty'];
+            $computedSubtotal += $itemSubtotal;
+
+            $verifiedItems[] = array_merge($item, [
+                'sell_price' => $realPrice,
+                'subtotal'   => $itemSubtotal,
+            ]);
+        }
+
+        return [$verifiedItems, $computedSubtotal];
+    }
+
+    /**
+     * Resolve harga SATU item: varian > flash sale > harga normal produk.
+     * Fallback ke harga kiriman client cuma kalau item nggak punya
+     * product_id (custom item) atau produknya udah kehapus.
+     */
+    private function resolveItemPrice(array $item, $flashPrices): int
+    {
+        if (empty($item['product_id'])) {
+            return (int) $item['sell_price'];
+        }
+
+        if (!empty($item['variant_id'])) {
+            $variant = ProductVariant::find($item['variant_id']);
+            if ($variant) {
+                return (int) $variant->effective_sell_price;
+            }
+        }
+
+        $product = Product::find($item['product_id']);
+        if (!$product) {
+            return (int) $item['sell_price'];
+        }
+
+        $normalPrice = (int) $product->sell_price;
+        $flashPrice  = $flashPrices->get($product->id);
+
+        if ($flashPrice !== null && (float) $flashPrice < $normalPrice) {
+            return (int) $flashPrice;
+        }
+
+        return $normalPrice;
     }
 
     /**

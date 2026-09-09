@@ -2,71 +2,130 @@
     <div class="min-h-screen bg-white">
         <AgeGateModal />
         <PromoPopup />
+
         <Navbar />
+
         <CartDrawer />
         <HeroSlider />
         <TopProducts />
+        <CategoryList />
+        <FlashSaleSection />
+
         <ProductList :search-query="activeSearchQuery" />
+
+        <HomeVideoSection slot-name="video_only" />
+
         <PromotionSlider
-            title="Promotions"
+            title-prefix="tbtb."
+            title="event"
             see-all-link="https://instagram.com/tokomu"
             :items="promoItems"
         />
-        <NewsletterBar />
+
+        <HomeVideoSection slot-name="video_with_caption" />
+
         <FaqSection />
+        <NewsletterBar />
         <CustomerChat />
         <FooterSection />
     </div>
 </template>
- 
+
 <script>
 import { ref, computed } from 'vue'
-import { useHead }          from '@vueuse/head'
-import { useSiteSettings }  from '../composables/useSiteSettings'
+import { useHead } from '@vueuse/head'
+import { useSiteSettings } from '../composables/useSiteSettings'
 import { useSeoMeta } from '../composables/useSeoMeta.js'
 import { useVisitorTracker } from '../composables/useVisitorTracker'
- 
+
 import AgeGateModal from '../components/AgeGateModal.vue'
-import PromoPopup      from '../components/PromoPopup.vue'
-import Navbar          from '../components/Navbar.vue'
-import HeroSlider      from '../components/HeroSlider.vue'
-import ProductList     from '../components/ProductList.vue'
-import CartDrawer      from '../components/CartDrawer.vue'
-import CustomerChat    from '../components/chat/ChatWidget.vue'
-import TopProducts     from '../components/TopProducts.vue'
-import NewsletterBar   from '../components/NewsletterBar.vue'
-import FooterSection   from '../components/FooterSection.vue'
+import PromoPopup from '../components/PromoPopup.vue'
+import Navbar from '../components/Navbar.vue'
+import HeroSlider from '../components/HeroSlider.vue'
+import CategoryList from '../components/CategoryList.vue'
+import FlashSaleSection from '../components/FlashSaleSection.vue'
+import HomeVideoSection from '../components/HomeVideoSection.vue'
+import ProductList from '../components/ProductList.vue'
+import CartDrawer from '../components/CartDrawer.vue'
+import CustomerChat from '../components/chat/ChatWidget.vue'
+import TopProducts from '../components/TopProducts.vue'
+import NewsletterBar from '../components/NewsletterBar.vue'
+import FooterSection from '../components/FooterSection.vue'
 import PromotionSlider from '../components/PromotionSlider.vue'
-import FaqSection      from '../components/FaqSection.vue'
- 
+import FaqSection from '../components/FaqSection.vue'
+
 export default {
     name: 'Home',
+
     components: {
-        Navbar, AgeGateModal, PromoPopup, HeroSlider, TopProducts, ProductList, PromotionSlider,
-        CartDrawer, CustomerChat, FooterSection, NewsletterBar, FaqSection,
+        Navbar,
+        AgeGateModal,
+        PromoPopup,
+        HeroSlider,
+        CategoryList,
+        FlashSaleSection,
+        TopProducts,
+        ProductList,
+        PromotionSlider,
+        HomeVideoSection,
+        CartDrawer,
+        CustomerChat,
+        FooterSection,
+        NewsletterBar,
+        FaqSection,
     },
- 
+
     setup() {
         const activeSearchQuery = ref('')
-        const { siteName, settings, fetchSettings } = useSiteSettings()
+
+        const {
+            siteName,
+            settings,
+            fetchSettings,
+        } = useSiteSettings()
 
         useHead({
             title: 'TB Store | Belanja Kebutuhan Vape Jadi Mudah',
+
             meta: computed(() => {
-                const code = settings.value?.google_site_verification?.value
-                return code ? [{ name: 'google-site-verification', content: code }] : []
+                const code =
+                    settings.value?.google_site_verification?.value
+
+                return code
+                    ? [
+                        {
+                            name: 'google-site-verification',
+                            content: code,
+                        },
+                    ]
+                    : []
             }),
         })
 
         useSeoMeta({
-            description: 'TB Store menyediakan produk vape original, mod, pod system, atomizer, liquid premium, dan aksesoris vape terpercaya.',
+            description:
+                'TB Store menyediakan produk vape original, mod, pod system, atomizer, liquid premium, dan aksesoris vape terpercaya.',
         })
 
-        useVisitorTracker({ page: '/', pageTitle: 'Home - TB Store' })
+        useVisitorTracker({
+            page: '/',
+            pageTitle: 'Home - TB Store',
+        })
 
-        fetchSettings().catch(e => console.error('Failed to load site settings:', e))
+        fetchSettings().catch((e) => {
+            console.error(
+                'Failed to load site settings:',
+                e
+            )
+        })
 
-        return { activeSearchQuery, onSearch: (q) => { activeSearchQuery.value = q } }
+        return {
+            activeSearchQuery,
+
+            onSearch: (q) => {
+                activeSearchQuery.value = q
+            },
+        }
     },
 }
 </script>
@@ -99,7 +158,13 @@ export default {
     width: 100%;
 }
 
+/*
+ * Jangan gunakan overflow-x: hidden pada wrapper utama.
+ * Gunakan clip supaya konten tidak menyebabkan horizontal scroll
+ * tanpa menjadikan wrapper sebagai scroll container.
+ */
 .min-h-screen {
-  overflow-x: hidden;
+    min-height: 100vh;
+    overflow-x: clip;
 }
 </style>

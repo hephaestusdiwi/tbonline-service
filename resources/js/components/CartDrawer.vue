@@ -131,7 +131,7 @@
 
 <script>
 
-import '../../css/CartDrawer.css'
+import '../../css/cartdrawer.css'
 import { cartStore } from '../store/cartStore'
 
 export default {

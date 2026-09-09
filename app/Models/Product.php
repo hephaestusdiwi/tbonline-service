@@ -117,12 +117,23 @@ class Product extends Model
 
     public function scopeTopSellers($query, int $limit = 10)
     {
-        return $query->where('published', 1)
-                    ->orderByDesc(
-                        \App\Models\ProductVariant::selectRaw('COALESCE(SUM(qty_fast_moving), 0)')
-                            ->whereColumn('product_id', 'products.id')
-                    )
-                    ->limit($limit);
+        return $query
+            ->where('published', 1)
+            ->whereIn('id', function ($sub) {
+                $sub->select('order_items.product_id')
+                    ->from('order_items')
+                    ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                    ->where('orders.status', 'success')
+                    ->whereNotNull('order_items.product_id')
+                    ->groupBy('order_items.product_id');
+            })
+            ->orderByDesc(
+                \App\Models\OrderItem::selectRaw('COALESCE(SUM(order_items.qty), 0)')
+                    ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                    ->whereColumn('order_items.product_id', 'products.id')
+                    ->where('orders.status', 'success')
+            )
+            ->limit($limit);
     }
 
     protected static function booted(): void

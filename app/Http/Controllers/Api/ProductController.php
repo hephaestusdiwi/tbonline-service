@@ -46,7 +46,13 @@ class ProductController extends Controller
 
         // ── Filters ─────────────────────────────────────────────
         if ($request->filled('category')) {
-            $query->where('category', $request->category);
+            // Boleh 1 nilai ("Liquid Freebase") atau beberapa dipisah koma
+            // ("Liquid Freebase,Liquid Saltnic,Liquid Import") — dipakai
+            // tile kategori homepage yang gabungin beberapa kategori produk
+            // jadi 1 tile. explode() satu nilai tetep jadi array 1 item,
+            // jadi whereIn() di sini backward-compatible sama filter lama.
+            $categories = array_filter(array_map('trim', explode(',', $request->category)));
+            $query->whereIn('category', $categories);
         }
 
         if ($request->filled('brand')) {
@@ -152,7 +158,8 @@ class ProductController extends Controller
         }
 
         if ($request->filled('category')) {
-            $statsQuery->where('category', $request->category);
+            $categories = array_filter(array_map('trim', explode(',', $request->category)));
+            $statsQuery->whereIn('category', $categories);
         }
 
         $stats = $statsQuery->selectRaw('

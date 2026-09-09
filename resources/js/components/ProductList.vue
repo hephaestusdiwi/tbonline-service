@@ -29,14 +29,27 @@
         </div>
 
         <!-- Product Grid -->
-        <div v-else class="products-grid">
+        <div
+            v-else
+            class="products-slider"
+            ref="productsSlider"
+            :class="{ 'is-dragging': isDragging }"
+            @mousedown="onSliderMouseDown"
+            @touchstart.passive="onSliderTouchStart"
+            @touchmove.passive="onSliderTouchMove"
+            @touchend.passive="onSliderTouchEnd"
+        >
             <div
-                v-for="product in products"
-                :key="product.id"
-                class="product-card"
-                :style="cardHeight ? { height: cardHeight + 'px' } : {}"
-                @click="goToProduct(product)"
+                class="products-grid products-track"
+                ref="productsTrack"
+                :style="trackStyle"
             >
+                <div
+                    v-for="product in products"
+                    :key="product.id"
+                    class="product-card"
+                    @click="handleProductClick(product)"
+                >
                 <!-- Image Area -->
                 <div class="card-img-wrap">
                     <!-- Discount Badge -->
@@ -51,6 +64,7 @@
                         :alt="product.name"
                         class="card-img"
                         loading="lazy"
+                        draggable="false"
                         @error="onImgError"
                     />
                     <div v-else class="card-img-empty">
@@ -68,7 +82,13 @@
 
                 <!-- Card Body -->
                 <div class="card-body">
-                    <p class="product-name">{{ product.name }}</p>
+                    <p class="product-name">
+                        {{
+                            product.name
+                                .toLowerCase()
+                                .replace(/\b\w/g, l => l.toUpperCase())
+                        }}
+                    </p>
                     <div class="price-row">
                         <span class="price-main" :class="{ discounted: product.market_price > product.sell_price }">
                             {{ formatPrice(product.sell_price) }}
@@ -87,11 +107,15 @@
                         :disabled="isOutOfStock(product)"
                     >
                         <span v-if="isOutOfStock(product)">HABIS</span>
-                        <span v-else-if="hasVariants(product)">PILIH OPSI</span>
-                        <span v-else>+ KERANJANG</span>
+                        <template v-else>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                            <span v-if="hasVariants(product)">KERANJANG</span>
+                            <span v-else>KERANJANG</span>
+                        </template>
                     </button>
                 </div>
             </div>
+        </div>
         </div>
 
         <!-- Empty State -->
@@ -106,6 +130,11 @@
 import { cartStore } from '../store/cartStore'
 import AppContainer from './AppContainer.vue'
 
+const GAP = 8
+const RESISTANCE = 0.2
+const VELOCITY_THRESH = 0.3
+const CLICK_SLOP = 6
+
 export default {
     name: 'ProductList',
 
@@ -116,10 +145,9 @@ export default {
     },
 
     props: {
-        limit: { type: Number, default: 10 },
+        limit: { type: Number, default: 12 },
         searchQuery: { type: String, default: '' },
     },
-
 
     data() {
         return {
@@ -127,28 +155,270 @@ export default {
             loading: false,
             error: null,
             total: 0,
-            cardHeight: 500,
+
+            sliderX: 0,
+            currentIndex: 0,
+            isDragging: false,
+            startX: 0,
+            lastX: 0,
+            lastTime: 0,
+            velocity: 0,
+            totalDeltaX: 0,
+            movedEnough: false,
+            touchStartY: 0,
+            touchLocked: false,
+            maxOffset: 0,
+            suppressClick: false,
         }
     },
 
-    watch: {                         
-        searchQuery(val) {
+    watch: {
+        searchQuery() {
+            this.currentIndex = 0
+            this.sliderX = 0
             this.fetchProducts()
         }
     },
 
     mounted() {
         this.fetchProducts()
-        this.calcCardHeight()
-        window.addEventListener('resize', this.calcCardHeight)
+        window.addEventListener('resize', this.calcSliderLayout)
     },
 
     beforeUnmount() {
-        window.removeEventListener('resize', this.calcCardHeight)
+        window.removeEventListener('resize', this.calcSliderLayout)
+        window.removeEventListener('mousemove', this.onSliderMouseMove)
+        window.removeEventListener('mouseup', this.onSliderMouseUp)
     },
-    
+
+    computed: {
+        trackStyle() {
+            return {
+                transition: this.isDragging
+                    ? 'none'
+                    : 'transform 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                willChange: 'transform',
+            }
+        },
+    },
 
     methods: {
+        isDesktop() {
+            return window.innerWidth >= 1024
+        },
+
+        calcSliderLayout() {
+            if (this.isDesktop()) {
+                this.currentIndex = 0
+                this.sliderX = 0
+                this.maxOffset = 0
+                if (this.$refs.productsTrack) {
+                    this.$refs.productsTrack.style.transform = ''
+                    this.$refs.productsTrack.style.transition = ''
+                }
+                return
+            }
+
+            const slider = this.$refs.productsSlider
+            const track = this.$refs.productsTrack
+            if (!slider || !track) return
+
+            const styles = window.getComputedStyle(slider)
+            const paddingLeft = parseFloat(styles.paddingLeft) || 0
+            const paddingRight = parseFloat(styles.paddingRight) || 0
+            const viewportWidth = slider.clientWidth - paddingLeft - paddingRight
+            this.maxOffset = Math.max(0, track.scrollWidth - viewportWidth)
+
+            const step = this.getCardStep()
+            const maxIndex = Math.max(0, Math.ceil(this.maxOffset / step))
+            if (this.currentIndex > maxIndex) {
+                this.currentIndex = maxIndex
+            }
+
+            this.setSliderX(-Math.min(this.currentIndex * step, this.maxOffset), false)
+        },
+
+        handleProductClick(product) {
+            if (this.suppressClick || this.movedEnough) {
+                this.suppressClick = false
+                this.movedEnough = false
+                return
+            }
+            this.goToProduct(product)
+        },
+
+        getSliderBounds() {
+            return {
+                min: -Math.max(0, this.maxOffset),
+                max: 0,
+            }
+        },
+
+        clampSliderX(value) {
+            const { min, max } = this.getSliderBounds()
+            return Math.min(max, Math.max(min, value))
+        },
+
+        setSliderX(value, withTransition = false) {
+            this.sliderX = this.clampSliderX(value)
+            if (this.$refs.productsTrack) {
+                this.$refs.productsTrack.style.transform = `translateX(${this.sliderX}px)`
+                this.$refs.productsTrack.style.transition = withTransition
+                    ? 'transform 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                    : 'none'
+            }
+        },
+
+        getCardStep() {
+            const track = this.$refs.productsTrack
+            if (!track || !track.children.length) {
+                return 168
+            }
+
+            const firstCard = track.children[0]
+            const styles = window.getComputedStyle(track)
+            const gap = parseFloat(styles.columnGap || styles.gap || '8') || 8
+            return firstCard.getBoundingClientRect().width + gap
+        },
+
+        getMaxIndex() {
+            const step = this.getCardStep()
+            return Math.max(0, Math.ceil(this.maxOffset / step))
+        },
+
+        snapTo(index) {
+            this.isDragging = false
+            const maxIndex = this.getMaxIndex()
+            this.currentIndex = Math.max(0, Math.min(index, maxIndex))
+            const step = this.getCardStep()
+            const offset = Math.min(this.currentIndex * step, this.maxOffset)
+            this.setSliderX(-offset, true)
+        },
+
+        startSliderDrag(clientX, clientY = null) {
+            if (this.isDesktop()) return
+
+            this.isDragging = true
+            this.movedEnough = false
+            this.startX = clientX
+            this.lastX = clientX
+            this.lastTime = performance.now()
+            this.velocity = 0
+            this.totalDeltaX = 0
+            this.touchStartY = clientY ?? 0
+            this.touchLocked = false
+
+            if (this.$refs.productsTrack) {
+                this.$refs.productsTrack.style.transition = 'none'
+            }
+        },
+
+        moveSliderDrag(clientX) {
+            if (!this.isDragging || this.isDesktop()) return
+
+            const now = performance.now()
+            const dt = now - this.lastTime
+            const dx = clientX - this.lastX
+
+            if (dt > 0) {
+                this.velocity = dx / dt
+            }
+
+            this.lastX = clientX
+            this.lastTime = now
+            this.totalDeltaX = clientX - this.startX
+
+            if (Math.abs(this.totalDeltaX) > CLICK_SLOP) {
+                this.movedEnough = true
+            }
+
+            let raw = -Math.min(this.currentIndex * (this.getCardStep()), this.maxOffset) + this.totalDeltaX
+            const minOffset = -this.maxOffset
+
+            if (raw > 0) {
+                raw = raw * RESISTANCE
+            } else if (raw < minOffset) {
+                raw = minOffset + (raw - minOffset) * RESISTANCE
+            }
+
+            this.setSliderX(raw, false)
+        },
+
+        endSliderDrag() {
+            if (!this.isDragging) return
+
+            this.isDragging = false
+
+            if (this.movedEnough) {
+                this.suppressClick = true
+                window.setTimeout(() => {
+                    this.suppressClick = false
+                }, 120)
+            }
+
+            let target = this.currentIndex
+            const step = this.getCardStep()
+            const currentOffset = Math.min(this.currentIndex * step, this.maxOffset)
+
+            if (Math.abs(this.velocity) > VELOCITY_THRESH) {
+                target = this.velocity < 0
+                    ? this.currentIndex + 1
+                    : this.currentIndex - 1
+            } else {
+                target = Math.round(-( -currentOffset + this.totalDeltaX ) / step)
+            }
+
+            this.snapTo(target)
+        },
+
+        onSliderMouseDown(e) {
+            if (this.isDesktop() || e.button !== 0) return
+            this.startSliderDrag(e.clientX, null)
+            window.addEventListener('mousemove', this.onSliderMouseMove)
+            window.addEventListener('mouseup', this.onSliderMouseUp)
+        },
+
+        onSliderMouseMove(e) {
+            this.moveSliderDrag(e.clientX)
+        },
+
+        onSliderMouseUp() {
+            window.removeEventListener('mousemove', this.onSliderMouseMove)
+            window.removeEventListener('mouseup', this.onSliderMouseUp)
+            this.endSliderDrag()
+        },
+
+        onSliderTouchStart(e) {
+            if (this.isDesktop() || !e.touches.length) return
+            const touch = e.touches[0]
+            this.touchStartY = touch.clientY
+            this.startSliderDrag(touch.clientX, touch.clientY)
+        },
+
+        onSliderTouchMove(e) {
+            if (this.isDesktop() || !e.touches.length || !this.isDragging) return
+
+            const touch = e.touches[0]
+            const dx = Math.abs(touch.clientX - this.startX)
+            const dy = Math.abs(touch.clientY - this.touchStartY)
+
+            if (!this.touchLocked) {
+                if (dy > dx) {
+                    this.isDragging = false
+                    this.setSliderX(-Math.min(this.currentIndex * this.getCardStep(), this.maxOffset), false)
+                    return
+                }
+                this.touchLocked = true
+            }
+
+            this.moveSliderDrag(touch.clientX)
+        },
+
+        onSliderTouchEnd() {
+            if (this.isDesktop()) return
+            this.endSliderDrag()
+        },
+
         async fetchProducts() {
             this.loading = true
             this.error = null
@@ -166,13 +436,24 @@ export default {
                 if (!res.ok) throw new Error('Gagal memuat produk.')
 
                 const json = await res.json()
-                const incoming = Array.isArray(json.data) ? json.data : (json.data?.data ?? [])
-                this.total = json.data?.total ?? incoming.length
-                this.products = incoming
+                const incoming = Array.isArray(json.data)
+                    ? json.data
+                    : (json.data?.data ?? [])
+
+                const availableProducts = incoming.filter(product => !this.isOutOfStock(product))
+                this.total = json.data?.total ?? availableProducts.length
+                this.products = availableProducts
+                this.currentIndex = 0
+                this.sliderX = 0
+
+                await this.$nextTick()
+                this.calcSliderLayout()
             } catch (e) {
                 this.error = e.message
             } finally {
                 this.loading = false
+                await this.$nextTick()
+                this.calcSliderLayout()
             }
         },
 
@@ -181,14 +462,6 @@ export default {
             if (path.startsWith('http://') || path.startsWith('https://')) return path
             const base = import.meta.env.VITE_APP_URL || window.location.origin
             return `${base}/storage/${path}`
-        },
-
-        calcCardHeight() {
-            const ww = window.innerWidth
-            if (ww < 540)       this.cardHeight = null  // ← auto, sama seperti TopProducts!
-            else if (ww < 800)  this.cardHeight = 400
-            else if (ww < 1024) this.cardHeight = 420
-            else                this.cardHeight = 500
         },
 
         hasVariants(product) {
@@ -234,7 +507,7 @@ export default {
         goToAllProducts() {
             this.$router.push({ name: 'Products' })
         },
-        
+
         formatPrice(val) {
             if (!val && val !== 0) return '-'
             return new Intl.NumberFormat('id-ID', {
@@ -258,93 +531,190 @@ export default {
 </script>
 
 <style scoped>
-
-/* ─── Section ─── */
 .product-section {
-    max-width: 1280px;
+    background: #f1f2f4;
     margin: 0 auto;
-    padding: 56px 24px 80px;
+    padding: 28px 8px 48px;
     font-family: "Poppins", sans-serif;
 }
 
-/* ─── Header ─── */
+/* Header */
 .section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-wrap: wrap;
     gap: 16px;
-    margin-bottom: 36px;
-    padding-bottom: 18px;
-    border-bottom: 1.5px solid #ebebeb;
+    margin: 0 0 18px;
+    padding: 0;
+    border: 0;
 }
+
 .section-title {
     font-family: "Poppins", sans-serif;
-    font-size: 1rem;
+    font-size: 1.6rem;
+    line-height: 1.2;
     font-weight: 600;
-    color: #BD2028;
+    color: #bd2028;
     margin: 0;
 }
+
 .all-products-btn {
-    padding: 8px 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 110px;
+    height: 28px;
+    padding: 0;
     background: #BD2028;
     color: #fff;
     border: none;
-    font-family: "Poppins", sans-serif;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    cursor: pointer;
     border-radius: 5px;
-    transition: background 0.2s, color 0.2s;
+    font-family: "Poppins", sans-serif;
+    font-size: 0.62rem;
+    line-height: 1;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-decoration: none;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s;
 }
-.all-products-btn:hover { background: #000; color: #fff; }
 
-/* ─── Grid ─── */
+.all-products-btn:hover {
+    background: #a91d24;
+    color: #fff;
+}
+
+/* Viewport + track */
+.products-slider {
+    width: 100%;
+    overflow: hidden;
+    box-sizing: border-box;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: grab;
+}
+
+.products-slider.is-dragging {
+    cursor: grabbing;
+}
+
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
 }
-@media (max-width: 1100px) { .products-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 720px)  { .products-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; } }
 
-/* ─── Card ─── */
+.products-slider .products-track {
+    display: flex;
+    flex-wrap: nowrap;
+    width: max-content;
+    grid-template-columns: none;
+    gap: 8px;
+    padding: 0;
+    box-sizing: border-box;
+    will-change: transform;
+}
+
+@media (min-width: 1024px) {
+    .section-header {
+        position: relative;
+        width: min(1060px, calc(100% - 32px));
+        margin: 0 auto 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .section-title {
+        margin: 0;
+        text-align: center;
+    }
+
+    .all-products-btn {
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .products-slider {
+        overflow: visible;
+        cursor: default;
+        user-select: auto;
+        -webkit-user-select: auto;
+    }
+
+    .products-slider .products-track {
+        display: grid;
+        grid-template-columns: repeat(6, 170px);
+        grid-auto-rows: 221px;
+        justify-content: center;
+        width: 100%;
+        gap: 8px;
+        transform: none !important;
+        transition: none !important;
+        will-change: auto;
+    }
+}
+
+/* Card — match TopProducts */
 .product-card {
-    /* TIDAK ada height fixed — biarkan konten yang tentukan */
-    background: #BD2028;
-    border-radius: 12px;
+    flex-shrink: 0;
+    background: #fff;
+    color: #111;
+    border: none;
+    border-radius: 5px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     cursor: pointer;
-    transition: transform 0.18s, box-shadow 0.18s;
-}
-.product-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 28px rgba(189, 32, 40, 0.35);
+    box-sizing: border-box;
+    box-shadow: none;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-/* ─── Image Area ─── */
+.product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
+}
+
+.products-slider.is-dragging .product-card:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Image — match TopProducts */
 .card-img-wrap {
-    position: relative;
-    margin: 10px 10px 0;
-    border-radius: 8px;
+    height: 55%;
+    margin: 4px 4px 0;
+    border-radius: 3px;
     overflow: hidden;
     aspect-ratio: 1 / 1;
-    background: #BD2028;
+    background: #eee;
     flex-shrink: 0;
 }
 
 .card-img {
     width: 100%;
-    height: 90%;    
+    height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform 0.3s;
+    transition: transform 0.35s;
+    -webkit-user-drag: none;
+    user-select: none;
 }
-.product-card:hover .card-img { transform: scale(1.05); }
+
+.product-card:hover .card-img {
+    transform: scale(1.04);
+}
+
+.products-slider.is-dragging .product-card:hover .card-img {
+    transform: none;
+}
 
 .card-img-empty {
     width: 100%;
@@ -352,119 +722,262 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-}
-.card-img-empty svg {
-    width: 2.5rem;
-    height: 2.5rem;
-    color: rgba(255, 255, 255, 0.5);
+    color: #aaa;
 }
 
-/* Discount Badge */
+.card-img-empty svg {
+    width: 2rem;
+    height: 2rem;
+}
+
 .discount-badge {
     position: absolute;
-    top: 8px; left: 8px;
+    top: 4px;
+    left: 4px;
     z-index: 3;
     background: #fff;
-    color: #BD2028;
-    font-size: 0.68rem;
+    color: #bd2028;
+    font-size: 0.5rem;
     font-weight: 800;
-    padding: 3px 8px;
-    border-radius: 4px;
-    letter-spacing: 0.04em;
-    line-height: 1.4;
+    padding: 2px 4px;
+    border-radius: 2px;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
 }
 
-/* Out of Stock */
+/* Out of stock — retained but filtered before render */
 .out-of-stock {
     position: absolute;
     inset: 0;
-    background: rgba(0,0,0,0.45);
+    background: rgba(0, 0, 0, 0.45);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 4;
 }
+
 .out-of-stock span {
     background: #000;
     color: #fff;
-    font-size: 0.68rem;
+    font-size: 0.5rem;
     font-weight: 800;
-    letter-spacing: 0.12em;
-    padding: 7px 18px;
-    border-radius: 50px;
+    letter-spacing: 0.06em;
+    padding: 4px 8px;
+    border-radius: 30px;
     text-transform: uppercase;
 }
 
-/* ─── Card Body ─── */
+/* Text — match TopProducts */
 .card-body {
-    font-family: "Poppins", sans-serif;
-    padding: 10px 12px 0;
+    padding: 5px 5px 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 1px;
     flex: 1;
-    min-height: 161px;  
-}
-
-.card-footer {
-    padding: 8px 12px 14px;
-    margin-top: auto;
+    min-height: 0;
+    text-align: center;
 }
 
 .product-name {
+    margin: 0;
+    padding: 0;
+    min-height: 0;
     font-family: "Poppins", sans-serif;
-    font-size: 1.10rem;
-    padding: 10px 20px;
-    font-weight: 500;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1.55;
+    color: #111;
     text-align: center;
-    color: #fff;
-    line-height: 1.4;
-    min-height: 4em;   /* ← sama dengan TopProducts */
     display: -webkit-box;
-    -webkit-line-clamp: 4;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
-/* Price */
 .price-row {
     display: flex;
-    gap: 6px;
+    gap: 3px;
     align-items: center;
     justify-content: center;
-    padding-bottom: 4px;
+    margin-top: auto;
+    padding: 1px 0 2px;
 }
+
 .price-main {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: #fff;
-}
-.price-main.discounted { color: #FFD580; }
-.price-strike {
     font-size: 0.72rem;
-    color: rgba(255,255,255,0.5);
+    line-height: 1.1;
+    font-weight: 700;
+    color: #111;
+}
+
+.price-main.discounted {
+    color: #ed1f24;
+}
+
+.price-strike {
+    font-size: 0.48rem;
+    color: #888;
     text-decoration: line-through;
 }
 
-.btn-cart {
-    font-family: "Poppins", sans-serif;
-    width: 100%;
-    background: transparent;
-    color: #fff;
-    border: 1.5px solid rgba(255,255,255,0.8);
-    border-radius: 6px;
-    padding: 18px 4px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    letter-spacing: 0.06em;
-    cursor: pointer;
-    transition: background 0.15s;
+/* Button — match TopProducts */
+.card-footer {
+    padding: 5px 13px 8px;
+    margin-top: auto;
 }
-.btn-cart:hover:not(:disabled)  { background: rgba(255,255,255,0.15); }
-.btn-cart:active:not(:disabled) { background: rgba(255,255,255,0.25); }
-.btn-cart:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ─── State Boxes ─── */
+.btn-cart {
+    width: 100%;
+    min-height: 20px;
+    background: #bd2028;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    padding: 8px 2px;
+    font-size: 0.58rem;
+    line-height: 1.1;
+    font-family: "Poppins", sans-serif;
+    font-weight: 600;
+    letter-spacing: 0;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.btn-cart:hover:not(:disabled) {
+    background: #a91d24;
+}
+
+.btn-cart:active:not(:disabled) {
+    opacity: 0.85;
+}
+
+.btn-cart svg {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 14px;
+    display: block;
+    position: relative;
+    top: -2px;
+}
+
+.btn-cart:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Desktop: same card dimensions as TopProducts (160 x 221) */
+@media (min-width: 1024px) {
+    .products-slider .product-card {
+        width: 170px;
+        min-width: 170px;
+        flex-basis: 170px;
+        height: 221px;
+    }
+
+    .products-slider .card-img-wrap {
+        width: auto;
+        height: 55%;
+        aspect-ratio: 1 / 1;
+    }
+}
+
+/* Tablet / mobile: same dimensions as TopProducts breakpoints */
+@media (max-width: 1023px) {
+    .product-section {
+        padding: 28px 0 44px;
+    }
+
+    .section-header {
+        margin: 0 16px 14px;
+    }
+
+    .products-slider {
+        padding-left: 16px;
+        padding-right: 0;
+    }
+
+    .products-slider .products-track {
+        gap: 8px;
+        padding: 0 0 6px;
+    }
+
+    .products-slider .product-card {
+        flex-basis: 180px;
+        width: 180px;
+        min-width: 180px;
+        height: 260px;
+    }
+
+    .products-slider .card-img-wrap {
+        height: 55%;
+        margin: 5px 5px 0;
+        aspect-ratio: 1 / 1;
+    }
+
+    .product-name {
+        font-size: 0.72rem;
+    }
+
+    .price-main {
+        font-size: 0.66rem;
+    }
+
+    .card-footer {
+        padding: 4px 5px 6px;
+    }
+
+    .btn-cart {
+        min-height: 22px;
+        font-size: 0.5rem;
+    }
+}
+
+@media (max-width: 799px) {
+    .products-slider .product-card {
+        flex-basis: 150px;
+        width: 150px;
+        min-width: 150px;
+        height: 220px;
+    }
+}
+
+@media (max-width: 539px) {
+    .products-slider .product-card {
+        flex-basis: max(112px, calc((100vw - 58px) / 2));
+        width: max(112px, calc((100vw - 58px) / 2));
+        min-width: max(112px, calc((100vw - 58px) / 2));
+        height: 232px;
+    }
+
+    .products-slider .products-track {
+        gap: 8px;
+    }
+}
+
+@media (max-width: 420px) {
+    .products-slider .products-track {
+        gap: 7px;
+    }
+
+    .product-name {
+        font-size: 0.68rem;
+    }
+
+    .price-main {
+        font-size: 0.62rem;
+    }
+
+    .btn-cart {
+        min-height: 21px;
+        font-size: 0.46rem;
+    }
+}
+
+/* State Boxes */
 .state-box {
     text-align: center;
     padding: 80px 24px;
@@ -475,10 +988,14 @@ export default {
     align-items: center;
     gap: 16px;
 }
-.state-box.error { color: #c00; }
+
+.state-box.error {
+    color: #c00;
+}
+
 .retry-btn {
     padding: 10px 28px;
-    background: #BD2028;
+    background: #bd2028;
     color: #fff;
     border: none;
     font-family: "Poppins", sans-serif;
@@ -489,47 +1006,56 @@ export default {
     border-radius: 50px;
     transition: background 0.2s;
 }
-.retry-btn:hover { background: #000; }
 
-/* ─── Skeleton ─── */
-.skeleton-card { background: #d63a42; }
-.skeleton-img {
-    margin: 10px 10px 0;
-    border-radius: 8px;
-    aspect-ratio: 1 / 1;
-    background: rgba(255,255,255,0.2);
-    animation: pulse 1.4s ease-in-out infinite;
+.retry-btn:hover {
+    background: #000;
 }
-.skeleton-line {
-    height: 11px;
-    border-radius: 6px;
-    background: rgba(255,255,255,0.2);
-    animation: pulse 1.4s ease-in-out infinite;
-    margin: 4px 12px;
+
+/* Skeleton */
+.skeleton-card {
+    background: #fff;
+    border: 1px solid #ececec;
 }
-.skeleton-line.short { width: 60%; margin-left: auto; margin-right: auto; }
+
+.skeleton-img,
+.skeleton-line,
 .skeleton-btn {
-    height: 36px;
-    border-radius: 6px;
-    border: 1px solid rgba(255,255,255,0.3);
-    margin: 6px 12px 0;
-    animation: pulse 1.4s ease-in-out infinite;
+    background: linear-gradient(
+        90deg,
+        #f0f0f0 25%,
+        #e4e4e4 50%,
+        #f0f0f0 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
 }
 
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.5; }
+.skeleton-img {
+    margin: 5px 5px 0;
+    border-radius: 3px;
+    aspect-ratio: 1 / 1;
 }
 
-@media (max-width: 420px) {
-    .btn-cart {
-        padding: 8px 4px;
-    }
+.skeleton-line {
+    height: 9px;
+    border-radius: 4px;
+    margin: 4px 8px;
 }
-@media (max-width: 720px) {
-    .product-name {
-        padding: 5px 10px;
-        font-size: 0.9rem;
-    }
+
+.skeleton-line.short {
+    width: 60%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.skeleton-btn {
+    height: 24px;
+    border-radius: 3px;
+    margin: 6px 8px 0;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 </style>

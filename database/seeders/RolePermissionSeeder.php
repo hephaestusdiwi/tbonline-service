@@ -53,6 +53,9 @@ class RolePermissionSeeder extends Seeder
 
         $permissions = array_merge($permissions, [
             'sliders_view', 'sliders_create', 'sliders_edit', 'sliders_delete',
+            'categories_view', 'categories_create', 'categories_edit', 'categories_delete',
+            'home_videos_view', 'home_videos_edit',
+            'flash_sale_view', 'flash_sale_edit',
             'faq_view', 'faq_create', 'faq_edit', 'faq_delete',
             'announcement_view', 'announcement_create', 'announcement_edit', 'announcement_delete', 'announcement_reorder',
             'store_locator_view', 'store_locator_create', 'store_locator_edit', 'store_locator_delete',

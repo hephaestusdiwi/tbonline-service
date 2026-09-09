@@ -10,6 +10,7 @@ class Slider extends Model
         'title',
         'type',
         'file_path',
+        'file_path_mobile',
         'order',
         'is_active',
         'is_processing'
@@ -26,5 +27,13 @@ class Slider extends Model
         return asset('storage/' . $this->file_path);
     }
 
-    protected $appends = ['file_url'];
+    // Aset khusus mobile — null kalau admin belum upload (frontend yang fallback
+    // ke file_url, bukan di sini, supaya form admin bisa bedain "belum diisi"
+    // vs "sengaja sama dengan desktop").
+    public function getFileUrlMobileAttribute(): ?string
+    {
+        return $this->file_path_mobile ? asset('storage/' . $this->file_path_mobile) : null;
+    }
+
+    protected $appends = ['file_url', 'file_url_mobile'];
 }

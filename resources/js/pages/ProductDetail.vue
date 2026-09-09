@@ -112,6 +112,7 @@
 
             <!-- Price -->
             <div class="pd-price-block">
+              <span v-if="flashPrice !== null" class="pd-flash-badge">⚡ FLASH SALE</span>
               <span class="pd-price" :class="discount && 'pd-price--sale'">
                 {{ formatPrice(effectivePrice) }}
               </span>
@@ -346,6 +347,7 @@ import { cartStore } from '../store/cartStore'
 import { useHead } from '@vueuse/head'
 import { useSiteSettings } from '../composables/useSiteSettings'
 import { useSeoMeta } from '../composables/useSeoMeta.js'
+import { getFlashPriceMap } from '../utils/flashSale.js'
 import Navbar        from '../components/Navbar.vue'
 import CartDrawer    from '../components/CartDrawer.vue'
 import CustomerChat  from '../components/chat/ChatWidget.vue'
@@ -382,6 +384,7 @@ export default {
       touchStartX:     0,
       suggestedProducts: [],
       sugWishlisted: new Set(),
+      flashPrice:      null,   // harga flash sale produk ini kalau lagi aktif, null kalau nggak
     }
   },
 
@@ -428,11 +431,18 @@ export default {
 
     effectivePrice() {
       if (this.selectedVariant?.sell_price) return this.selectedVariant.sell_price
+      if (this.flashPrice !== null) return this.flashPrice
       return this.product?.sell_price || 0
     },
 
     effectiveMarketPrice() {
       if (this.selectedVariant?.market_price) return this.selectedVariant.market_price
+      // Kalau lagi flash sale, "harga coret"-nya harus tetep nunjukkin harga
+      // normal (bukan cuma market_price) — biar potongannya nggak keliatan
+      // lebih kecil dari yang sebenernya kalau sell_price > market_price.
+      if (this.flashPrice !== null) {
+        return Math.max(this.product?.market_price || 0, this.product?.sell_price || 0)
+      }
       return this.product?.market_price || 0
     },
 
@@ -470,10 +480,20 @@ export default {
       if (this.product) {
         this.setSeoMeta()
         await this.fetchSuggestions()
+        this.fetchFlashPrice()
       }
   },
 
   methods: {
+    async fetchFlashPrice() {
+        try {
+            const map = await getFlashPriceMap()
+            this.flashPrice = map[this.product.id] ?? null
+        } catch (e) {
+            this.flashPrice = null
+        }
+    },
+
     async fetchProduct() {
       this.loading   = true
       this.error     = null

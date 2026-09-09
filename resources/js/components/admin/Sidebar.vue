@@ -373,6 +373,7 @@ export default {
                             children: [
                                 { path: '/admin/products',          label: 'All Products',      permission: 'products_view' },
                                 { path: '/admin/featured-products', label: 'Featured Products', permission: 'products_view' },
+                                { path: '/admin/categories',    label: 'Featured Categories',    permission: 'categories_edit' },
                             ]
                         },
                         {
@@ -380,6 +381,7 @@ export default {
                             children: [
                                 { path: '/admin/promo-codes',   label: 'Promo Codes',       permission: 'promo_codes_view' },
                                 { path: '/admin/promotions',    label: 'Promotion Banners', permission: 'promotions_view' },
+                                { path: '/admin/flash-sale',    label: 'Flash Sale',    permission: 'flash_sale_edit' },
                                 { path: '/admin/announcements', label: 'Announcement Bar',  permission: 'announcement_view' },
                             ]
                         },
@@ -474,6 +476,7 @@ export default {
                             children: [
                                 { path: '/admin/settings',      label: 'Site Settings', permission: 'settings_edit' },
                                 { path: '/admin/sliders',       label: 'Sliders',       permission: 'sliders_edit' },
+                                { path: '/admin/home-videos',   label: 'Home Videos',   permission: 'home_videos_edit' },
                                 { path: '/admin/navigations',   label: 'Navigation',    permission: 'navigations_view' },
                                 { path: '/admin/footer-links',  label: 'Footer Links',  permission: 'footer_links_manage' },
                             ]
