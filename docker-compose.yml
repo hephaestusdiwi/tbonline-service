@@ -1,0 +1,45 @@
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: tbstore-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - tbstore
+
+  mysql:
+    image: mysql:8.0
+    container_name: tbstore-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: tbstore_db
+      MYSQL_USER: laravel_user
+      MYSQL_PASSWORD: tbstore_password
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - tbstore_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - tbstore
+
+networks:
+  tbstore:
+
+volumes:
+  tbstore_mysql:
