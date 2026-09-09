@@ -1051,7 +1051,11 @@ export default {
 ────────────────────────────────────────────── */
 @media (max-width: 767px) {
   .search-container {
-    top: 64px;
+    top:
+      calc(
+        var(--announcement-height, 0px) +
+        var(--navbar-height, 0px)
+      );
   }
 
   .search-backdrop {
@@ -1063,11 +1067,22 @@ export default {
   }
 
   .search-bar.is-expanded {
-    max-height: calc(100dvh - 64px);
+    max-height:
+      calc(
+        100dvh -
+        var(--announcement-height, 0px) -
+        var(--navbar-height, 0px)
+      );
   }
 
   .search-bar__dropdown {
-    max-height: calc(100dvh - 124px);
+    max-height:
+      calc(
+        100dvh -
+        var(--announcement-height, 0px) -
+        var(--navbar-height, 0px) -
+        60px
+      );
   }
 
   .search-bar.is-expanded .search-bar__row {

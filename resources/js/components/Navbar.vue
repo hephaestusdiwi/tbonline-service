@@ -1,189 +1,203 @@
 <template>
-  <!--
-    AnnouncementBar berada di luar navbar.
-    Jadi AnnouncementBar ikut scroll normal dan tidak ikut fixed/sticky.
-  -->
-  <AnnouncementBar
-    :enabled="showAnnouncement"
-    bg-color="#000000"
-    text-color="#ffffff"
-    :interval="4000"
-  />
+  <div
+    ref="navbarShellRef"
+    class="navbar-shell"
+    :class="{ 'navbar-shell--fixed': navFixed }"
+  >
+    <!-- Announcement Bar -->
+    <AnnouncementBar
+      ref="announcementRef"
+      :enabled="showAnnouncement"
+      bg-color="#000000"
+      text-color="#ffffff"
+      :interval="4000"
+    />
 
-  <nav class="navbar" :class="{ 'menu-open': mobileOpen }">
+    <nav
+      ref="navbarRef"
+      class="navbar"
+      :class="{ 'menu-open': mobileOpen, 'navbar--fixed': navFixed }"
+    >
 
-    <!-- Main Bar -->
-    <div class="navbar-inner">
+      <!-- Main Bar -->
+      <div class="navbar-inner">
 
-      <!-- Logo -->
-      <router-link
-        to="/"
-        class="navbar-logo"
-        @click="closeMobile"
-      >
-        <img
-          v-if="siteLogo"
-          :src="siteLogo"
-          :alt="siteName"
-          class="logo-img"
-        />
-
-        <span
-          v-else
-          class="logo-text"
-        >
-          {{ siteName }}
-        </span>
-      </router-link>
-
-      <!-- Desktop Menu -->
-      <div class="desktop-menu">
+        <!-- Logo -->
         <router-link
-          v-for="menu in menus"
-          :key="menu.id"
-          :to="menu.url"
-          class="desktop-link"
-          active-class="desktop-link--active"
+          to="/"
+          class="navbar-logo"
+          @click="closeMobile"
         >
-          {{ menu.label }}
-        </router-link>
-      </div>
-
-      <!-- Right Icons -->
-      <div class="navbar-actions">
-
-        <!-- Search: desktop only -->
-        <div class="search-wrapper">
-          <button
-            ref="searchIconRef"
-            class="icon-btn"
-            aria-label="Search"
-            @click="openSearch"
-          >
-            <font-awesome-icon
-              :icon="['fas', 'magnifying-glass']"
-            />
-          </button>
-        </div>
-
-        <!-- Cart -->
-        <button
-          class="icon-btn cart-btn"
-          aria-label="Cart"
-          @click="cart.open()"
-        >
-          <font-awesome-icon
-            :icon="['fas', 'cart-shopping']"
+          <img
+            v-if="siteLogo"
+            :src="siteLogo"
+            :alt="siteName"
+            class="logo-img"
           />
 
           <span
-            v-if="cart.totalItems > 0"
-            class="cart-badge"
+            v-else
+            class="logo-text"
           >
-            {{ cart.totalItems > 99 ? '99+' : cart.totalItems }}
+            {{ siteName }}
           </span>
-        </button>
+        </router-link>
 
-        <!-- Hamburger — mobile only -->
-        <button
-          class="icon-btn hamburger"
-          :class="{ 'is-open': mobileOpen }"
-          :aria-label="mobileOpen ? 'Tutup menu' : 'Buka menu'"
-          @click="toggleMobile"
-        >
-          <span class="bar bar-top"></span>
-          <span class="bar bar-mid"></span>
-          <span class="bar bar-bot"></span>
-        </button>
-
-      </div>
-    </div>
-
-    <!-- Mobile Full-Screen Overlay -->
-    <div class="overlay-container">
-      <Transition name="apple-menu">
-        <div
-          v-if="mobileOpen"
-          class="apple-overlay"
-        >
-
-          <!-- Close button -->
-          <button
-            class="apple-close"
-            aria-label="Tutup menu"
-            @click="closeMobile"
+        <!-- Desktop Menu -->
+        <div class="desktop-menu">
+          <router-link
+            v-for="menu in menus"
+            :key="menu.id"
+            :to="menu.url"
+            class="desktop-link"
+            active-class="desktop-link--active"
           >
-            <font-awesome-icon
-              :icon="['fas', 'xmark']"
-            />
-          </button>
+            {{ menu.label }}
+          </router-link>
+        </div>
 
-          <!-- Nav links -->
-          <nav
-            class="apple-links"
-            aria-label="Mobile navigation"
-          >
-            <router-link
-              v-for="(menu, i) in menus"
-              :key="menu.id"
-              :to="menu.url"
-              class="apple-link"
-              :style="{
-                animationDelay: `${0.04 + i * 0.045}s`
-              }"
-              active-class="apple-link--active"
-              @click="closeMobile"
-            >
-              {{ menu.label }}
-            </router-link>
-          </nav>
+        <!-- Right Icons -->
+        <div class="navbar-actions">
 
-          <!-- Bottom utility row -->
-          <div class="apple-utility">
-
+          <!-- Search: desktop only -->
+          <div class="search-wrapper">
             <button
-              class="apple-util-btn"
-              @click="openSearch(); closeMobile()"
+              ref="searchIconRef"
+              class="icon-btn"
+              aria-label="Search"
+              @click="openSearch"
             >
               <font-awesome-icon
                 :icon="['fas', 'magnifying-glass']"
-                class="util-icon"
               />
-
-              <span>Search</span>
             </button>
+          </div>
 
+          <!-- Cart -->
+          <button
+            class="icon-btn cart-btn"
+            aria-label="Cart"
+            @click="cart.open()"
+          >
+            <font-awesome-icon
+              :icon="['fas', 'cart-shopping']"
+            />
+
+            <span
+              v-if="cart.totalItems > 0"
+              class="cart-badge"
+            >
+              {{ cart.totalItems > 99 ? '99+' : cart.totalItems }}
+            </span>
+          </button>
+
+          <!-- Hamburger — mobile only -->
+          <button
+            class="icon-btn hamburger"
+            :class="{ 'is-open': mobileOpen }"
+            :aria-label="mobileOpen ? 'Tutup menu' : 'Buka menu'"
+            @click="toggleMobile"
+          >
+            <span class="bar bar-top"></span>
+            <span class="bar bar-mid"></span>
+            <span class="bar bar-bot"></span>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Mobile Full-Screen Overlay -->
+      <div class="overlay-container">
+        <Transition name="apple-menu">
+          <div
+            v-if="mobileOpen"
+            class="apple-overlay"
+          >
+
+            <!-- Close button -->
             <button
-              class="apple-util-btn"
-              @click="cart.open(); closeMobile()"
+              class="apple-close"
+              aria-label="Tutup menu"
+              @click="closeMobile"
             >
               <font-awesome-icon
-                :icon="['fas', 'cart-shopping']"
-                class="util-icon"
+                :icon="['fas', 'xmark']"
               />
-
-              <span>Cart</span>
-
-              <span
-                v-if="cart.totalItems > 0"
-                class="util-badge"
-              >
-                {{ cart.totalItems }}
-              </span>
             </button>
 
+            <!-- Nav links -->
+            <nav
+              class="apple-links"
+              aria-label="Mobile navigation"
+            >
+              <router-link
+                v-for="(menu, i) in menus"
+                :key="menu.id"
+                :to="menu.url"
+                class="apple-link"
+                :style="{
+                  animationDelay: `${0.04 + i * 0.045}s`
+                }"
+                active-class="apple-link--active"
+                @click="closeMobile"
+              >
+                {{ menu.label }}
+              </router-link>
+            </nav>
+
+            <!-- Bottom utility row -->
+            <div class="apple-utility">
+
+              <button
+                class="apple-util-btn"
+                @click="openSearch(); closeMobile()"
+              >
+                <font-awesome-icon
+                  :icon="['fas', 'magnifying-glass']"
+                  class="util-icon"
+                />
+
+                <span>Search</span>
+              </button>
+
+              <button
+                class="apple-util-btn"
+                @click="cart.open(); closeMobile()"
+              >
+                <font-awesome-icon
+                  :icon="['fas', 'cart-shopping']"
+                  class="util-icon"
+                />
+
+                <span>Cart</span>
+
+                <span
+                  v-if="cart.totalItems > 0"
+                  class="util-badge"
+                >
+                  {{ cart.totalItems }}
+                </span>
+              </button>
+
+            </div>
           </div>
-        </div>
-      </Transition>
-    </div>
+        </Transition>
+      </div>
 
-    <SearchOverlay v-model="searchOpen" />
+      <SearchOverlay v-model="searchOpen" />
 
-  </nav>
+    </nav>
+  </div>
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import {
+  ref,
+  computed,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+} from 'vue'
 import { useRoute } from 'vue-router'
 import axios from '../axios.js'
 import AnnouncementBar from './AnnouncementBar.vue'
@@ -202,8 +216,61 @@ export default {
   setup() {
     const searchOpen = ref(false)
     const mobileOpen = ref(false)
+
     const searchIconRef = ref(null)
     const searchIconRect = ref(null)
+
+    const announcementRef = ref(null)
+    const navbarShellRef = ref(null)
+    const navbarRef = ref(null)
+    const navFixed = ref(false)
+
+    let announcementResizeObserver = null
+    let navbarResizeObserver = null
+
+    function updateHeaderHeights() {
+      const root = document.documentElement
+      const announcementEl = announcementRef.value?.$el
+      const navbarEl = navbarRef.value
+
+      const announcementVisible =
+        showAnnouncement.value &&
+        announcementEl &&
+        getComputedStyle(announcementEl).display !== 'none'
+
+      const announcementHeight = announcementVisible
+        ? announcementEl.getBoundingClientRect().height
+        : 0
+
+      const navbarHeight = navbarEl
+        ? navbarEl.getBoundingClientRect().height
+        : 0
+
+      root.style.setProperty(
+        '--announcement-height',
+        `${announcementHeight}px`,
+      )
+      root.style.setProperty(
+        '--navbar-height',
+        `${navbarHeight}px`,
+      )
+    }
+
+    function updateNavPosition() {
+      updateHeaderHeights()
+
+      const announcementEl = announcementRef.value?.$el
+      const announcementVisible =
+        showAnnouncement.value &&
+        announcementEl &&
+        getComputedStyle(announcementEl).display !== 'none'
+
+      const threshold = announcementVisible
+        ? announcementEl.getBoundingClientRect().height
+        : 0
+
+      navFixed.value = window.scrollY >= threshold
+    }
 
     const route = useRoute()
 
@@ -218,6 +285,35 @@ export default {
     } = useSiteSettings()
 
     fetchSettings()
+
+    onMounted(async () => {
+      await nextTick()
+      updateHeaderHeights()
+      updateNavPosition()
+
+      window.addEventListener('scroll', updateNavPosition, { passive: true })
+      window.addEventListener('resize', updateNavPosition)
+
+      if (typeof ResizeObserver !== 'undefined') {
+        announcementResizeObserver = new ResizeObserver(updateNavPosition)
+        navbarResizeObserver = new ResizeObserver(updateHeaderHeights)
+
+        const announcementEl = announcementRef.value?.$el
+        const navbarEl = navbarRef.value
+
+        if (announcementEl) announcementResizeObserver.observe(announcementEl)
+        if (navbarEl) navbarResizeObserver.observe(navbarEl)
+      }
+    })
+
+    onBeforeUnmount(() => {
+      window.removeEventListener('scroll', updateNavPosition)
+      window.removeEventListener('resize', updateNavPosition)
+      announcementResizeObserver?.disconnect()
+      navbarResizeObserver?.disconnect()
+      document.documentElement.style.removeProperty('--announcement-height')
+      document.documentElement.style.removeProperty('--navbar-height')
+    })
 
     function openSearch() {
       searchIconRect.value =
@@ -246,6 +342,10 @@ export default {
 
       searchIconRef,
       searchIconRect,
+      announcementRef,
+      navbarShellRef,
+      navbarRef,
+      navFixed,
 
       openSearch,
       toggleMobile,
@@ -274,7 +374,9 @@ export default {
   methods: {
     async fetchMenus() {
       try {
-        const response = await axios.get('/navigations')
+        const response =
+          await axios.get('/navigations')
+
         this.menus = response.data
       } catch (e) {
         console.error(e)
@@ -287,13 +389,36 @@ export default {
 <style scoped>
 
 /* =========================================================
+   NAVBAR SHELL
+   ========================================================= */
+
+.navbar-shell {
+  width: 100%;
+  position: relative;
+}
+
+.navbar-shell--fixed {
+  padding-bottom: var(--navbar-height, 0px);
+}
+
+
+/* =========================================================
    NAVBAR BASE
    ========================================================= */
 
 .navbar {
   background: #BD2028;
-  position: sticky !important;
+  position: relative;
+  width: 100%;
+  z-index: 99999;
+}
+
+.navbar--fixed {
+  position: fixed !important;
   top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
   z-index: 99999 !important;
 }
 
@@ -305,6 +430,7 @@ export default {
 .navbar-inner {
   max-width: 80rem;
   margin: 0 auto;
+
   padding: 1.25rem 1.25rem;
 
   display: flex;
@@ -333,7 +459,9 @@ export default {
 .logo-text {
   font-size: 1.25rem;
   font-weight: 900;
+
   letter-spacing: -0.02em;
+
   color: #fff;
 }
 
@@ -344,7 +472,9 @@ export default {
 
 .desktop-menu {
   display: none;
+
   align-items: center;
+
   gap: 2rem;
 }
 
@@ -356,8 +486,10 @@ export default {
 
 .desktop-link {
   font-family: 'Poppins', sans-serif;
+
   font-size: 1.05rem;
   font-weight: 500;
+
   color: rgba(255, 255, 255, 0.88);
 
   text-decoration: none;
@@ -378,13 +510,16 @@ export default {
 
 .navbar-actions {
   display: flex;
+
   align-items: center;
+
   gap: 0.75rem;
 }
 
 .icon-btn {
   background: none;
   border: none;
+
   cursor: pointer;
 
   color: rgba(255, 255, 255, 0.9);
@@ -405,7 +540,9 @@ export default {
 }
 
 
-/* Search */
+/* =========================================================
+   SEARCH
+   ========================================================= */
 
 .search-btn {
   display: none;
@@ -424,12 +561,15 @@ export default {
 @media (min-width: 768px) {
   .search-wrapper {
     display: flex;
+
     align-items: center;
   }
 }
 
 
-/* Cart */
+/* =========================================================
+   CART
+   ========================================================= */
 
 .cart-btn {
   position: relative;
@@ -439,6 +579,7 @@ export default {
   font-family: "Poppins", sans-serif;
 
   position: absolute;
+
   top: -7px;
   right: -10px;
 
@@ -517,6 +658,7 @@ export default {
 
 .hamburger.is-open .bar-mid {
   opacity: 0;
+
   transform: scaleX(0);
 }
 
@@ -533,9 +675,10 @@ export default {
 
 .apple-overlay {
   position: fixed;
+
   inset: 0;
 
-  z-index: 49;
+  z-index: 100000;
 
   background: #f5f5f7;
 
@@ -556,7 +699,9 @@ export default {
 }
 
 
-/* Close */
+/* =========================================================
+   CLOSE
+   ========================================================= */
 
 .apple-close {
   position: absolute;
@@ -575,6 +720,7 @@ export default {
   background: #e0e0e5;
 
   border: none;
+
   border-radius: 50%;
 
   cursor: pointer;
@@ -621,6 +767,7 @@ export default {
     sans-serif;
 
   font-size: 2rem;
+
   font-weight: 600;
 
   letter-spacing: -0.025em;
@@ -659,6 +806,7 @@ export default {
 @keyframes link-in {
   to {
     opacity: 1;
+
     transform: translateY(0);
   }
 }
@@ -684,6 +832,7 @@ export default {
   flex: 1;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -694,6 +843,7 @@ export default {
   background: #e8e8ed;
 
   border: none;
+
   border-radius: 12px;
 
   font-family:
@@ -703,6 +853,7 @@ export default {
     sans-serif;
 
   font-size: 0.9375rem;
+
   font-weight: 500;
 
   color: #1d1d1f;
@@ -720,14 +871,17 @@ export default {
 
 .util-icon {
   font-size: 1rem;
+
   color: #1d1d1f;
 }
 
 .util-badge {
   background: #BD2028;
+
   color: #fff;
 
   font-size: 0.65rem;
+
   font-weight: 700;
 
   min-width: 18px;
@@ -736,6 +890,7 @@ export default {
   border-radius: 999px;
 
   display: inline-flex;
+
   align-items: center;
   justify-content: center;
 
@@ -764,6 +919,7 @@ export default {
 .apple-menu-enter-from,
 .apple-menu-leave-to {
   opacity: 0;
+
   transform: translateY(-8px);
 }
 
@@ -778,21 +934,12 @@ export default {
 
 @media (max-width: 767px) {
 
-  /*
-   * MOBILE NAVBAR
-   *
-   * Sticky diganti fixed supaya Navbar benar-benar
-   * menempel pada viewport saat halaman di-scroll.
-   */
-  .navbar {
+  .navbar--fixed {
     position: fixed !important;
-
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
-
     width: 100% !important;
-
     z-index: 99999 !important;
   }
 
@@ -803,20 +950,15 @@ export default {
 
   .navbar-logo {
     position: absolute;
-
     left: 60px;
     top: 50%;
-
     transform: translateY(-50%);
   }
 
   .navbar-actions {
     width: 100%;
-
     display: flex;
-
     justify-content: space-between;
-
     gap: 0;
   }
 
@@ -839,13 +981,19 @@ export default {
    ========================================================= */
 
 @media (min-width: 768px) {
-  .navbar {
-    position: sticky !important;
-
+  .navbar--fixed {
+    position: fixed !important;
     top: 0 !important;
-
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
     z-index: 99999 !important;
   }
 }
+
+
+/* =========================================================
+   END
+   ========================================================= */
 
 </style>
