@@ -378,7 +378,7 @@ export default {
    CSS Custom Properties
 ────────────────────────────────────────────── */
 .search-container {
-  --icon-right: 64px;           /* fallback jika iconRect tidak dikirim */
+  --icon-right: 64px;
   --bar-expand-duration: 0.38s;
   --bar-easing: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -389,31 +389,29 @@ export default {
 .search-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 9997;
+  z-index: 99999;
   background: rgba(0, 0, 0, 0.38);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
 }
 
 /* ──────────────────────────────────────────────
-   Container — wrapper tepat di atas navbar area
+   Container
 ────────────────────────────────────────────── */
 .search-container {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 9998;
-  /* bar mulai dari kanan (posisi icon), lalu expand ke kiri */
+  z-index: 100000;
   display: flex;
   justify-content: flex-end;
   pointer-events: none;
-  /* Bar tidak boleh kliping sebelum expand */
   overflow: visible;
 }
 
 /* ──────────────────────────────────────────────
-   The search bar — inti animasi
+   Search bar
 ────────────────────────────────────────────── */
 .search-bar {
   font-family: "Poppins", sans-serif;
@@ -421,11 +419,6 @@ export default {
   background: #fff;
   overflow: hidden;
 
-  /*
-   * COLLAPSED STATE:
-   * Ukuran kecil, tepat di bawah / di posisi icon.
-   * transform-origin: top right agar grow ke kiri & bawah.
-   */
   width: 48px;
   max-height: 52px;
   margin-top: 10px;
@@ -438,14 +431,14 @@ export default {
   opacity: 0.6;
 
   transition:
-    width              var(--bar-expand-duration) var(--bar-easing),
-    max-height         calc(var(--bar-expand-duration) + 0.08s) var(--bar-easing),
-    margin-top         var(--bar-expand-duration) var(--bar-easing),
-    margin-right       var(--bar-expand-duration) var(--bar-easing),
-    border-radius      0.28s ease,
-    box-shadow         0.3s ease,
-    transform          0.25s var(--bar-easing),
-    opacity            0.2s ease;
+    width var(--bar-expand-duration) var(--bar-easing),
+    max-height calc(var(--bar-expand-duration) + 0.08s) var(--bar-easing),
+    margin-top var(--bar-expand-duration) var(--bar-easing),
+    margin-right var(--bar-expand-duration) var(--bar-easing),
+    border-radius 0.28s ease,
+    box-shadow 0.3s ease,
+    transform 0.25s var(--bar-easing),
+    opacity 0.2s ease;
 }
 
 /* EXPANDED STATE */
@@ -491,9 +484,12 @@ export default {
   color: #555;
   transition: color 0.2s;
 }
-.search-bar.is-expanded .search-bar__icon { color: #111; }
 
-/* Input text */
+.search-bar.is-expanded .search-bar__icon {
+  color: #111;
+}
+
+/* Input */
 .search-bar__input {
   flex: 1;
   border: none;
@@ -503,7 +499,6 @@ export default {
   color: #111;
   font-family: "Poppins", sans-serif;
   min-width: 0;
-  /* Tersembunyi saat collapsed, muncul saat expanded */
   opacity: 0;
   width: 0;
   transition: opacity 0.2s ease 0.18s, width 0.01s;
@@ -516,7 +511,9 @@ export default {
   width: auto;
 }
 
-.search-bar__input::placeholder { color: #bbb; }
+.search-bar__input::placeholder {
+  color: #bbb;
+}
 
 /* Spinner */
 .search-bar__spinner svg {
@@ -527,7 +524,11 @@ export default {
   flex-shrink: 0;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 /* Clear */
 .search-bar__clear {
@@ -543,8 +544,16 @@ export default {
   cursor: pointer;
   transition: background 0.15s;
 }
-.search-bar__clear:hover { background: #bbb; }
-.search-bar__clear svg { width: 10px; height: 10px; color: #444; }
+
+.search-bar__clear:hover {
+  background: #bbb;
+}
+
+.search-bar__clear svg {
+  width: 10px;
+  height: 10px;
+  color: #444;
+}
 
 /* Close */
 .search-bar__close {
@@ -559,13 +568,24 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Tersembunyi saat collapsed */
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s ease 0.15s, color 0.15s, background 0.15s;
+  transition:
+    opacity 0.2s ease 0.15s,
+    color 0.15s,
+    background 0.15s;
 }
-.search-bar__close svg { width: 17px; height: 17px; }
-.search-bar__close:hover { color: #111; background: #f2f2f2; }
+
+.search-bar__close svg {
+  width: 17px;
+  height: 17px;
+}
+
+.search-bar__close:hover {
+  color: #111;
+  background: #f2f2f2;
+}
+
 .search-bar.is-expanded .search-bar__close {
   opacity: 1;
   pointer-events: all;
@@ -607,7 +627,10 @@ export default {
   justify-content: space-between;
   margin-bottom: 12px;
 }
-.dropdown-label-row .dropdown-label { margin-bottom: 0; }
+
+.dropdown-label-row .dropdown-label {
+  margin-bottom: 0;
+}
 
 .btn-link {
   background: none;
@@ -619,14 +642,23 @@ export default {
   padding: 0;
   transition: color 0.15s;
 }
-.btn-link:hover { color: #ED1F24; }
 
-.dropdown-section { margin-bottom: 28px; }
+.btn-link:hover {
+  color: #ED1F24;
+}
+
+.dropdown-section {
+  margin-bottom: 28px;
+}
 
 /* ──────────────────────────────────────────────
    Chips
 ────────────────────────────────────────────── */
-.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 
 .chip {
   border: 1.5px solid #e0e0e0;
@@ -637,15 +669,26 @@ export default {
   color: #222;
   background: #fff;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s;
   white-space: nowrap;
 }
-.chip:hover { border-color: #ED1F24; background: #ED1F24; color: #fff; }
+
+.chip:hover {
+  border-color: #ED1F24;
+  background: #ED1F24;
+  color: #fff;
+}
 
 /* ──────────────────────────────────────────────
    Recent
 ────────────────────────────────────────────── */
-.recent-list { display: flex; flex-direction: column; }
+.recent-list {
+  display: flex;
+  flex-direction: column;
+}
 
 .recent-item {
   display: flex;
@@ -661,13 +704,26 @@ export default {
   text-align: left;
   transition: background 0.12s;
 }
-.recent-item:hover { background: #f6f6f6; }
-.recent-icon { width: 15px; height: 15px; color: #ccc; flex-shrink: 0; }
+
+.recent-item:hover {
+  background: #f6f6f6;
+}
+
+.recent-icon {
+  width: 15px;
+  height: 15px;
+  color: #ccc;
+  flex-shrink: 0;
+}
 
 /* ──────────────────────────────────────────────
    Skeletons
 ────────────────────────────────────────────── */
-.dropdown-skeletons { display: flex; flex-direction: column; gap: 6px; }
+.dropdown-skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
 .skeleton-row {
   display: flex;
@@ -675,26 +731,60 @@ export default {
   gap: 14px;
   padding: 8px 10px;
 }
+
 .sk {
   background: #ececec;
   border-radius: 6px;
   animation: pulse 1.3s ease-in-out infinite;
 }
-.sk-img   { width: 50px; height: 50px; border-radius: 8px; flex-shrink: 0; }
-.sk-text  { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-.sk-title { height: 13px; width: 60%; }
-.sk-sub   { height: 10px; width: 35%; }
-.sk-price { width: 58px; height: 13px; }
+
+.sk-img {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.sk-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sk-title {
+  height: 13px;
+  width: 60%;
+}
+
+.sk-sub {
+  height: 10px;
+  width: 35%;
+}
+
+.sk-price {
+  width: 58px;
+  height: 13px;
+}
 
 @keyframes pulse {
-  0%,100% { opacity: 1; }
-  50%      { opacity: 0.4; }
+  0%,100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
 }
 
 /* ──────────────────────────────────────────────
    Results
 ────────────────────────────────────────────── */
-.results-list { display: flex; flex-direction: column; margin-bottom: 10px; }
+.results-list {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
 
 .result-row {
   display: flex;
@@ -710,12 +800,26 @@ export default {
   animation: result-in 0.22s ease both;
   transition: background 0.12s;
 }
-.result-row:hover { background: #f6f6f6; }
-.result-row:hover .result-arrow { opacity: 1; transform: translateX(0); }
+
+.result-row:hover {
+  background: #f6f6f6;
+}
+
+.result-row:hover .result-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
 
 @keyframes result-in {
-  from { opacity: 0; transform: translateY(5px); }
-  to   { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .result-thumb {
@@ -729,10 +833,26 @@ export default {
   align-items: center;
   justify-content: center;
 }
-.result-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.result-thumb svg { width: 20px; height: 20px; color: #ccc; }
 
-.result-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.result-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.result-thumb svg {
+  width: 20px;
+  height: 20px;
+  color: #ccc;
+}
+
+.result-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
 
 .result-name {
   font-size: 0.9rem;
@@ -758,7 +878,12 @@ export default {
   letter-spacing: 0.05em;
 }
 
-.result-price { font-size: 0.88rem; font-weight: 700; color: #111; flex-shrink: 0; }
+.result-price {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #111;
+  flex-shrink: 0;
+}
 
 .result-arrow {
   width: 13px;
@@ -791,8 +916,16 @@ export default {
   transition: background 0.15s;
   letter-spacing: -0.01em;
 }
-.view-all-btn:hover { background: #333; }
-.view-all-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+.view-all-btn:hover {
+  background: #333;
+}
+
+.view-all-btn svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
 
 /* ──────────────────────────────────────────────
    Empty
@@ -805,6 +938,7 @@ export default {
   text-align: center;
   gap: 8px;
 }
+
 .empty-icon {
   width: 52px;
   height: 52px;
@@ -815,52 +949,134 @@ export default {
   justify-content: center;
   margin-bottom: 4px;
 }
-.empty-icon svg { width: 26px; height: 26px; color: #ccc; }
-.dropdown-empty p { margin: 0; font-size: 0.9rem; color: #444; }
-.dropdown-empty p strong { color: #111; }
-.dropdown-empty span { font-size: 0.78rem; color: #bbb; }
+
+.empty-icon svg {
+  width: 26px;
+  height: 26px;
+  color: #ccc;
+}
+
+.dropdown-empty p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #444;
+}
+
+.dropdown-empty p strong {
+  color: #111;
+}
+
+.dropdown-empty span {
+  font-size: 0.78rem;
+  color: #bbb;
+}
 
 /* ──────────────────────────────────────────────
    Vue Transitions
 ────────────────────────────────────────────── */
-/* Backdrop */
-.backdrop-enter-active { transition: opacity 0.28s ease; }
-.backdrop-leave-active { transition: opacity 0.22s ease 0.08s; }
+.backdrop-enter-active {
+  transition: opacity 0.28s ease;
+}
+
+.backdrop-leave-active {
+  transition: opacity 0.22s ease 0.08s;
+}
+
 .backdrop-enter-from,
-.backdrop-leave-to { opacity: 0; }
+.backdrop-leave-to {
+  opacity: 0;
+}
 
-/* Container wrapper (masuk/keluar instan, animasi ada di .search-bar) */
 .searchbar-enter-active,
-.searchbar-leave-active { transition: opacity 0.01s; }
+.searchbar-leave-active {
+  transition: opacity 0.01s;
+}
+
 .searchbar-enter-from,
-.searchbar-leave-to { opacity: 1; } /* biarkan .search-bar yang handle */
+.searchbar-leave-to {
+  opacity: 1;
+}
 
-/* Dropdown panel */
 .dropdown-enter-active {
-  transition: opacity 0.22s ease, transform 0.28s cubic-bezier(0.22,1,0.36,1);
+  transition:
+    opacity 0.22s ease,
+    transform 0.28s cubic-bezier(0.22,1,0.36,1);
 }
-.dropdown-leave-active {
-  transition: opacity 0.15s ease, transform 0.18s ease;
-}
-.dropdown-enter-from { opacity: 0; transform: translateY(-6px); }
-.dropdown-leave-to   { opacity: 0; transform: translateY(-4px); }
 
-/* Fade umum */
-.fade-enter-active { transition: opacity 0.15s ease; }
-.fade-leave-active { transition: opacity 0.1s ease; }
+.dropdown-leave-active {
+  transition:
+    opacity 0.15s ease,
+    transform 0.18s ease;
+}
+
+.dropdown-enter-from {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.fade-enter-active {
+  transition: opacity 0.15s ease;
+}
+
+.fade-leave-active {
+  transition: opacity 0.1s ease;
+}
+
 .fade-enter-from,
-.fade-leave-to { opacity: 0; }
+.fade-leave-to {
+  opacity: 0;
+}
 
 /* ──────────────────────────────────────────────
-   Responsive
+   Desktop
 ────────────────────────────────────────────── */
 @media (min-width: 768px) {
   .search-bar.is-expanded .search-bar__row {
     padding: 0 40px;
     height: 64px;
   }
+
   .dropdown-body {
     padding: 24px 40px 40px;
+  }
+}
+
+/* ──────────────────────────────────────────────
+   Mobile
+────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .search-container {
+    top: 64px;
+  }
+
+  .search-backdrop {
+    z-index: 99999;
+  }
+
+  .search-container {
+    z-index: 100000;
+  }
+
+  .search-bar.is-expanded {
+    max-height: calc(100dvh - 64px);
+  }
+
+  .search-bar__dropdown {
+    max-height: calc(100dvh - 124px);
+  }
+
+  .search-bar.is-expanded .search-bar__row {
+    height: 60px;
+    padding: 0 16px;
+  }
+
+  .dropdown-body {
+    padding: 16px 16px 28px;
   }
 }
 </style>
