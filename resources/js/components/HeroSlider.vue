@@ -1,7 +1,7 @@
 <template>
     <div
         class="relative w-full overflow-hidden bg-gray-100
-            h-[420px] sm:h-[15vh] md:h-[25vh] lg:h-[100vh]"
+            h-[420px] sm:h-[15vh] md:h-[25vh] lg:h-[75vh]"
     >
 
         <!-- Loading -->
