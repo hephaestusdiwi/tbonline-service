@@ -15,21 +15,26 @@ class HomeVideoController extends Controller
     // (sama pola kayak /api/sliders & /api/categories).
     public function index()
     {
-        return response()->json(HomeVideo::whereIn('slot', self::SLOTS)->get());
+        return response()->json(
+            HomeVideo::whereIn('slot', self::SLOTS)->get()
+        );
     }
 
     // PUT /api/home-videos/{slot}
     public function update(Request $request, string $slot)
     {
-        if (!in_array($slot, self::SLOTS)) {
-            return response()->json(['message' => 'Slot video tidak dikenali'], 404);
+        if (!in_array($slot, self::SLOTS, true)) {
+            return response()->json([
+                'message' => 'Slot video tidak dikenali',
+            ], 404);
         }
 
         $homeVideo = HomeVideo::where('slot', $slot)->firstOrFail();
 
         $rules = [
-            'is_active' => 'nullable|boolean',
-            'video'     => 'nullable|file|max:204800|mimes:mp4,webm,mov',
+            'is_active'    => 'nullable|boolean',
+            'remove_video' => 'nullable|boolean',
+            'video'        => 'nullable|file|max:204800|mimes:mp4,webm,mov',
         ];
 
         // Judul & deskripsi cuma relevan buat slot video_with_caption.
@@ -40,21 +45,57 @@ class HomeVideoController extends Controller
 
         $request->validate($rules);
 
+        /*
+         * Video baru:
+         * hapus file lama terlebih dahulu, kemudian simpan file baru.
+         */
         if ($request->hasFile('video')) {
             if ($homeVideo->video_path) {
                 Storage::disk('public')->delete($homeVideo->video_path);
             }
-            $homeVideo->video_path = $request->file('video')->store('home-videos', 'public');
+
+            $homeVideo->video_path = $request->file('video')->store(
+                'home-videos',
+                'public'
+            );
+        }
+
+        /*
+         * Hapus video lama:
+         * hanya dijalankan ketika tidak sedang upload video pengganti.
+         *
+         * Frontend mengirim remove_video=1 ketika user menekan X pada
+         * video yang sudah tersimpan lalu menekan "Simpan Perubahan".
+         */
+        elseif ($request->boolean('remove_video')) {
+            if ($homeVideo->video_path) {
+                Storage::disk('public')->delete($homeVideo->video_path);
+            }
+
+            $homeVideo->video_path = null;
         }
 
         if ($slot === 'video_with_caption') {
-            $homeVideo->title       = $request->input('title', $homeVideo->title);
-            $homeVideo->description = $request->input('description', $homeVideo->description);
+            $homeVideo->title = $request->input(
+                'title',
+                $homeVideo->title
+            );
+
+            $homeVideo->description = $request->input(
+                'description',
+                $homeVideo->description
+            );
         }
 
-        $homeVideo->is_active = $request->input('is_active') ?? $homeVideo->is_active;
+        $homeVideo->is_active = $request->input(
+            'is_active',
+            $homeVideo->is_active
+        );
+
         $homeVideo->save();
 
-        return response()->json($homeVideo->fresh());
+        return response()->json(
+            $homeVideo->fresh()
+        );
     }
 }
