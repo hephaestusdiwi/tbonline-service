@@ -118,14 +118,6 @@
 
             </div>
 
-            <!-- Progress Bar -->
-            <div class="absolute bottom-0 left-0 w-full h-1 bg-white bg-opacity-20">
-                <div
-                    class="h-full bg-white transition-all ease-linear"
-                    :style="{ width: progressWidth + '%', transitionDuration: isPlaying ? '50ms' : '0ms' }"
-                />
-            </div>
-
         </div>
     </div>
 </template>
