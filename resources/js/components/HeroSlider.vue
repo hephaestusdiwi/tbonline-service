@@ -261,7 +261,8 @@
                     md:hidden
                     absolute
                     top-3
-                    right-3
+                    left-1/2
+                    -translate-x-1/2
                     flex
                     items-center
                     gap-1.5
